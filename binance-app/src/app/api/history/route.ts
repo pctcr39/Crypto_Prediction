@@ -1,4 +1,7 @@
 import { NextResponse } from 'next/server';
+
+export const runtime = 'edge';
+
 import { binanceClient } from '@/lib/binance';
 
 export async function GET(request: Request) {

@@ -1,4 +1,7 @@
 import { NextResponse } from 'next/server';
+
+export const runtime = 'edge';
+
 import { binanceClient } from '@/lib/binance';
 import { TechnicalAnalysis, Signal } from '@/lib/technical-analysis';
 
