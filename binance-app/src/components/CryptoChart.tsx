@@ -340,6 +340,9 @@ export function CryptoChart({ symbol }: { symbol: string }) {
 
                         <XAxis
                             dataKey="time"
+                            type="number"
+                            domain={['dataMin', 'dataMax']}
+                            scale="time"
                             stroke="#848E9C"
                             fontSize={11}
                             tickLine={false}

@@ -28,10 +28,13 @@ async function fetchPublic(endpoint: string, params: Record<string, any> = {}) {
         url.searchParams.append(key, String(params[key]))
     );
 
+    const headers: Record<string, string> = {};
+    if (API_KEY) {
+        headers['X-MBX-APIKEY'] = API_KEY;
+    }
+
     const res = await fetch(url.toString(), {
-        headers: {
-            'X-MBX-APIKEY': API_KEY,
-        },
+        headers,
     });
 
     if (!res.ok) {
