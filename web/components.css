@@ -1,0 +1,47 @@
+/* ══════════════════════════════════════════════════════════════════
+   COMPONENT — M11 (chưa xây)
+   Nguồn đặc tả: docs/02_DESIGN_SYSTEM.md §4
+   DS-RULE 8: KHÔNG mã màu trực tiếp ở file này. Chỉ dùng var(--…).
+   ══════════════════════════════════════════════════════════════════ */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--surface-0);
+  color: var(--text-1);
+  font: var(--text-md);
+}
+
+.card {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--sp-4);
+}
+
+/* ── DirectionBadge — DS-RULE 3: hướng KHÔNG BAO GIỜ chỉ mã hoá bằng màu.
+      Luôn có mũi tên ▲/▼ VÀ chữ. Người mù màu phải đọc được. ───────── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  padding: var(--sp-1) var(--sp-3);
+  border-radius: var(--radius-pill);
+  font: var(--text-sm);
+}
+.badge--up      { color: var(--up);   background: var(--up-bg); }
+.badge--down    { color: var(--down); background: var(--down-bg); }
+.badge--unclear { color: var(--text-2); background: transparent; border: 1px solid var(--border); }
+
+/* ── Chỉ báo độ tươi — RULE 8: màn hình luôn nói thật ─────────── */
+.status { display: inline-flex; align-items: center; gap: var(--sp-2); font: var(--text-xs); }
+.status::before { content: ""; width: 8px; height: 8px; border-radius: var(--radius-pill); }
+.status--live::before  { background: var(--status-live); }
+.status--slow::before  { background: var(--status-slow); }
+.status--down::before  { background: var(--status-down); }
+.status--stale::before { background: var(--status-stale); }
+.status--down .num, .status--stale .num { color: var(--text-3); }  /* mất kết nối → giá xám */
+
+/* TODO(M11): ProbabilityMeter, PriceHero, PredictionCard, SymbolPicker
+   — đặc tả đầy đủ ở docs/02_DESIGN_SYSTEM.md §4 */

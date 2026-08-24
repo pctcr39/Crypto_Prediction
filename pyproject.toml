@@ -1,0 +1,112 @@
+# ══════════════════════════════════════════════════════════════════
+#  CRYPTO PREDICTION — cấu hình dự án
+#  Tham chiếu: docs/00_MASTER_PLAN.md §3 (tech stack đã chốt)
+# ══════════════════════════════════════════════════════════════════
+
+[project]
+name = "cryptopred"
+version = "0.1.0"
+description = "Dự đoán hướng giá crypto — pipeline + dashboard realtime"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+license = { text = "MIT" }
+authors = [{ name = "PCT" }]
+
+# ── Lõi: đủ cho M0 → M4 (tải dữ liệu, lưu trữ, feature, nhãn) ────
+dependencies = [
+    "ccxt>=4.4.0",            # MIT — một API cho 100+ sàn
+    "pandas>=2.2.0",
+    "numpy>=1.26,<3",
+    "pyarrow>=16.0.0",        # đọc/ghi Parquet
+    "duckdb>=1.1.0",          # truy vấn SQL thẳng trên file Parquet
+    "pandas-ta-classic>=0.5", # MIT — KHÔNG dùng `pandas-ta` (xem MASTER_PLAN §3.2)
+    "pyyaml>=6.0",
+    "python-dotenv>=1.0",
+    "tqdm>=4.66",
+]
+
+[project.optional-dependencies]
+# ── M5–M7: huấn luyện, tinh chỉnh, hiệu chỉnh xác suất ───────────
+model = [
+    "lightgbm>=4.5.0",
+    "catboost>=1.2.7",
+    "scikit-learn>=1.5.0",
+    "optuna>=4.0.0",
+    "mlflow>=2.17.0",
+    "statsforecast>=1.7.0",   # baseline bắt buộc — RULE 4
+    "matplotlib>=3.9.0",
+]
+
+# ── M8: backtest + báo cáo ──────────────────────────────────────
+# ⚠️ vectorbt = Apache-2.0 + Commons Clause: dùng cá nhân/nội bộ OK,
+#    không được bán sản phẩm mà giá trị chính đến từ nó.
+backtest = [
+    "vectorbt>=0.26.0",
+    "quantstats>=0.0.62",
+]
+
+# ── M9–M11: backend + dashboard ─────────────────────────────────
+serving = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.32.0",
+    "websockets>=13.0",
+    "httpx>=0.27.0",
+]
+
+# ── M12–M14: lịch chạy, cảnh báo, giao dịch ─────────────────────
+ops = [
+    "apscheduler>=3.10.4",
+    "httpx>=0.27.0",          # Telegram Bot API
+]
+
+dev = [
+    "pytest>=8.3.0",
+    "pytest-cov>=5.0.0",
+    "ruff>=0.7.0",
+    "ipykernel>=6.29.0",
+]
+
+[project.scripts]
+cryptopred = "cryptopred.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/cryptopred"]
+
+# ══════════════════════════════════════════════════════════════════
+#  RUFF — lint + format
+# ══════════════════════════════════════════════════════════════════
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "C4", "ARG", "PTH"]
+ignore = [
+    "E501",   # độ dài dòng đã do formatter lo
+    "B905",   # zip(strict=) — không bắt buộc ở đây
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*"     = ["ARG"]      # fixture pytest hay bị coi là tham số thừa
+"notebooks/*" = ["E402", "F401"]
+
+[tool.ruff.format]
+quote-style = "double"
+
+# ══════════════════════════════════════════════════════════════════
+#  PYTEST
+# ══════════════════════════════════════════════════════════════════
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --strict-markers -m 'not network'"
+markers = [
+    "network: cần gọi API Binance thật (chạy: pytest -m network)",
+    "slow: chạy lâu (>10s)",
+    "leakage: bộ dò rò rỉ dữ liệu — M6, KHÔNG BAO GIỜ được skip trên CI",
+]
+filterwarnings = ["ignore::DeprecationWarning"]

@@ -1,0 +1,72 @@
+# ══════════════════════════════════════════════════════════════════
+#  KHAI BÁO ĐẶC TRƯNG — MASTER_PLAN §4.3 (~45 feature)
+#
+#  RULE 1 — mọi feature phải SCALE-FREE (log return, z-score, tỉ lệ).
+#           Cấm tuyệt đối giá thô và volume thô.
+#  RULE 2 — mọi feature phải .shift(1) qua đúng MỘT hàm bọc duy nhất
+#           (cryptopred.features.builder.shift_all). Không đường vòng.
+# ══════════════════════════════════════════════════════════════════
+
+shift_bars: 1          # RULE 2 — không được đổi thành 0
+
+groups:
+
+  returns:             # Lợi suất — nền tảng của mọi thứ
+    enabled: true
+    log_return_periods: [1, 2, 3, 6, 12, 24, 72]
+
+  volatility:          # Biến động — đã chuẩn hoá theo giá
+    enabled: true
+    realized_vol_windows: [24, 72]
+    atr_period: 14     # dùng dạng atr/close, KHÔNG dùng atr thô
+    parkinson_window: 24
+
+  momentum:
+    enabled: true
+    rsi_period: 14
+    macd: { fast: 12, slow: 26, signal: 9 }   # chuẩn hoá bằng ATR
+    stoch: { k: 14, d: 3 }
+    roc_periods: [6, 24]
+
+  trend:               # Dạng TỈ LỆ, không phải hiệu (RULE 1)
+    enabled: true
+    ema_periods: [20, 50, 200]
+    ratios: ["close/ema20", "ema20/ema50", "ema50/ema200"]
+
+  volume:              # Tỉ lệ taker buy là feature bị đánh giá thấp
+    enabled: true
+    zscore_window: 96
+    taker_buy_ratio: true
+    obv_slope_window: 24
+
+  candle:              # Vi cấu trúc rẻ tiền
+    enabled: true
+    features: ["hl_range_pct", "close_position_in_range", "body_pct", "upper_wick_pct"]
+
+  time:                # Crypto chạy 24/7 nhưng VẪN có mùa vụ trong ngày
+    enabled: true
+    features: ["hour_sin", "hour_cos", "dow_sin", "dow_cos"]
+
+  cross_market:        # ★ NHÓM QUAN TRỌNG NHẤT — và dễ rò rỉ nhất
+    enabled: true
+    reference: "BTC/USDT"
+    features: ["btc_log_return_1", "excess_return_vs_btc", "beta_30d"]
+    # Phải căn timestamp giữa hai coin. Lệch một nến = rò rỉ tương lai.
+
+  regime:              # Giúp model biết đang ở thị trường yên hay bão
+    enabled: true
+    vol_percentile_window: 720     # ~30 ngày ở khung 1h
+    volume_percentile_window: 720
+
+# ── Chuẩn hoá ───────────────────────────────────────────────────
+normalization:
+  method: zscore
+  fit_scope: fold      # ★ BÊN TRONG TỪNG FOLD, không bao giờ toàn chuỗi
+  clip_sigma: 5.0
+
+# ── Điều cấm (được test khẳng định trong tests/test_leakage.py) ──
+forbidden:
+  - "rolling(center=True)"   # cửa sổ căn giữa = nhìn tương lai
+  - "fillna(method='bfill')" # kéo tương lai về quá khứ
+  - "bfill()"
+  - "interpolate()"

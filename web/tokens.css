@@ -1,0 +1,107 @@
+/* ══════════════════════════════════════════════════════════════════
+   DESIGN TOKENS — NGUỒN CHÂN LÝ DUY NHẤT VỀ MÀU
+   Nguồn: docs/02_DESIGN_SYSTEM.md §2
+
+   DS-RULE 8 — Không component nào được viết mã màu trực tiếp.
+   Nếu bạn thấy `#26A69A` ở file khác ngoài file này, đó là lỗi.
+   ══════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Bề mặt và chữ (chế độ TỐI — mặc định) ──────────────────── */
+  --surface-0: #0b0e14;   /* nền trang */
+  --surface-1: #131722;   /* ★ nền card và chart — bề mặt đã kiểm định màu */
+  --surface-2: #1e222d;   /* lớp nổi: dropdown, tooltip, modal */
+  --border:    #2a2e39;
+  --text-1:    #d1d4dc;   /* chữ chính */
+  --text-2:    #868993;   /* chữ phụ, nhãn trục */
+  --text-3:    #5d606b;   /* chữ mờ, chú thích */
+
+  /* ── Màu dữ liệu (đã kiểm định mù màu: ΔE 11.6 deutan) ──────── */
+  --up:   #26a69a;        /* nến tăng, PnL dương */
+  --down: #ef5350;        /* nến giảm, PnL âm */
+  --pred: #8b7be8;        /* ★ MỌI THỨ DO MODEL SINH RA — DS-RULE 4 */
+
+  --up-bg:     color-mix(in srgb, var(--up) 12%, transparent);
+  --down-bg:   color-mix(in srgb, var(--down) 12%, transparent);
+  --pred-band: color-mix(in srgb, var(--pred) 14%, transparent);
+
+  /* ── Màu trạng thái — KHÔNG BAO GIỜ tái sử dụng làm màu chuỗi ── */
+  --status-live:  #26a69a;
+  --status-slow:  #f5a524;
+  --status-down:  #ef5350;
+  --status-stale: #868993;
+
+  /* DS-RULE 5 — vàng Binance CHỈ dùng cho giao diện (nút, focus ring).
+     Không bao giờ là màu dữ liệu: nó tách kém khỏi đỏ (ΔE 4.5). */
+  --accent: #f0b90b;
+
+  /* ── Bộ so sánh nhiều coin (bối cảnh KHÔNG có tăng/giảm) ────── */
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --series-3: #199e70;
+
+  /* ── Chữ ─────────────────────────────────────────────────────── */
+  --font-ui:  "Inter", -apple-system, "Segoe UI", system-ui, sans-serif;
+  --font-num: "JetBrains Mono", "SF Mono", ui-monospace, monospace;
+
+  --text-hero: 600 36px/40px var(--font-num);  /* giá hiện tại */
+  --text-xl:   600 28px/32px var(--font-num);  /* giá dự đoán */
+  --text-lg:   600 20px/28px var(--font-ui);
+  --text-md:   500 16px/24px var(--font-ui);
+  --text-sm:   400 14px/20px var(--font-ui);
+  --text-xs:   400 12px/16px var(--font-ui);
+  --text-2xs:  500 11px/14px var(--font-ui);
+
+  /* ── Khoảng cách (thang 4px), bo góc, chuyển động ────────────── */
+  --sp-1: 4px;  --sp-2: 8px;   --sp-3: 12px;  --sp-4: 16px;
+  --sp-5: 24px; --sp-6: 32px;  --sp-7: 48px;
+
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-pill: 999px;
+
+  --dur-flash: 150ms;   /* nháy khi giá đổi — DS-RULE 2: nháy nền, KHÔNG trượt vị trí */
+  --dur-fast:  120ms;
+  --dur-base:  200ms;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ── Chế độ SÁNG ──────────────────────────────────────────────── */
+:root[data-theme="light"] {
+  --surface-0: #f7f8fa;
+  --surface-1: #ffffff;
+  --surface-2: #f0f2f5;
+  --border:    #e0e3eb;
+  --text-1:    #131722;
+  --text-2:    #5d606b;
+  --text-3:    #9598a1;
+
+  --up:   #0e9384;
+  --down: #d64541;
+  --pred: #6d5bd0;
+
+  --status-live:  #0e9384;
+  --status-slow:  #b76e00;
+  --status-down:  #d64541;
+  --status-stale: #5d606b;
+  --accent: #b8860b;
+
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --series-3: #1baf7a;  /* ⚠️ 2.82:1 — BẮT BUỘC có nhãn trực tiếp kèm theo */
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   DS-RULE 1 — mọi con số dùng chữ số đều bề rộng.
+   Thiếu class này, giá nhảy sẽ làm cả hàng số giật ngang.
+   ══════════════════════════════════════════════════════════════════ */
+.num {
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+/* DS-RULE 2 — không hoạt hoạ VỊ TRÍ khi giá đổi, chỉ nháy nền. */
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}

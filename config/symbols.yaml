@@ -1,0 +1,58 @@
+# ══════════════════════════════════════════════════════════════════
+#  VŨ TRỤ COIN — MASTER_PLAN §4.2
+#  Huấn luyện trên top thanh khoản; suy luận cho BẤT KỲ cặp nào
+#  (nhờ RULE 1 — feature scale-free nên model không quan tâm coin gì).
+# ══════════════════════════════════════════════════════════════════
+
+exchange: binance
+market_type: spot
+quote: USDT
+
+# ── Bộ lọc thanh khoản ──────────────────────────────────────────
+filters:
+  # ⚠️ Ngưỡng theo MASTER_PLAN §4.2. Thực đo 24/08/2026: 425/477 cặp lọt qua —
+  #    tức là gần như không lọc. Nếu muốn siết thật, cân nhắc 150_000_000
+  #    (≈ 5 triệu USD/ngày). Đây là quyết định của bạn, chưa đổi.
+  min_quote_volume_30d_usd: 5_000_000   # tổng 30 ngày, ước lượng = volume 24h × 30
+  min_listed_days: 180                  # niêm yết ≥ 180 ngày
+  exclude_leveraged: true               # loại UP/DOWN/BULL/BEAR
+  exclude_stablecoins: true             # loại USDC/FDUSD/TUSD/DAI... — không có hướng giá
+  exclude_patterns:
+    - "UP/USDT"
+    - "DOWN/USDT"
+    - "BULL/USDT"
+    - "BEAR/USDT"
+
+# Danh sách này phải cập nhật thủ công — stablecoin mới lên sàn liên tục.
+# Kiểm tra lại mỗi khi refresh vũ trụ: một stablecoin lọt vào tập huấn luyện
+# sẽ dạy model rằng "giá không đổi" là một chế độ thị trường bình thường.
+stablecoin_bases: [USDC, FDUSD, TUSD, BUSD, DAI, USDP, EURI, AEUR, USD1, USDE, PYUSD, XUSD]
+
+# ── Tập huấn luyện ──────────────────────────────────────────────
+training_universe:
+  top_n_by_volume: 40        # §4.2 khuyến nghị 30–50
+  # ⚠️ BẪY SỐNG SÓT: không lấy top-N của HÔM NAY rồi backtest ngược 3 năm.
+  #    Ảnh chụp danh sách đủ điều kiện được lưu theo từng tháng ở
+  #    data/raw/universe/month=YYYY-MM/universe.parquet và backtest
+  #    phải dùng đúng ảnh chụp của tháng đó.
+  snapshot_monthly: true
+
+# Luôn tải, bất kể bộ lọc — BTC là feature liên thị trường của mọi coin (§4.3)
+always_include:
+  - BTC/USDT
+  - ETH/USDT
+
+# ── Khung thời gian ─────────────────────────────────────────────
+timeframes: ["1h", "4h", "1d"]
+
+# ── Phạm vi lịch sử ─────────────────────────────────────────────
+history:
+  start: "2021-01-01T00:00:00Z"
+  # end để trống = tới nến đóng gần nhất
+
+# ── Giới hạn API (M1) ───────────────────────────────────────────
+download:
+  candles_per_request: 1000   # trần cứng của Binance
+  enable_rate_limit: true     # để ccxt tự giãn nhịp — ĐỪNG tắt
+  max_retries: 5
+  retry_backoff_sec: 2.0

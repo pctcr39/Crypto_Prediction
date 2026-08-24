@@ -1,0 +1,88 @@
+# ══════════════════════════════════════════════════════════════════
+#  SIÊU THAM SỐ — MASTER_PLAN §5
+#  Ba đầu ra: hướng (classifier) · dải giá (quantile) · biến động
+# ══════════════════════════════════════════════════════════════════
+
+seed: 42                      # RULE 10 — ghi lại cùng git hash vào MLflow
+
+# ── Nhãn (M4) — MASTER_PLAN §4.4 ────────────────────────────────
+label:
+  horizon_bars:               # nhìn về trước bao nhiêu nến
+    "1h": 4
+    "4h": 6
+    "1d": 1
+  dead_zone:
+    theta_multiplier: 0.3     # theta = 0.3 * rolling_std(log_return, window)
+    std_window: 96
+  drop_flat_from_train: true  # nhãn 0 (ĐI NGANG) bị loại khỏi tập train
+
+# ── Kiểm định (M6) ★ — RULE 3 ───────────────────────────────────
+validation:
+  scheme: purged_walk_forward
+  n_folds: 8                  # GATE 1 yêu cầu ≥ 8 fold, trải ≥ 24 tháng
+  purge_bars: null            # null = tự lấy bằng horizon_bars
+  embargo_bars: null          # null = tự lấy bằng horizon_bars
+  min_train_bars: 5000
+
+# ── Baseline bắt buộc (M5) — RULE 4 ─────────────────────────────
+# Model KHÔNG có giá trị nếu chưa thắng cả ba, out-of-sample, sau phí.
+baselines: [always_up, seasonal_naive, random_5050, buy_and_hold]
+
+# ── LightGBM: hướng giá ─────────────────────────────────────────
+classifier:
+  objective: binary
+  metric: [binary_logloss, auc]
+  learning_rate: 0.03
+  num_leaves: 31
+  max_depth: 6
+  min_data_in_leaf: 200       # dữ liệu tài chính rất nhiễu — để cao
+  feature_fraction: 0.7
+  bagging_fraction: 0.8
+  bagging_freq: 1
+  lambda_l1: 0.1
+  lambda_l2: 1.0
+  n_estimators: 2000
+  early_stopping_rounds: 100
+  verbosity: -1
+
+# ── LightGBM: dải giá (3 model riêng) ───────────────────────────
+quantile:
+  objective: quantile
+  alphas: [0.1, 0.5, 0.9]
+  learning_rate: 0.03
+  num_leaves: 31
+  min_data_in_leaf: 200
+  n_estimators: 1500
+
+# ── Hiệu chỉnh xác suất (M7) — RULE 6 ───────────────────────────
+calibration:
+  method: isotonic            # hoặc "platt"
+  fit_on: validation_split    # ★ tập RIÊNG, tuyệt đối không phải tập test
+  reliability_bins: 10
+  min_samples_per_bin: 50
+
+# ── Ngưỡng ra quyết định — MASTER_PLAN §5 ───────────────────────
+decision:
+  p_up_threshold: 0.58        # > 0.58 → TĂNG
+  p_down_threshold: 0.42      # < 0.42 → GIẢM
+  # còn lại → KHÔNG RÕ. Dashboard phải hiển thị bình thường, không coi là lỗi.
+
+# ── Chi phí giao dịch (M8) — RULE 5 ─────────────────────────────
+# Mọi con số đánh giá đều PHẢI đã trừ những khoản này.
+costs:
+  taker_fee_pct: 0.10         # mỗi chiều
+  slippage_pct: 0.05
+  funding_rate_8h_pct: 0.01   # chỉ áp dụng cho futures
+
+# ── Tinh chỉnh (Optuna) ─────────────────────────────────────────
+tuning:
+  n_trials: 100
+  # ★ Mục tiêu tối ưu là điểm TRUNG BÌNH WALK-FORWARD, không phải
+  #   một backtest cố định. 1000 trial trên một giai đoạn cố định là
+  #   cách chắc chắn nhất để overfit.
+  objective: mean_oos_sharpe_after_costs
+  holdout_untouched_months: 6   # giai đoạn cuối, chưa từng chạm tới
+
+# ── Ngưỡng cảnh báo — RULE 11 ───────────────────────────────────
+sanity:
+  suspicious_accuracy_1h: 0.60  # vượt mốc này ⇒ GIẢ ĐỊNH CÓ RÒ RỈ

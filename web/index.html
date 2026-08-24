@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="vi" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Crypto Prediction — Dashboard</title>
+  <link rel="stylesheet" href="tokens.css" />
+  <link rel="stylesheet" href="components.css" />
+</head>
+<body>
+  <main style="max-width: 720px; margin: var(--sp-7) auto; padding: 0 var(--sp-4)">
+    <h1 style="font: var(--text-lg)">Crypto Prediction</h1>
+
+    <div class="card">
+      <p style="font: var(--text-sm); color: var(--text-2); margin-top: 0">
+        Dashboard là <strong>M11</strong> — chưa xây. Khung này chỉ để xác nhận
+        design token nạp đúng.
+      </p>
+
+      <div style="display: flex; gap: var(--sp-4); align-items: center; flex-wrap: wrap">
+        <span class="badge badge--up">▲ TĂNG</span>
+        <span class="badge badge--down">▼ GIẢM</span>
+        <span class="badge badge--unclear">— KHÔNG RÕ</span>
+        <span class="status status--stale">Chưa kết nối</span>
+      </div>
+
+      <p class="num" style="font: var(--text-hero); margin-bottom: 0">68,450.20</p>
+      <p class="num" style="font: var(--text-xl); color: var(--pred); margin-top: var(--sp-2)">
+        68,910.00
+      </p>
+      <p style="font: var(--text-xs); color: var(--text-3)">
+        Tím = do model sinh ra (DS-RULE 4). Không bao giờ dùng xanh/đỏ cho dự đoán.
+      </p>
+    </div>
+  </main>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

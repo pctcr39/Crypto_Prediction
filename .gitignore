@@ -1,0 +1,38 @@
+# ── Bí mật — KHÔNG BAO GIỜ commit ────────────────────────────────
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# ── Dữ liệu — tải lại được, không đưa vào git ────────────────────
+data/**
+!data/**/
+!data/**/.gitkeep
+
+# ── Môi trường Python ───────────────────────────────────────────
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.uv-cache/
+
+# ── Công cụ ─────────────────────────────────────────────────────
+.pytest_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+.coverage
+htmlcov/
+
+# ── MLflow & kết quả thí nghiệm ──────────────────────────────────
+mlruns/
+mlartifacts/
+reports/
+
+# ── Hệ điều hành / IDE ──────────────────────────────────────────
+.DS_Store
+.idea/
+.vscode/
