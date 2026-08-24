@@ -1,0 +1,624 @@
+<title>Crypto Prediction Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+/* ══════════════════════════════════════════════════════════════════
+   PROTOTYPE DASHBOARD — bàn giao cho M11
+   Token chép nguyên từ web/tokens.css (nguồn chân lý: docs/02 §2).
+   TỐI là thế giới mặc định của sản phẩm → :root trần = bộ tối;
+   bộ SÁNG là bảng màu được chọn riêng đã kiểm định, không phải đảo tự động.
+   ══════════════════════════════════════════════════════════════════ */
+:root {
+  --surface-0:#0b0e14; --surface-1:#131722; --surface-2:#1e222d;
+  --border:#2a2e39;
+  --text-1:#d1d4dc; --text-2:#868993; --text-3:#5d606b;
+  --up:#26a69a; --down:#ef5350; --pred:#8b7be8;
+  --up-bg:color-mix(in srgb,var(--up) 12%,transparent);
+  --down-bg:color-mix(in srgb,var(--down) 12%,transparent);
+  --pred-band:color-mix(in srgb,var(--pred) 14%,transparent);
+  --status-live:#26a69a; --status-slow:#f5a524; --status-down:#ef5350; --status-stale:#868993;
+  --accent:#f0b90b;
+  --font-ui:'Inter',-apple-system,'Segoe UI',system-ui,sans-serif;
+  --font-num:'JetBrains Mono','SF Mono',ui-monospace,monospace;
+  --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:24px; --sp-6:32px; --sp-7:48px;
+  --radius-sm:4px; --radius-md:6px; --radius-pill:999px;
+  --dur-flash:150ms; --dur-fast:120ms; --ease:cubic-bezier(.16,1,.3,1);
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --surface-0:#f7f8fa; --surface-1:#ffffff; --surface-2:#f0f2f5;
+    --border:#e0e3eb;
+    --text-1:#131722; --text-2:#5d606b; --text-3:#9598a1;
+    --up:#0e9384; --down:#d64541; --pred:#6d5bd0;
+    --status-live:#0e9384; --status-slow:#b76e00; --status-down:#d64541; --status-stale:#5d606b;
+    --accent:#b8860b;
+  }
+}
+:root[data-theme="light"] {
+  --surface-0:#f7f8fa; --surface-1:#ffffff; --surface-2:#f0f2f5;
+  --border:#e0e3eb;
+  --text-1:#131722; --text-2:#5d606b; --text-3:#9598a1;
+  --up:#0e9384; --down:#d64541; --pred:#6d5bd0;
+  --status-live:#0e9384; --status-slow:#b76e00; --status-down:#d64541; --status-stale:#5d606b;
+  --accent:#b8860b;
+}
+
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--surface-0);color:var(--text-1);
+  font:500 16px/24px var(--font-ui)}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer;padding:0}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:var(--radius-sm)}
+.num{font-family:var(--font-num);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+/* ── Khung ─────────────────────────────────────────────────────── */
+.shell{max-width:1440px;margin:0 auto;padding:var(--sp-4)}
+.topbar{display:flex;align-items:center;justify-content:space-between;
+  padding:var(--sp-2) 0 var(--sp-4)}
+.brand{font:600 20px/28px var(--font-ui)}
+.brand em{color:var(--pred);font-style:normal}
+.topbar-note{font:400 12px/16px var(--font-ui);color:var(--text-3)}
+.grid{display:grid;grid-template-columns:280px minmax(0,1fr) 360px;gap:var(--sp-4)}
+@media (max-width:1279px){.grid{grid-template-columns:minmax(0,1fr) 340px}
+  .selector{grid-column:1/-1;order:-1}
+  .selector .coin-list{display:flex;flex-wrap:wrap;gap:var(--sp-2)}
+  .selector .coin-row{width:auto;min-width:150px}}
+@media (max-width:767px){.grid{grid-template-columns:minmax(0,1fr)}
+  .side{order:3}}
+.card{background:var(--surface-1);border:1px solid var(--border);
+  border-radius:var(--radius-md);padding:var(--sp-4)}
+.card h2{margin:0 0 var(--sp-3);font:600 14px/20px var(--font-ui);color:var(--text-2);
+  text-transform:uppercase;letter-spacing:.06em}
+
+/* ── CoinSelector ─────────────────────────────────────────────── */
+.search{width:100%;padding:10px var(--sp-3);margin-bottom:var(--sp-3);
+  background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-md);
+  color:var(--text-1);font:400 14px/20px var(--font-ui)}
+.search::placeholder{color:var(--text-3)}
+.coin-list{display:flex;flex-direction:column;gap:2px}
+.coin-row{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-2);
+  width:100%;min-height:44px;padding:var(--sp-2) var(--sp-3);text-align:left;
+  border-radius:var(--radius-sm);transition:background var(--dur-fast) var(--ease)}
+.coin-row:hover{background:var(--surface-2)}
+.coin-row[aria-current="true"]{background:var(--surface-2);
+  box-shadow:inset 2px 0 0 var(--accent)}
+.coin-sym{font:500 14px/20px var(--font-ui)}
+.coin-chg{font:400 12px/16px var(--font-num);font-variant-numeric:tabular-nums}
+.coin-chg.pos{color:var(--up)} .coin-chg.neg{color:var(--down)}
+.coin-tag{font:500 11px/14px var(--font-ui);color:var(--text-3);
+  border:1px solid var(--border);border-radius:var(--radius-pill);padding:1px 8px}
+
+/* ── PriceHeader ──────────────────────────────────────────────── */
+.price-header{display:flex;align-items:flex-end;justify-content:space-between;
+  gap:var(--sp-4);flex-wrap:wrap;margin-bottom:var(--sp-4)}
+.ph-left{display:flex;flex-direction:column;gap:var(--sp-1)}
+.ph-symbol{font:600 16px/24px var(--font-ui);color:var(--text-2)}
+.price-hero{font:600 36px/40px var(--font-num);font-variant-numeric:tabular-nums;
+  letter-spacing:-.01em;padding:2px 6px;margin-left:-6px;border-radius:var(--radius-sm);
+  transition:background var(--dur-flash) var(--ease)}
+.price-hero.flash-up{background:var(--up-bg)}
+.price-hero.flash-down{background:var(--down-bg)}
+.ph-change{font:400 14px/20px var(--font-num);display:inline-flex;gap:var(--sp-2)}
+.ph-change .pos{color:var(--up)} .ph-change .neg{color:var(--down)}
+.ph-right{display:flex;flex-direction:column;align-items:flex-end;gap:var(--sp-2)}
+
+/* ── FreshnessIndicator (RULE 8) ──────────────────────────────── */
+.status{display:inline-flex;align-items:center;gap:var(--sp-2);font:400 12px/16px var(--font-ui);
+  color:var(--text-2)}
+.status::before{content:"";width:8px;height:8px;border-radius:var(--radius-pill);flex:none}
+.status--live::before{background:var(--status-live)}
+.status--slow::before{background:var(--status-slow)}
+.status--down::before{background:var(--status-down)}
+.status--stale::before{background:var(--status-stale)}
+
+/* ── Hàng bộ lọc ──────────────────────────────────────────────── */
+.filter-row{display:flex;align-items:center;justify-content:space-between;
+  gap:var(--sp-3);margin-bottom:var(--sp-3);flex-wrap:wrap}
+.tabs{display:inline-flex;background:var(--surface-2);border:1px solid var(--border);
+  border-radius:var(--radius-md);padding:2px}
+.tab{min-width:56px;min-height:40px;padding:var(--sp-1) var(--sp-3);
+  border-radius:var(--radius-sm);font:500 14px/20px var(--font-ui);color:var(--text-2)}
+.tab[aria-selected="true"]{background:var(--surface-1);color:var(--text-1);
+  box-shadow:0 0 0 1px var(--border)}
+.ghost-btn{min-height:40px;padding:var(--sp-1) var(--sp-3);border:1px solid var(--border);
+  border-radius:var(--radius-md);font:500 13px/20px var(--font-ui);color:var(--text-2)}
+.ghost-btn:hover{background:var(--surface-2)}
+.ghost-btn[aria-pressed="true"]{color:var(--text-1);background:var(--surface-2)}
+
+/* ── Chart ────────────────────────────────────────────────────── */
+.chart-wrap{position:relative;min-height:320px;aspect-ratio:16/8}
+canvas{display:block;width:100%;height:100%}
+.tooltip{position:absolute;pointer-events:none;z-index:3;display:none;
+  background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-md);
+  padding:var(--sp-2) var(--sp-3);font:400 12px/18px var(--font-num);
+  font-variant-numeric:tabular-nums;color:var(--text-1);white-space:nowrap;
+  box-shadow:0 4px 16px rgb(0 0 0 / .25)}
+.tooltip .tt-title{color:var(--text-2);font-family:var(--font-ui);margin-bottom:2px}
+.tooltip .tt-pred{color:var(--text-2);font-family:var(--font-ui)}
+.tooltip .dot{display:inline-block;width:7px;height:7px;border-radius:99px;
+  background:var(--pred);margin-right:6px}
+.chart-note{margin-top:var(--sp-2);font:400 11px/14px var(--font-ui);color:var(--text-3);
+  display:flex;gap:var(--sp-4);flex-wrap:wrap}
+.legend-chip{display:inline-flex;align-items:center;gap:6px}
+.legend-chip i{width:14px;height:0;border-top:2px dashed var(--pred)}
+.legend-chip b{width:10px;height:10px;border-radius:2px;background:var(--pred-band);
+  border:1px solid var(--pred)}
+
+/* bảng thay chart (chế độ bảng — checklist §6) */
+.data-table{display:none;overflow-x:auto}
+.data-table table{width:100%;border-collapse:collapse;font:400 13px/20px var(--font-num);
+  font-variant-numeric:tabular-nums}
+.data-table th{font:500 11px/14px var(--font-ui);text-transform:uppercase;
+  letter-spacing:.06em;color:var(--text-3);text-align:right;padding:var(--sp-2)}
+.data-table th:first-child,.data-table td:first-child{text-align:left}
+.data-table td{padding:var(--sp-2);text-align:right;border-top:1px solid var(--border)}
+.table-mode .chart-wrap,.table-mode .chart-note{display:none}
+.table-mode .data-table{display:block}
+
+/* ── DirectionBadge (DS-RULE 3: màu + ký hiệu + chữ) ─────────── */
+.badge{display:inline-flex;align-items:center;gap:var(--sp-2);
+  padding:6px var(--sp-3);border-radius:var(--radius-pill);font:500 14px/20px var(--font-ui)}
+.badge .num{font-weight:600}
+.badge--up{color:var(--up);background:var(--up-bg);
+  border:1px solid color-mix(in srgb,var(--up) 40%,transparent)}
+.badge--down{color:var(--down);background:var(--down-bg);
+  border:1px solid color-mix(in srgb,var(--down) 40%,transparent)}
+.badge--unclear{color:var(--text-2);background:transparent;border:1px solid var(--border)}
+
+/* ── ProbabilityMeter ─────────────────────────────────────────── */
+.meter{position:relative;height:6px;border-radius:var(--radius-pill);
+  background:var(--surface-2);margin:var(--sp-2) 0 var(--sp-1)}
+.meter-fill{position:absolute;inset:0 auto 0 0;border-radius:var(--radius-pill);
+  background:var(--up)}
+.meter-notch{position:absolute;left:50%;top:-3px;bottom:-3px;width:1px;background:var(--text-3)}
+.meter-label{display:flex;justify-content:space-between;font:400 12px/16px var(--font-ui);
+  color:var(--text-2)}
+.meter-verbal{margin:var(--sp-2) 0 0;font:400 12px/18px var(--font-ui);color:var(--text-3)}
+
+/* ── PredictionCard ───────────────────────────────────────────── */
+.pred-card .pc-head{display:flex;justify-content:space-between;align-items:center;
+  margin-bottom:var(--sp-3)}
+.chip{font:500 11px/14px var(--font-num);color:var(--text-3);
+  border:1px solid var(--border);border-radius:var(--radius-pill);padding:2px 8px}
+.qrows{display:flex;flex-direction:column;gap:0;margin-top:var(--sp-3);
+  border-top:1px solid var(--border)}
+.qrow{display:flex;justify-content:space-between;align-items:center;
+  padding:var(--sp-2) 0;border-bottom:1px solid var(--border)}
+.qrow .ql{display:inline-flex;align-items:center;gap:var(--sp-2);
+  font:400 13px/20px var(--font-ui);color:var(--text-2)}
+.qrow .ql i{width:8px;height:8px;border-radius:99px;flex:none}
+.qrow .qv{font:500 15px/20px var(--font-num);font-variant-numeric:tabular-nums}
+.q50 .qv{font-size:17px;color:var(--text-1)}
+.valid-until{margin-top:var(--sp-3);display:flex;justify-content:space-between;
+  align-items:center;font:400 12px/16px var(--font-ui);color:var(--text-2)}
+
+/* ── AccuracyPanel / History ──────────────────────────────────── */
+.stat-row{display:flex;align-items:baseline;gap:var(--sp-2)}
+.stat-big{font:600 28px/32px var(--font-num);font-variant-numeric:tabular-nums}
+.stat-n{font:400 12px/16px var(--font-ui);color:var(--text-3)}
+.stat-sub{margin:var(--sp-1) 0 0;font:400 12px/18px var(--font-ui);color:var(--text-2)}
+.hist{overflow-x:auto}
+.hist table{width:100%;border-collapse:collapse;font:400 13px/20px var(--font-num);
+  font-variant-numeric:tabular-nums}
+.hist th{font:500 11px/14px var(--font-ui);text-transform:uppercase;letter-spacing:.06em;
+  color:var(--text-3);text-align:left;padding:var(--sp-2) var(--sp-2)}
+.hist td{padding:var(--sp-2);border-top:1px solid var(--border)}
+.hist .r{text-align:right}
+.mini{font:500 12px/16px var(--font-ui)}
+.mini.up{color:var(--up)} .mini.down{color:var(--down)} .mini.flat{color:var(--text-2)}
+.hit{color:var(--up)} .miss{color:var(--down)}
+
+/* ── Dải đặc tả bàn giao M11 ──────────────────────────────────── */
+.spec{margin-top:var(--sp-6);border-top:1px dashed var(--border);padding-top:var(--sp-5)}
+.spec>h2{margin:0 0 var(--sp-1);font:600 16px/24px var(--font-ui)}
+.spec>p{margin:0 0 var(--sp-4);font:400 13px/20px var(--font-ui);color:var(--text-2);
+  max-width:70ch}
+.spec-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:var(--sp-4)}
+.spec-card h3{margin:0 0 var(--sp-3);font:500 12px/16px var(--font-ui);
+  text-transform:uppercase;letter-spacing:.06em;color:var(--text-3)}
+.spec-stack{display:flex;flex-direction:column;gap:var(--sp-3);align-items:flex-start}
+.spec-note{font:400 12px/18px var(--font-ui);color:var(--text-3);margin:var(--sp-2) 0 0}
+.stale-demo{opacity:.75}
+.stale-demo .price-mini{color:var(--text-3);font:600 20px/28px var(--font-num)}
+.warn-banner{display:flex;gap:var(--sp-2);align-items:flex-start;
+  background:color-mix(in srgb,var(--status-slow) 10%,transparent);
+  border:1px solid color-mix(in srgb,var(--status-slow) 35%,transparent);
+  border-radius:var(--radius-md);padding:var(--sp-2) var(--sp-3);
+  font:400 12px/18px var(--font-ui);color:var(--text-1)}
+</style>
+
+<div class="shell">
+  <header class="topbar">
+    <div class="brand">Crypto <em>Prediction</em></div>
+    <div class="topbar-note">Prototype bàn giao M11 · theme theo trình xem · dữ liệu mô phỏng</div>
+  </header>
+
+  <div class="grid">
+    <!-- ── CoinSelector ─────────────────────────────────────── -->
+    <aside class="card selector" aria-label="Chọn cặp giao dịch">
+      <h2>Cặp giao dịch</h2>
+      <input class="search" type="search" placeholder="Tìm coin… (vd: SOL)" aria-label="Tìm coin">
+      <div class="coin-list" role="listbox" aria-label="Danh sách cặp USDT">
+        <button class="coin-row" role="option" aria-current="true">
+          <span class="coin-sym">BTC/USDT</span><span class="coin-chg pos num">▲ +2.14%</span></button>
+        <button class="coin-row" role="option">
+          <span class="coin-sym">ETH/USDT</span><span class="coin-chg pos num">▲ +1.62%</span></button>
+        <button class="coin-row" role="option">
+          <span class="coin-sym">SOL/USDT</span><span class="coin-chg neg num">▼ −0.87%</span></button>
+        <button class="coin-row" role="option">
+          <span class="coin-sym">XRP/USDT</span><span class="coin-chg pos num">▲ +0.34%</span></button>
+        <button class="coin-row" role="option">
+          <span class="coin-sym">DOGE/USDT</span><span class="coin-chg neg num">▼ −1.95%</span></button>
+        <button class="coin-row" role="option">
+          <span class="coin-sym">BNB/USDT</span><span class="coin-chg pos num">▲ +0.51%</span></button>
+        <button class="coin-row" role="option">
+          <span class="coin-sym">TUT/USDT</span><span class="coin-tag">ngoài tập HL</span></button>
+      </div>
+    </aside>
+
+    <!-- ── Vùng chính ───────────────────────────────────────── -->
+    <main>
+      <div class="price-header">
+        <div class="ph-left">
+          <span class="ph-symbol">BTC/USDT · Binance Spot</span>
+          <span class="price-hero num" id="hero">68,450.20</span>
+          <span class="ph-change num"><span class="pos">▲ +1,432.80 (+2.14%)</span>
+            <span style="color:var(--text-3)">24h</span></span>
+        </div>
+        <div class="ph-right">
+          <span class="status status--live">Live · <span class="num" id="tick-time">14:00:05</span> UTC</span>
+          <span class="status status--live" style="color:var(--text-3)">Dự đoán mới · nến 14:00 đã đóng</span>
+        </div>
+      </div>
+
+      <section class="card" id="chart-card">
+        <div class="filter-row">
+          <div class="tabs" role="tablist" aria-label="Khung thời gian">
+            <button class="tab" role="tab" aria-selected="true">1h</button>
+            <button class="tab" role="tab" aria-selected="false">4h</button>
+            <button class="tab" role="tab" aria-selected="false">1d</button>
+          </div>
+          <button class="ghost-btn" id="table-toggle" aria-pressed="false">Xem dạng bảng</button>
+        </div>
+
+        <div class="chart-wrap" id="chart-wrap">
+          <canvas id="chart" role="img"
+            aria-label="Biểu đồ nến BTC/USDT khung 1h kèm dự đoán 4 giờ tới. Dữ liệu chi tiết ở chế độ bảng."></canvas>
+          <div class="tooltip" id="tt"></div>
+        </div>
+        <div class="chart-note">
+          <span class="legend-chip"><i></i> Giá dự đoán (q50)</span>
+          <span class="legend-chip"><b></b> Dải tin cậy q10–q90</span>
+          <span>Trái ranh giới «Bây giờ» là dữ liệu thật · phải là phỏng đoán của model</span>
+        </div>
+
+        <div class="data-table" id="data-table">
+          <table>
+            <thead><tr><th scope="col">Giờ (UTC)</th><th scope="col">Mở</th><th scope="col">Cao</th>
+              <th scope="col">Thấp</th><th scope="col">Đóng</th><th scope="col">Hướng</th></tr></thead>
+            <tbody id="table-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="card hist" style="margin-top:var(--sp-4)" aria-label="Lịch sử tín hiệu">
+        <h2>Lịch sử tín hiệu · BTC/USDT 1h</h2>
+        <table>
+          <thead><tr><th scope="col">Nến</th><th scope="col">Tín hiệu</th>
+            <th scope="col" class="r">p (hiệu chỉnh)</th><th scope="col" class="r">Thực tế 4h</th>
+            <th scope="col" class="r">Kết quả</th></tr></thead>
+          <tbody>
+            <tr><td class="num">24/08 10:00</td><td><span class="mini up">▲ TĂNG</span></td>
+              <td class="r num">61%</td><td class="r num">+0.9%</td><td class="r hit">✓ đúng</td></tr>
+            <tr><td class="num">24/08 09:00</td><td><span class="mini flat">● KHÔNG RÕ</span></td>
+              <td class="r num">52%</td><td class="r num">+0.2%</td><td class="r" style="color:var(--text-3)">—</td></tr>
+            <tr><td class="num">24/08 08:00</td><td><span class="mini down">▼ GIẢM</span></td>
+              <td class="r num">63%</td><td class="r num">−0.6%</td><td class="r hit">✓ đúng</td></tr>
+            <tr><td class="num">24/08 07:00</td><td><span class="mini up">▲ TĂNG</span></td>
+              <td class="r num">59%</td><td class="r num">−0.4%</td><td class="r miss">✗ sai</td></tr>
+            <tr><td class="num">24/08 06:00</td><td><span class="mini flat">● KHÔNG RÕ</span></td>
+              <td class="r num">55%</td><td class="r num">+0.1%</td><td class="r" style="color:var(--text-3)">—</td></tr>
+          </tbody>
+        </table>
+      </section>
+    </main>
+
+    <!-- ── Panel phải ───────────────────────────────────────── -->
+    <aside class="side">
+      <section class="card pred-card" aria-live="polite" aria-label="Dự đoán hiện tại">
+        <div class="pc-head">
+          <h2 style="margin:0">Dự đoán · 4 giờ tới</h2>
+          <span class="chip num">lgbm-1h-v3</span>
+        </div>
+        <span class="badge badge--up">▲ TĂNG <span class="num">62%</span></span>
+        <div class="meter" role="img" aria-label="Xác suất tăng đã hiệu chỉnh 62 phần trăm">
+          <div class="meter-fill" style="width:62%"></div><div class="meter-notch"></div>
+        </div>
+        <div class="meter-label"><span>50% = tung đồng xu</span><span><b class="num">62%</b> · đã hiệu chỉnh</span></div>
+        <p class="meter-verbal">Trong 100 lần model nói ~62%, thực tế tăng 58 lần (n=340).</p>
+
+        <div class="qrows">
+          <div class="qrow"><span class="ql"><i style="background:var(--pred);opacity:.45"></i>Kịch bản cao · q90</span>
+            <span class="qv num">69,850.00</span></div>
+          <div class="qrow q50"><span class="ql"><i style="background:var(--pred)"></i>Trung vị · q50</span>
+            <span class="qv num">68,910.00</span></div>
+          <div class="qrow" style="border-bottom:none">
+            <span class="ql"><i style="background:var(--pred);opacity:.45"></i>Kịch bản thấp · q10</span>
+            <span class="qv num">67,980.00</span></div>
+        </div>
+
+        <div class="valid-until">
+          <span>Có hiệu lực đến <b class="num">18:00</b> UTC</span>
+          <span class="status status--live">mới</span>
+        </div>
+      </section>
+
+      <section class="card" style="margin-top:var(--sp-4)" aria-label="Độ chính xác gần đây">
+        <h2>Đúng hướng · 30 ngày</h2>
+        <div class="stat-row"><span class="stat-big">58%</span><span class="stat-n">n = 340 tín hiệu</span></div>
+        <p class="stat-sub">Chỉ tính nến có tín hiệu rõ (TĂNG/GIẢM). Hiệu chỉnh nằm trong ±10%
+          quanh đường chéo ở mọi bin ≥ 50 mẫu.</p>
+      </section>
+
+      <section class="card" style="margin-top:var(--sp-4)" aria-label="Biến động kỳ vọng">
+        <h2>Biến động kỳ vọng · 4h</h2>
+        <div class="stat-row"><span class="stat-big">±1.4%</span><span class="stat-n">EWMA realized vol</span></div>
+      </section>
+    </aside>
+  </div>
+
+  <!-- ══ Đặc tả trạng thái — phần bàn giao cho M11 ══════════════ -->
+  <section class="spec">
+    <h2>Đặc tả trạng thái — bàn giao M11</h2>
+    <p>Phần dưới không thuộc màn hình chính. Nó liệt kê các biến thể trạng thái mà code thật
+      phải có (02 §4), để người dựng M11 không phải suy diễn.</p>
+    <div class="spec-grid">
+      <div class="card spec-card">
+        <h3>DirectionBadge — 3 trạng thái</h3>
+        <div class="spec-stack">
+          <span class="badge badge--up">▲ TĂNG <span class="num">62%</span></span>
+          <span class="badge badge--down">▼ GIẢM <span class="num">64%</span></span>
+          <span class="badge badge--unclear">● KHÔNG RÕ</span>
+        </div>
+        <p class="spec-note">«KHÔNG RÕ» phải trông bình thường, không giống lỗi — hệ thống
+          trung thực im lặng phần lớn thời gian. Số hiển thị là độ tin cậy của hướng đang
+          hiện (GIẢM = 1−p_up), luôn ≥ 58% theo ngưỡng vùng chết.</p>
+      </div>
+      <div class="card spec-card">
+        <h3>FreshnessIndicator — 4 trạng thái</h3>
+        <div class="spec-stack">
+          <span class="status status--live">Live · WebSocket khoẻ</span>
+          <span class="status status--slow">Chậm · 8s không có tick</span>
+          <span class="status status--down">Mất kết nối · thử lại sau 5s</span>
+          <span class="status status--stale">Dự đoán cũ · model chưa chạy lại</span>
+        </div>
+        <p class="spec-note">Luôn hiện, không bao giờ ẩn (RULE 8). Chấm màu + chữ,
+          không bao giờ chỉ màu.</p>
+      </div>
+      <div class="card spec-card">
+        <h3>Mất kết nối — giá chuyển xám</h3>
+        <div class="spec-stack stale-demo">
+          <span class="status status--down">Mất kết nối</span>
+          <span class="price-mini num">68,450.20</span>
+          <span class="spec-note" style="margin:0">Cập nhật cuối <b class="num">13:58:41</b> UTC</span>
+        </div>
+        <p class="spec-note">Chế độ hỏng nguy hiểm nhất là im lặng hiển thị số cũ như thể
+          nó vẫn đúng — giá xám + dấu thời gian là bắt buộc.</p>
+      </div>
+      <div class="card spec-card">
+        <h3>Coin ngoài tập huấn luyện</h3>
+        <div class="warn-banner">⚠<span>TUT/USDT nằm <b>ngoài tập huấn luyện</b> — model vẫn
+          dự đoán được (feature scale-free) nhưng độ tin cậy thấp hơn. Hiển thị nhãn này
+          ngay trên PredictionCard.</span></div>
+        <p class="spec-note">Trung thực với người dùng là yêu cầu thiết kế, không phải
+          tuỳ chọn (00 §4.2).</p>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════════
+   Chart Canvas — nến + dự đoán, theo 02 §3.
+   Mô phỏng: 72 nến 1h kết thúc 24/08/2026 14:00 UTC, close cuối 68,450.20;
+   dự đoán q10/q50/q90 lấy đúng ví dụ hợp đồng dữ liệu 00 §5.
+   ══════════════════════════════════════════════════════════════════ */
+(() => {
+  const N = 72, H = 4, LAST_CLOSE = 68450.20;
+  const PRED = { q10: 67980, q50: 68910, q90: 69850, p_up: 62 };
+
+  // RNG có seed — chạy lại vẫn ra đúng một chart
+  const mulberry32 = s => () => {
+    s |= 0; s = s + 0x6d2b79f5 | 0;
+    let t = Math.imul(s ^ s >>> 15, 1 | s);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+  const rng = mulberry32(20260824);
+
+  // Sinh nến lùi từ close cuối để chốt đúng giá hero
+  const candles = [];
+  let close = LAST_CLOSE;
+  for (let i = N - 1; i >= 0; i--) {
+    const ret = (rng() - 0.485) * 0.008;
+    const open = close / (1 + ret);
+    const hi = Math.max(open, close) * (1 + rng() * 0.0035);
+    const lo = Math.min(open, close) * (1 - rng() * 0.0035);
+    const hour = (14 - (N - 1 - i) % 24 + 48) % 24;
+    candles[i] = { open, high: hi, low: lo, close, hour };
+    close = open;
+  }
+
+  const canvas = document.getElementById("chart");
+  const wrap = document.getElementById("chart-wrap");
+  const tt = document.getElementById("tt");
+  const ctx = canvas.getContext("2d");
+  let hover = null;
+
+  const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const fmt = v => v.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+
+  function draw() {
+    const dpr = window.devicePixelRatio || 1;
+    const W = wrap.clientWidth, Ht = wrap.clientHeight;
+    canvas.width = W * dpr; canvas.height = Ht * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, W, Ht);
+
+    const C = {
+      up: cssVar("--up"), down: cssVar("--down"), pred: cssVar("--pred"),
+      border: cssVar("--border"), t2: cssVar("--text-2"), t3: cssVar("--text-3"),
+      s1: cssVar("--surface-1"), s2: cssVar("--surface-2"),
+    };
+    const padL = 8, padR = 64, padT = 18, padB = 26;
+    const plotW = W - padL - padR, plotH = Ht - padT - padB;
+    const slots = N + H + 1.5;
+    const slotW = plotW / slots;
+    const x = i => padL + (i + 0.5) * slotW;
+
+    let lo = Math.min(PRED.q10, ...candles.map(c => c.low));
+    let hi = Math.max(PRED.q90, ...candles.map(c => c.high));
+    const pad = (hi - lo) * 0.06; lo -= pad; hi += pad;
+    const y = p => padT + (1 - (p - lo) / (hi - lo)) * plotH;
+
+    // Lưới: CHỈ ngang (02 §3.1), nhãn giá bên phải
+    ctx.font = "500 11px 'JetBrains Mono', monospace";
+    ctx.globalAlpha = 1;
+    const step = 500, g0 = Math.ceil(lo / step) * step;
+    for (let p = g0; p < hi; p += step) {
+      ctx.strokeStyle = C.border; ctx.globalAlpha = 0.2;
+      ctx.beginPath(); ctx.moveTo(padL, y(p)); ctx.lineTo(W - padR, y(p)); ctx.stroke();
+      ctx.globalAlpha = 1; ctx.fillStyle = C.t2;
+      ctx.fillText(fmt(p), W - padR + 8, y(p) + 4);
+    }
+    // Nhãn giờ dưới trục, thưa
+    ctx.fillStyle = C.t3; ctx.textAlign = "center";
+    for (let i = 6; i < N; i += 12)   // bắt đầu i=6: nhãn đầu không bị mép trái cắt
+      ctx.fillText(String(candles[i].hour).padStart(2, "0") + ":00", x(i), Ht - 8);
+    ctx.fillText("+4h", x(N + H - 1), Ht - 8);
+    ctx.textAlign = "left";
+
+    // Nến: thân đặc, bấc 1px, khe 2px
+    const bodyW = Math.max(3, slotW - 2);
+    for (let i = 0; i < N; i++) {
+      const c = candles[i], col = c.close >= c.open ? C.up : C.down;
+      ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(x(i), y(c.high)); ctx.lineTo(x(i), y(c.low)); ctx.stroke();
+      const yo = y(c.open), yc = y(c.close);
+      ctx.fillRect(x(i) - bodyW / 2, Math.min(yo, yc), bodyW, Math.max(1, Math.abs(yo - yc)));
+    }
+
+    // Đường giá hiện tại: 1px nét đứt --text-2 + pill giá bên phải
+    const yNow = y(candles[N - 1].close);
+    ctx.setLineDash([3, 3]); ctx.strokeStyle = C.t2; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(padL, yNow); ctx.lineTo(W - padR, yNow); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = C.s2; const label = fmt(candles[N - 1].close);
+    ctx.fillRect(W - padR + 2, yNow - 9, padR - 6, 18);
+    ctx.fillStyle = cssVar("--text-1"); ctx.fillText(label, W - padR + 8, yNow + 4);
+
+    // Ranh giới «Bây giờ» (02 §3.2)
+    const xB = padL + N * slotW;
+    ctx.strokeStyle = C.border; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(xB, padT - 6); ctx.lineTo(xB, Ht - padB); ctx.stroke();
+    ctx.fillStyle = C.t3; ctx.font = "500 10px 'Inter', sans-serif";
+    ctx.fillText("Bây giờ", xB + 4, padT + 2);
+
+    // Dự đoán: dải q10–q90 loe từ điểm neo, KHÔNG viền
+    const x0 = x(N - 1), y0 = yNow, xE = x(N + H - 1);
+    ctx.fillStyle = cssVar("--pred-band");
+    ctx.beginPath(); ctx.moveTo(x0, y0);
+    ctx.lineTo(xE, y(PRED.q90)); ctx.lineTo(xE, y(PRED.q10)); ctx.closePath(); ctx.fill();
+    // Đường q50: 2px NÉT ĐỨT tím (RULE 7 / DS-RULE 4)
+    ctx.setLineDash([6, 4]); ctx.strokeStyle = C.pred; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(xE, y(PRED.q50)); ctx.stroke();
+    ctx.setLineDash([]);
+    // Điểm neo 8px, viền 2px màu nền card (vòng cách nền)
+    ctx.beginPath(); ctx.arc(xE, y(PRED.q50), 4, 0, 7);
+    ctx.fillStyle = C.pred; ctx.fill();
+    ctx.lineWidth = 2; ctx.strokeStyle = C.s1; ctx.stroke();
+
+    // Crosshair + highlight nến đang rê (02 §3.3)
+    if (hover !== null) {
+      const { i, my } = hover;
+      ctx.setLineDash([2, 3]); ctx.strokeStyle = C.t3; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(x(i), padT); ctx.lineTo(x(i), Ht - padB); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(padL, my); ctx.lineTo(W - padR, my); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = C.s2;
+      const pv = lo + (1 - (my - padT) / plotH) * (hi - lo);
+      ctx.fillRect(W - padR + 2, my - 9, padR - 6, 18);
+      ctx.fillStyle = cssVar("--text-1"); ctx.font = "500 11px 'JetBrains Mono', monospace";
+      ctx.fillText(fmt(pv), W - padR + 8, my + 4);
+    }
+  }
+
+  // Tooltip: OHLC bên trái ranh giới, q10/q50/q90 + p_up bên phải
+  wrap.addEventListener("mousemove", e => {
+    const r = wrap.getBoundingClientRect();
+    const mx = e.clientX - r.left, my = e.clientY - r.top;
+    const slotW = (wrap.clientWidth - 72) / (N + H + 1.5);
+    const i = Math.floor((mx - 8) / slotW);
+    if (i < 0 || i >= N + H) { hover = null; tt.style.display = "none"; draw(); return; }
+    hover = { i: Math.min(i, N + H - 1), my };
+    if (i < N) {
+      const c = candles[i];
+      tt.innerHTML = `<div class="tt-title">${String(c.hour).padStart(2, "0")}:00 UTC · nến 1h</div>`
+        + `O ${fmt(c.open)} · H ${fmt(c.high)}<br>L ${fmt(c.low)} · C ${fmt(c.close)}`;
+    } else {
+      tt.innerHTML = `<div class="tt-title"><span class="dot"></span>Dự đoán · +${i - N + 1}h</div>`
+        + `q90 ${fmt(PRED.q90)}<br>q50 ${fmt(PRED.q50)}<br>q10 ${fmt(PRED.q10)}`
+        + `<div class="tt-pred">p(tăng) ${PRED.p_up}% · đã hiệu chỉnh</div>`;
+    }
+    tt.style.display = "block";
+    const flip = mx > wrap.clientWidth - 190;
+    tt.style.left = flip ? (mx - tt.offsetWidth - 14) + "px" : (mx + 14) + "px";
+    tt.style.top = Math.max(4, my - 20) + "px";
+    draw();
+  });
+  wrap.addEventListener("mouseleave", () => { hover = null; tt.style.display = "none"; draw(); });
+
+  // Chế độ bảng (checklist 02 §6)
+  const tbody = document.getElementById("table-body");
+  tbody.innerHTML = candles.slice(-12).reverse().map(c => {
+    const up = c.close >= c.open;
+    return `<tr><td class="num">${String(c.hour).padStart(2, "0")}:00</td>`
+      + `<td class="num">${fmt(c.open)}</td><td class="num">${fmt(c.high)}</td>`
+      + `<td class="num">${fmt(c.low)}</td><td class="num">${fmt(c.close)}</td>`
+      + `<td><span class="mini ${up ? "up" : "down"}">${up ? "▲ tăng" : "▼ giảm"}</span></td></tr>`;
+  }).join("");
+  const toggle = document.getElementById("table-toggle");
+  toggle.addEventListener("click", () => {
+    const on = toggle.getAttribute("aria-pressed") !== "true";
+    toggle.setAttribute("aria-pressed", String(on));
+    toggle.textContent = on ? "Xem biểu đồ" : "Xem dạng bảng";
+    document.getElementById("chart-card").classList.toggle("table-mode", on);
+    if (!on) draw();
+  });
+
+  // Tick mô phỏng: giá nhích nhẹ mỗi 2.5s — hero NHÁY NỀN, không trượt vị trí (DS-RULE 2)
+  const hero = document.getElementById("hero");
+  const tickTime = document.getElementById("tick-time");
+  let sec = 5;
+  setInterval(() => {
+    const c = candles[N - 1];
+    const d = (rng() - 0.48) * 22;
+    c.close = Math.max(c.low, Math.min(c.high * 1.0005, c.close + d));
+    c.high = Math.max(c.high, c.close); c.low = Math.min(c.low, c.close);
+    hero.textContent = c.close.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    hero.classList.remove("flash-up", "flash-down");
+    void hero.offsetWidth;                       // restart transition
+    hero.classList.add(d >= 0 ? "flash-up" : "flash-down");
+    setTimeout(() => hero.classList.remove("flash-up", "flash-down"), 220);
+    sec = (sec + 2) % 60;
+    tickTime.textContent = "14:00:" + String(sec).padStart(2, "0");
+    draw();
+  }, 2500);
+
+  // Vẽ lại khi đổi kích thước / đổi theme
+  new ResizeObserver(draw).observe(wrap);
+  new MutationObserver(draw).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+  matchMedia("(prefers-color-scheme: light)").addEventListener("change", draw);
+  draw();
+})();
+</script>

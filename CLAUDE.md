@@ -1,7 +1,7 @@
 # CLAUDE.md — hướng dẫn làm việc trong repo này
 
 > Đọc file này trước khi sửa bất cứ thứ gì.
-> Chi tiết đầy đủ: `docs/00_MASTER_PLAN.md` · đặc tả module: `docs/03_MODULE_SPECS.md`
+> Chi tiết đầy đủ: `docs/00_MASTER_PLAN.md` · đặc tả module: `docs/03_MODULE_SPECS.md` · thứ tự làm việc + audit: `docs/04_EXECUTION_STRATEGY.md`
 
 ---
 

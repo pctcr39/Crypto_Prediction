@@ -55,6 +55,7 @@ python -m cryptopred.data.universe --refresh
 | [`docs/01_CLAUDE_HANDBOOK.md`](docs/01_CLAUDE_HANDBOOK.md) | Cẩm nang tính năng Claude Code |
 | [`docs/02_DESIGN_SYSTEM.md`](docs/02_DESIGN_SYSTEM.md) | Design system dashboard |
 | [`docs/03_MODULE_SPECS.md`](docs/03_MODULE_SPECS.md) | Đặc tả chi tiết M0–M14 |
+| [`docs/04_EXECUTION_STRATEGY.md`](docs/04_EXECUTION_STRATEGY.md) | Chiến lược thực thi: harness map, chế độ audit, detail design, WBS |
 | [`docs/adr/`](docs/adr/) | Nhật ký quyết định kiến trúc |
 
 ## Cấu trúc
