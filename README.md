@@ -58,6 +58,9 @@ python -m cryptopred.data.universe --refresh
 | [`docs/04_EXECUTION_STRATEGY.md`](docs/04_EXECUTION_STRATEGY.md) | Chiến lược thực thi: harness map, chế độ audit, detail design, WBS |
 | [`docs/05_DASHBOARD_UX_PLAN.md`](docs/05_DASHBOARD_UX_PLAN.md) | Review prototype + kế hoạch UX dashboard (timestamp Binance, track record) |
 | [`docs/06_HIGH_LEVEL_DESIGN.md`](docs/06_HIGH_LEVEL_DESIGN.md) | **HLD** — 14 sơ đồ: bối cảnh, container, pipeline, ER, sequence, walk-forward, state machine, 4 cổng |
+| [`docs/07_PREDICTION_METHODS.md`](docs/07_PREDICTION_METHODS.md) | Toàn cảnh 9 họ tín hiệu + 7 họ model + 6 kịch bản thị trường → chiến lược 4 đợt |
+| [`docs/08_TRADING_METHODS.md`](docs/08_TRADING_METHODS.md) | 11 kiến trúc chiến lược + 10 hành vi thị trường + thực thi + quản trị vốn → xếp hạng trung thực |
+| [`docs/09_TRADING_DEEP_REVIEW.md`](docs/09_TRADING_DEEP_REVIEW.md) | Review đối kháng 14 agent: kiểm toán 07–08, tổng hợp EN+VN, xếp hạng độ chính xác, hồ sơ claim bị bác |
 | [`docs/adr/`](docs/adr/) | Nhật ký quyết định kiến trúc |
 
 ## Cấu trúc
