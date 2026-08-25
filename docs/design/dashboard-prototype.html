@@ -228,6 +228,41 @@ canvas{display:block;width:100%;height:100%}
 .mini.up{color:var(--up)} .mini.down{color:var(--down)} .mini.flat{color:var(--text-2)}
 .hit{color:var(--up)} .miss{color:var(--down)}
 
+/* ── Sổ lệnh + khớp lệnh (kiểu Binance, mô phỏng) ─────────────── */
+.ob{display:flex;flex-direction:column;gap:1px}
+.ob-row{position:relative;display:flex;justify-content:space-between;gap:var(--sp-2);
+  padding:2px var(--sp-2);font:400 12px/18px var(--font-num);font-variant-numeric:tabular-nums}
+.ob-row i{position:absolute;inset:0 0 0 auto;border-radius:2px}
+.ob-a{background:var(--down-bg)} .ob-b{background:var(--up-bg)}
+.ob-row span{position:relative}
+.ob-mid{display:flex;align-items:center;gap:var(--sp-2);padding:var(--sp-1) var(--sp-2);
+  margin:2px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);
+  font:600 16px/24px var(--font-num);font-variant-numeric:tabular-nums}
+.flow-bar{display:flex;height:6px;border-radius:var(--radius-pill);overflow:hidden;margin-top:var(--sp-3)}
+.fb-buy{background:var(--up)} .fb-sell{flex:1;background:var(--down)}
+.fb-lbl{display:flex;justify-content:space-between;font:400 11px/16px var(--font-ui);margin-top:4px}
+.tape .tape-row{display:flex;justify-content:space-between;gap:var(--sp-2);
+  padding:2px 0;font:400 12px/18px var(--font-num);font-variant-numeric:tabular-nums}
+
+/* ── Đặt lệnh PAPER ───────────────────────────────────────────── */
+.bal-row{display:flex;justify-content:space-between;align-items:baseline;gap:var(--sp-2);
+  padding:var(--sp-1) 0;font:400 13px/20px var(--font-ui);color:var(--text-2)}
+.bal-row .sv{font:500 13px/20px var(--font-num);font-variant-numeric:tabular-nums;color:var(--text-1)}
+.amt-lbl{display:flex;flex-direction:column;gap:4px;margin-top:var(--sp-2);
+  font:500 11px/14px var(--font-ui);color:var(--text-3);text-transform:uppercase;letter-spacing:.05em}
+.pct-row{display:flex;gap:var(--sp-2);margin:var(--sp-2) 0}
+.pct-btn{flex:1;min-height:32px;border:1px solid var(--border);border-radius:var(--radius-sm);
+  font:500 12px/16px var(--font-num);color:var(--text-2)}
+.pct-btn:hover{background:var(--surface-2);color:var(--text-1)}
+.ord-btns{display:flex;gap:var(--sp-2);margin-top:var(--sp-1)}
+.ord-buy,.ord-sell{flex:1;min-height:44px;border-radius:var(--radius-md);
+  font:600 15px/20px var(--font-ui);color:#fff}
+.ord-buy{background:var(--up)} .ord-sell{background:var(--down)}
+.ord-buy:hover,.ord-sell:hover{filter:brightness(1.12)}
+#pos-box{margin-top:var(--sp-2);border-top:1px solid var(--border);padding-top:var(--sp-1)}
+#pos-box[hidden]{display:none}
+.ord-log{margin:var(--sp-2) 0 0;font:400 12px/18px var(--font-ui);color:var(--text-2)}
+
 /* ── TradeSetup ───────────────────────────────────────────────── */
 .setup-inputs{display:flex;gap:var(--sp-3);margin-bottom:var(--sp-2)}
 .setup-inputs label{flex:1;font:500 11px/14px var(--font-ui);color:var(--text-3);
@@ -291,6 +326,23 @@ canvas{display:block;width:100%;height:100%}
         <button class="coin-row" role="option">
           <span class="coin-sym">TUT/USDT</span><span class="coin-tag">ngoài tập HL</span></button>
       </div>
+
+      <section style="margin-top:var(--sp-5)" aria-label="Sổ lệnh">
+        <div class="pc-head"><h2 style="margin:0">Sổ lệnh</h2><span class="chip">mô phỏng</span></div>
+        <div class="ob" id="ob-asks"></div>
+        <div class="ob-mid"><span class="num" id="ob-mid">—</span><span class="mini up" id="ob-dir">▲</span></div>
+        <div class="ob" id="ob-bids"></div>
+        <div class="flow-bar" role="img" aria-label="Tỷ lệ khối lượng mua bán">
+          <div class="fb-buy" id="fb-buy" style="width:55%"></div><div class="fb-sell"></div>
+        </div>
+        <div class="fb-lbl"><span class="pos" id="fb-buy-l">Mua 55%</span>
+          <span class="neg" id="fb-sell-l">45% Bán</span></div>
+      </section>
+
+      <section style="margin-top:var(--sp-5)" aria-label="Khớp lệnh gần đây">
+        <h2>Khớp lệnh gần đây</h2>
+        <div class="tape" id="tape" aria-live="off"></div>
+      </section>
     </aside>
 
     <!-- ── Vùng chính ───────────────────────────────────────── -->
@@ -435,6 +487,37 @@ canvas{display:block;width:100%;height:100%}
           Hệ thống <b>không tự đặt lệnh</b> — RULE 9, TRADING_ENABLED=false.</p>
       </section>
 
+      <section class="card" style="margin-top:var(--sp-4)" aria-label="Đặt lệnh chế độ paper">
+        <div class="pc-head">
+          <h2 style="margin:0">Đặt lệnh · PAPER</h2>
+          <span class="chip">chưa kết nối Binance</span>
+        </div>
+        <div class="bal-row"><span>Số dư paper</span><span class="sv" id="paper-cash">10,000.00 USDT</span></div>
+        <div class="bal-row"><span id="asset-lbl">BTC đang giữ</span><span class="sv" id="paper-asset">0.000000</span></div>
+        <label class="amt-lbl">Giá trị lệnh (USDT)
+          <input type="number" id="ord-amt" class="sinput num" value="500" min="10" step="50"></label>
+        <div class="pct-row">
+          <button class="pct-btn num" data-p="25">25%</button>
+          <button class="pct-btn num" data-p="50">50%</button>
+          <button class="pct-btn num" data-p="75">75%</button>
+          <button class="pct-btn num" data-p="100">100%</button>
+        </div>
+        <div class="ord-btns">
+          <button class="ord-buy" id="btn-buy">Mua <span id="buy-sym">BTC</span></button>
+          <button class="ord-sell" id="btn-sell">Bán <span id="sell-sym">BTC</span></button>
+        </div>
+        <div id="pos-box" hidden>
+          <div class="bal-row"><span>Vị thế</span><span class="sv" id="pos-qty"></span></div>
+          <div class="bal-row"><span>Giá vào trung bình</span><span class="sv" id="pos-entry"></span></div>
+          <div class="bal-row"><span>uPnL (đang mở)</span><span class="sv" id="pos-pnl"></span></div>
+        </div>
+        <p class="ord-log" id="ord-log">Chưa có lệnh nào trong phiên.</p>
+        <p class="meter-verbal">PAPER = khớp mô phỏng tại giá hiển thị, phí taker 0.10%/chiều,
+          theo cơ chế spot (bán cần có coin). <b>Đặt lệnh Binance thật là M14</b> — chỉ mở sau
+          RiskEngine M13 + GATE 1–4 (RULE 9). Sổ lệnh/khớp lệnh ở prototype là mô phỏng;
+          bản chạy thật nối WebSocket công khai @depth · @aggTrade, không cần API key.</p>
+      </section>
+
       <section class="card" style="margin-top:var(--sp-4)" aria-label="Độ chính xác gần đây">
         <h2>Hiệu năng 30 ngày · theo khung</h2>
         <div class="stat-row"><span class="stat-big">58%</span>
@@ -526,6 +609,16 @@ canvas{display:block;width:100%;height:100%}
           lãi/lỗ ước tính đã trừ phí khứ hồi 0.30%.</p>
       </div>
       <div class="card spec-card">
+        <h3>Kết nối Binance — hai tầng, hai số phận</h3>
+        <p class="spec-note" style="margin-top:0"><b>Tầng dữ liệu (read-only):</b> giá, sổ lệnh
+          (@depth), khớp lệnh (@aggTrade) là WebSocket công khai của Binance, không cần API key —
+          bản chạy thật (W15a) nối thẳng từ trình duyệt. Prototype này mô phỏng vì artifact
+          chặn mạng ngoài.</p>
+        <p class="spec-note"><b>Tầng đặt lệnh:</b> BUY/SELL ở đây là <b>PAPER</b> — ví ảo trong
+          trang. Lệnh thật đi qua M13 (RiskEngine) → M14 (Executor), chỉ mở sau GATE 1–4;
+          khởi động lại luôn về TẮT (RULE 9). Không có đường tắt nào từ nút này tới tiền thật.</p>
+      </div>
+      <div class="card spec-card">
         <h3>Tham chiếu trình bày — VishvaAlgoAI</h3>
         <p class="spec-note" style="margin-top:0"><b>Mượn:</b> geometry rõ ràng từng tín hiệu
           (giá theo mốc giờ, dải kịch bản, RR), ma trận hiệu năng theo khung (đúng hướng ·
@@ -587,6 +680,14 @@ canvas{display:block;width:100%;height:100%}
   const hashStr = str => [...str].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) | 0, 7);
 
   const state = { coinSym: "BTC/USDT", tf: "1h" };
+
+  // ── Ví PAPER + sổ lệnh/khớp lệnh mô phỏng ───────────────────────
+  // Bản chạy thật: sổ lệnh & tape nối WS công khai @depth/@aggTrade của
+  // Binance (không cần key). ĐẶT LỆNH thật là M14 — sau M13 + GATE 1–4.
+  const paper = { cash: 10000, assets: {} };       // assets[sym] = { qty, entry }
+  const flow = { tape: [], buyShare: 0.55 };
+  const FEE_SIDE = 0.001;                          // taker 0.10%/chiều
+
 
   function buildData() {
     const { coinSym, tf } = state;
@@ -771,6 +872,19 @@ canvas{display:block;width:100%;height:100%}
     }
     ctx.font = "500 11px 'JetBrains Mono', monospace";
 
+    // Vạch vị thế PAPER (nếu đang giữ coin này) — chữ dùng token chữ, không màu chuỗi
+    const holding = paper.assets[state.coinSym];
+    if (holding && holding.qty > 0) {
+      const yP = y(holding.entry);
+      ctx.setLineDash([8, 4]); ctx.strokeStyle = C.t1; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(padL, yP); ctx.lineTo(W - padR, yP); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = C.s2; ctx.fillRect(padL + 4, yP - 17, 124, 14);
+      ctx.fillStyle = C.t1; ctx.font = "500 10px 'JetBrains Mono', monospace";
+      ctx.fillText("VỊ THẾ " + fmt(holding.entry), padL + 8, yP - 6);
+      ctx.font = "500 11px 'JetBrains Mono', monospace";
+    }
+
     // Dải tín hiệu quá khứ
     const yR = Ht - padB + 12;
     for (const k in hist) {
@@ -866,6 +980,108 @@ canvas{display:block;width:100%;height:100%}
   $("cap-input").addEventListener("input", renderSetup);
   $("risk-input").addEventListener("input", renderSetup);
 
+  // ── Sổ lệnh + khớp lệnh mô phỏng ────────────────────────────────
+  function baseSym() { return state.coinSym.split("/")[0]; }
+
+  function refreshBook() {
+    const p = state.candles[N - 1].close;
+    const tick = p * 0.0002;
+    const mk = sign => Array.from({ length: 6 }, (_, k) => ({
+      price: p + sign * tick * (k + 1) * (1 + state.rngTick() * 0.4),
+      qty: (0.2 + state.rngTick() * 1.8) * (1 + k * 0.35),
+    }));
+    const asks = mk(1).reverse(), bids = mk(-1);   // ask xa nhất trên cùng — như Binance
+    const maxQ = Math.max(...asks.map(l => l.qty), ...bids.map(l => l.qty));
+    const row = (l, side) =>
+      `<div class="ob-row"><i class="${side === "a" ? "ob-a" : "ob-b"}" style="width:${(l.qty / maxQ * 100).toFixed(0)}%"></i>`
+      + `<span class="num ${side === "a" ? "neg" : "pos"}">${fmt(l.price)}</span>`
+      + `<span class="num">${l.qty.toFixed(3)}</span></div>`;
+    $("ob-asks").innerHTML = asks.map(l => row(l, "a")).join("");
+    $("ob-bids").innerHTML = bids.map(l => row(l, "b")).join("");
+    const midEl = $("ob-mid"), prev = parseFloat(midEl.dataset.v || p);
+    midEl.textContent = fmt(p); midEl.dataset.v = p;
+    const dirEl = $("ob-dir");
+    dirEl.className = "mini " + (p >= prev ? "up" : "down");
+    dirEl.textContent = p >= prev ? "▲" : "▼";
+  }
+
+  function pushTrade(nowMs) {
+    const p = state.candles[N - 1].close;
+    const buy = state.rngTick() < flow.buyShare;
+    flow.buyShare = Math.min(0.8, Math.max(0.2, flow.buyShare + (state.rngTick() - 0.5) * 0.04));
+    flow.tape.unshift({ ms: nowMs, price: p * (1 + (state.rngTick() - 0.5) * 0.0004),
+                        qty: 0.02 + state.rngTick() * 0.6, buy });
+    if (flow.tape.length > 9) flow.tape.length = 9;
+    $("tape").innerHTML = flow.tape.map(x => {
+      const d = new Date(x.ms);
+      return `<div class="tape-row"><span class="num ${x.buy ? "pos" : "neg"}">${fmt(x.price)}</span>`
+        + `<span class="num">${x.qty.toFixed(3)}</span>`
+        + `<span class="num" style="color:var(--text-3)">${two(d.getUTCHours())}:${two(d.getUTCMinutes())}:${two(d.getUTCSeconds())}</span></div>`;
+    }).join("");
+    const bs = Math.round(flow.buyShare * 100);
+    $("fb-buy").style.width = bs + "%";
+    $("fb-buy-l").textContent = `Mua ${bs}%`;
+    $("fb-sell-l").textContent = `${100 - bs}% Bán`;
+  }
+
+  // ── Ví PAPER: BUY/SELL cơ chế spot, phí taker mỗi chiều ─────────
+  function updWallet() {
+    $("paper-cash").textContent = fmtUsd(paper.cash) + " USDT";
+    const h = paper.assets[state.coinSym];
+    $("asset-lbl").textContent = baseSym() + " đang giữ";
+    $("paper-asset").textContent = (h ? h.qty : 0).toFixed(6) + " " + baseSym();
+    const box = $("pos-box");
+    if (h && h.qty > 0) {
+      box.hidden = false;
+      const cur = state.candles[N - 1].close;
+      const pnl = (cur - h.entry) * h.qty, pnlPct = (cur / h.entry - 1) * 100;
+      $("pos-qty").textContent = h.qty.toFixed(6) + " " + baseSym();
+      $("pos-entry").textContent = fmt(h.entry);
+      $("pos-pnl").innerHTML =
+        `<b class="${pnl >= 0 ? "pos" : "neg"}">${pnl >= 0 ? "+" : "−"}${fmtUsd(Math.abs(pnl))} USDT (${pctStr(pnlPct)})</b>`;
+    } else box.hidden = true;
+  }
+
+  function placeOrder(side) {
+    const price = state.candles[N - 1].close, sym = state.coinSym, b = baseSym();
+    const log = $("ord-log");
+    const usdIn = Math.max(0, parseFloat($("ord-amt").value) || 0);
+    if (side === "buy") {
+      const usd = Math.min(paper.cash, usdIn);
+      if (usd < 10) { log.textContent = "Lệnh tối thiểu 10 USDT (hoặc số dư không đủ)."; return; }
+      const qty = usd * (1 - FEE_SIDE) / price;
+      const h = paper.assets[sym] || { qty: 0, entry: price };
+      h.entry = (h.entry * h.qty + price * qty) / (h.qty + qty);   // giá vào trung bình
+      h.qty += qty; paper.assets[sym] = h; paper.cash -= usd;
+      log.innerHTML = `✓ Khớp PAPER: mua <b class="num">${qty.toFixed(6)} ${b}</b>`
+        + ` @ <span class="num">${fmt(price)}</span> · phí 0.10%`;
+    } else {
+      const h = paper.assets[sym];
+      if (!h || h.qty <= 0) {
+        log.textContent = `Không có ${b} để bán — PAPER theo cơ chế spot. SHORT cần futures (xem Thiết lập lệnh).`;
+        return;
+      }
+      const qty = usdIn > 0 ? Math.min(h.qty, usdIn / price) : h.qty;
+      paper.cash += qty * price * (1 - FEE_SIDE);
+      const pnl = (price - h.entry) * qty;
+      h.qty -= qty; if (h.qty < 1e-9) delete paper.assets[sym];
+      log.innerHTML = `✓ Khớp PAPER: bán <b class="num">${qty.toFixed(6)} ${b}</b>`
+        + ` @ <span class="num">${fmt(price)}</span> · PnL <b class="${pnl >= 0 ? "pos" : "neg"}">`
+        + `${pnl >= 0 ? "+" : "−"}${fmtUsd(Math.abs(pnl))} USDT</b>`;
+    }
+    updWallet(); draw();
+  }
+  $("btn-buy").addEventListener("click", () => placeOrder("buy"));
+  $("btn-sell").addEventListener("click", () => placeOrder("sell"));
+  document.querySelectorAll(".pct-btn").forEach(b => b.addEventListener("click", () => {
+    const pct = +b.dataset.p / 100;
+    const h = paper.assets[state.coinSym];
+    const cur = state.candles[N - 1].close;
+    // đang giữ coin → % theo giá trị nắm giữ (để bán); chưa giữ → % theo số dư (để mua)
+    const baseVal = h && h.qty > 0 ? h.qty * cur : paper.cash;
+    $("ord-amt").value = Math.floor(baseVal * pct);
+  }));
+
   // ── Cập nhật toàn màn hình ──────────────────────────────────────
   const chipEl = $("model-chip");
 
@@ -942,6 +1158,10 @@ canvas{display:block;width:100%;height:100%}
         + `<td><span class="mini ${isUp ? "up" : "down"}">${isUp ? "▲ tăng" : "▼ giảm"}</span></td></tr>`;
     }).join("");
 
+    $("buy-sym").textContent = baseSym();
+    $("sell-sym").textContent = baseSym();
+    flow.tape.length = 0; $("tape").innerHTML = "";
+    refreshBook(); updWallet();
     renderSetup();
     draw();
   }
@@ -990,8 +1210,12 @@ canvas{display:block;width:100%;height:100%}
     void hero.offsetWidth;
     hero.classList.add(d >= 0 ? "flash-up" : "flash-down");
     setTimeout(() => hero.classList.remove("flash-up", "flash-down"), 220);
+    refreshBook(); updWallet();
     draw();
   }, 2500);
+
+  // Khớp lệnh mô phỏng chảy liên tục — cảm giác "sống" thật của sàn
+  setInterval(() => pushTrade(NOW0 + elapsed * 1000), 900);
 
   new ResizeObserver(draw).observe(wrap);
   new MutationObserver(draw).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });

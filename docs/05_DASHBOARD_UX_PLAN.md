@@ -70,6 +70,15 @@ GET /api/predictions/history?symbol=&timeframe=&limit=200
 → [{predicted_at, direction, p_up_calibrated, outcome, hit}, …]
 ```
 
+### 3.6 Kết nối Binance — hai tầng, hai số phận
+
+| Tầng | Là gì | Khi nào có thật |
+|---|---|---|
+| **Dữ liệu (read-only)** | Giá, sổ lệnh `@depth`, khớp lệnh `@aggTrade` — WebSocket công khai, **không cần API key** | W15a — trình duyệt nối thẳng Binance (đúng kiến trúc 3 đường của 00 §2) |
+| **Đặt lệnh** | BUY/SELL động tới tiền | M13 (RiskEngine) → M14 (Executor), chỉ sau GATE 1–4; khởi động lại luôn về TẮT (RULE 9). Prototype và giai đoạn đầu chạy **PAPER** |
+
+Prototype luôn mô phỏng cả hai tầng vì artifact chặn mạng ngoài (CSP) — đây là giới hạn của môi trường publish, không phải của thiết kế.
+
 ---
 
 ## 4. DANH MỤC NÂNG CẤP — XẾP ƯU TIÊN
@@ -91,6 +100,8 @@ GET /api/predictions/history?symbol=&timeframe=&limit=200
 | UX-13 | Ma trận hiệu năng theo khung (đúng hướng · PF · n cho 1h/4h/1d) thay AccuracyPanel đơn khung | ★★ | S | W15b | ✅ v3 (mô phỏng) |
 | UX-14 | **Chọn coin hoạt động thật (v5):** đổi coin là đổi toàn bộ thang giá/nến/ATR/setup; quantile model là **%** nên một model phục vụ mọi coin (demo sống RULE 1); SOL demo GIẢM, DOGE demo KHÔNG RÕ, TUT hiện banner «ngoài tập huấn luyện» | ★★★ | M | W15a | ✅ v5 |
 | UX-15 | **TradeSetupCard (v5):** vốn + rủi ro%/lệnh do người dùng nhập → SL 1.5×ATR14, TP q90/q10, RR, khối lượng (trần bằng vốn), lãi/lỗ USDT đã trừ phí, thoát hạn theo horizon — đúng 3 lối ra M13; SHORT ghi «cần futures»; KHÔNG RÕ → «model đứng ngoài»; chip **auto-trade TẮT**, không có nút đặt lệnh (RULE 9) | ★★★ | M | W15b + M13 | ✅ v5 |
+| UX-16 | **BUY/SELL chế độ PAPER (v6):** nút Mua/Bán kiểu Binance, ví ảo 10.000 USDT, %-nhanh 25–100, khớp mô phỏng phí taker 0.10%/chiều, giá vào trung bình, uPnL sống theo tick, **vạch VỊ THẾ trên chart**; bán khi ví trống → thông điệp spot; chip «chưa kết nối Binance» | ★★★ | M | W15b → nối M13 paper thật | ✅ v6 |
+| UX-17 | **Sổ lệnh + khớp lệnh kiểu Binance (v6):** 6 asks/6 bids kèm thanh depth, mid + mũi hướng, tape chảy ~0.9s/lệnh, thanh tỷ lệ Mua/Bán (tiền thân trực quan của feature `taker_buy_ratio` G3). Bản thật W15a nối WS công khai @depth · @aggTrade, không cần API key — artifact CSP chặn mạng ngoài nên prototype mô phỏng | ★★ | M | W15a | ✅ v6 (mô phỏng) |
 
 ### 4.1 Tham chiếu trình bày — VishvaAlgoAI (bài Medium v36.2)
 
