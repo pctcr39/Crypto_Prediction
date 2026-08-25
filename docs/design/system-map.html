@@ -1,0 +1,789 @@
+<title>Bản đồ hệ thống cryptopred</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap">
+<style>
+/* ══════════════════════════════════════════════════════════════════
+   BẢN ĐỒ HỆ THỐNG CRYPTOPRED
+   Token lấy nguyên từ web/tokens.css (nguồn chân lý: docs/02 §2).
+   Dark-first: :root trần = bộ TỐI (thế giới mặc định của sản phẩm);
+   bộ SÁNG là bảng màu được chọn riêng, đã kiểm định — không đảo tự động.
+   Ngữ nghĩa màu trong trang này:
+     --up   = ĐÃ XONG      --status-slow = ĐANG DỞ
+     --down = CHẶN/RỦI RO  --pred        = do model/thiết kế sinh ra
+     --accent = chỉ giao diện (rail, focus) — không bao giờ là màu dữ liệu
+   ══════════════════════════════════════════════════════════════════ */
+:root{
+  --surface-0:#0b0e14; --surface-1:#131722; --surface-2:#1e222d;
+  --border:#2a2e39;
+  --text-1:#d1d4dc; --text-2:#868993; --text-3:#5d606b;
+  --up:#26a69a; --down:#ef5350; --pred:#8b7be8; --warn:#f5a524;
+  --accent:#f0b90b;
+  --up-bg:color-mix(in srgb,var(--up) 13%,transparent);
+  --down-bg:color-mix(in srgb,var(--down) 13%,transparent);
+  --pred-bg:color-mix(in srgb,var(--pred) 14%,transparent);
+  --warn-bg:color-mix(in srgb,var(--warn) 13%,transparent);
+  --ui:'Inter',-apple-system,'Segoe UI',system-ui,sans-serif;
+  --mono:'JetBrains Mono','SF Mono',ui-monospace,monospace;
+  --sp1:4px; --sp2:8px; --sp3:12px; --sp4:16px; --sp5:24px; --sp6:32px; --sp7:48px; --sp8:64px;
+  --r-sm:4px; --r-md:6px; --r-pill:999px;
+  --shadow:0 1px 2px rgb(0 0 0 / .3);
+}
+@media (prefers-color-scheme:light){
+  :root:not([data-theme="dark"]){
+    --surface-0:#f7f8fa; --surface-1:#ffffff; --surface-2:#f0f2f5;
+    --border:#e0e3eb;
+    --text-1:#131722; --text-2:#5d606b; --text-3:#9598a1;
+    --up:#0e9384; --down:#d64541; --pred:#6d5bd0; --warn:#b76e00;
+    --accent:#b8860b;
+    --shadow:0 1px 2px rgb(19 23 34 / .08);
+  }
+}
+:root[data-theme="light"]{
+  --surface-0:#f7f8fa; --surface-1:#ffffff; --surface-2:#f0f2f5;
+  --border:#e0e3eb;
+  --text-1:#131722; --text-2:#5d606b; --text-3:#9598a1;
+  --up:#0e9384; --down:#d64541; --pred:#6d5bd0; --warn:#b76e00;
+  --accent:#b8860b;
+  --shadow:0 1px 2px rgb(19 23 34 / .08);
+}
+
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--surface-0);color:var(--text-1);
+  font:400 15px/1.65 var(--ui);-webkit-font-smoothing:antialiased}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:var(--r-sm)}
+.num,code,kbd{font-family:var(--mono);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+code{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-sm);
+  padding:1px 5px;font-size:.86em;color:var(--text-1)}
+@media (prefers-reduced-motion:reduce){*{transition-duration:.01ms!important;animation-duration:.01ms!important}}
+
+.wrap{max-width:1140px;margin:0 auto;padding:var(--sp6) var(--sp4) var(--sp8)}
+
+/* ── Header ─────────────────────────────────────────────────── */
+.head{border-bottom:1px solid var(--border);padding-bottom:var(--sp5);margin-bottom:var(--sp6)}
+.eyebrow{font:600 11px/1.4 var(--ui);letter-spacing:.14em;text-transform:uppercase;color:var(--text-2);
+  display:flex;gap:var(--sp3);flex-wrap:wrap;align-items:center}
+.eyebrow b{color:var(--pred);font-weight:600}
+h1{font:700 clamp(28px,4.4vw,40px)/1.12 var(--ui);letter-spacing:-.02em;
+  margin:var(--sp3) 0 var(--sp2);text-wrap:balance}
+h1 em{font-style:normal;color:var(--pred)}
+.lede{max-width:64ch;font:400 17px/1.6 var(--ui);color:var(--text-2);margin:0}
+
+/* ── Stat strip ─────────────────────────────────────────────── */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:var(--sp3);margin-top:var(--sp5)}
+.stat{background:var(--surface-1);border:1px solid var(--border);border-radius:var(--r-md);
+  padding:var(--sp3) var(--sp4);box-shadow:var(--shadow)}
+.stat .k{font:600 10px/1.4 var(--ui);letter-spacing:.1em;text-transform:uppercase;color:var(--text-2)}
+.stat .v{font:600 24px/1.25 var(--mono);font-variant-numeric:tabular-nums;
+  letter-spacing:-.02em;margin-top:2px}
+.stat .s{font:400 12px/1.4 var(--ui);color:var(--text-2)}
+.stat.ok .v{color:var(--up)} .stat.wp .v{color:var(--warn)} .stat.pd .v{color:var(--pred)}
+
+/* ── Sections ───────────────────────────────────────────────── */
+section{margin-top:var(--sp8);scroll-margin-top:var(--sp4)}
+h2{font:600 12px/1.4 var(--ui);letter-spacing:.14em;text-transform:uppercase;color:var(--text-2);
+  margin:0 0 var(--sp2);display:flex;align-items:center;gap:var(--sp2)}
+h2::before{content:"";width:18px;height:2px;background:var(--accent);border-radius:2px;flex:none}
+h3{font:600 clamp(21px,2.6vw,26px)/1.25 var(--ui);letter-spacing:-.015em;
+  margin:0 0 var(--sp3);text-wrap:balance}
+h4{font:600 16px/1.4 var(--ui);margin:var(--sp5) 0 var(--sp2)}
+h5{font:600 11px/1.4 var(--ui);letter-spacing:.1em;text-transform:uppercase;color:var(--text-2);
+  margin:0 0 var(--sp2)}
+p{max-width:70ch;margin:0 0 var(--sp3)}
+.muted{color:var(--text-2)}
+.small{font-size:13px;line-height:1.6}
+
+/* ── Callout ────────────────────────────────────────────────── */
+.note{border-left:3px solid var(--pred);background:var(--pred-bg);
+  padding:var(--sp3) var(--sp4);border-radius:0 var(--r-md) var(--r-md) 0;margin:var(--sp4) 0}
+.note.warn{border-left-color:var(--warn);background:var(--warn-bg)}
+.note.stop{border-left-color:var(--down);background:var(--down-bg)}
+.note p{margin:0;max-width:72ch}
+.note p + p{margin-top:var(--sp2)}
+.note strong{color:var(--text-1)}
+
+/* ── Pills ──────────────────────────────────────────────────── */
+.pill{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:var(--r-pill);
+  font:600 11px/1.5 var(--ui);white-space:nowrap;border:1px solid transparent}
+.p-done{color:var(--up);background:var(--up-bg);border-color:color-mix(in srgb,var(--up) 38%,transparent)}
+.p-wip{color:var(--warn);background:var(--warn-bg);border-color:color-mix(in srgb,var(--warn) 38%,transparent)}
+.p-todo{color:var(--text-2);background:transparent;border-color:var(--border)}
+.p-lock{color:var(--down);background:var(--down-bg);border-color:color-mix(in srgb,var(--down) 34%,transparent)}
+.p-design{color:var(--pred);background:var(--pred-bg);border-color:color-mix(in srgb,var(--pred) 38%,transparent)}
+
+/* ── Cards / grids ──────────────────────────────────────────── */
+.grid{display:grid;gap:var(--sp3)}
+.g2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(250px,1fr))}
+.card{background:var(--surface-1);border:1px solid var(--border);border-radius:var(--r-md);
+  padding:var(--sp4);box-shadow:var(--shadow)}
+.card > :last-child{margin-bottom:0}
+.card.stripe-up{border-left:3px solid var(--up)}
+.card.stripe-warn{border-left:3px solid var(--warn)}
+.card.stripe-todo{border-left:3px solid var(--border)}
+.card.stripe-pred{border-left:3px solid var(--pred)}
+.card.stripe-down{border-left:3px solid var(--down)}
+.card h4{margin-top:0;display:flex;justify-content:space-between;align-items:flex-start;
+  gap:var(--sp2);flex-wrap:wrap}
+
+/* ── Tables ─────────────────────────────────────────────────── */
+.tw{overflow-x:auto;border:1px solid var(--border);border-radius:var(--r-md);
+  background:var(--surface-1);margin:var(--sp3) 0;box-shadow:var(--shadow)}
+table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:540px}
+th{font:600 10px/1.4 var(--ui);letter-spacing:.1em;text-transform:uppercase;color:var(--text-2);
+  text-align:left;padding:var(--sp3) var(--sp3);border-bottom:1px solid var(--border);
+  white-space:nowrap;background:var(--surface-2)}
+td{padding:var(--sp3);border-top:1px solid var(--border);vertical-align:top;line-height:1.55}
+tbody tr:first-child td{border-top:none}
+td code{white-space:nowrap}
+.tnum{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+th.tnum{text-align:right}
+
+/* ── Pipeline bands (sơ đồ kiến trúc bằng HTML — themable, đọc được) ── */
+.legend{display:flex;gap:var(--sp4);flex-wrap:wrap;margin:var(--sp3) 0 var(--sp4);
+  font:400 12px/1.5 var(--ui);color:var(--text-2)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:10px;height:10px;border-radius:3px;flex:none;border:1px solid var(--border)}
+.band{background:var(--surface-1);border:1px solid var(--border);border-radius:var(--r-md);
+  padding:var(--sp3) var(--sp4);margin-bottom:var(--sp2);box-shadow:var(--shadow);
+  display:grid;grid-template-columns:150px 1fr;gap:var(--sp4);align-items:start}
+@media(max-width:720px){.band{grid-template-columns:1fr;gap:var(--sp2)}}
+.band.locked{border-style:dashed}
+.band-l .bt{font:600 13px/1.35 var(--ui)}
+.band-l .bs{font:500 10px/1.4 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--text-2)}
+.nodes{display:flex;flex-wrap:wrap;gap:var(--sp2)}
+.node{display:flex;flex-direction:column;gap:2px;padding:var(--sp2) var(--sp3);
+  border:1px solid var(--border);border-radius:var(--r-sm);background:var(--surface-2);
+  min-width:132px;flex:1 1 132px}
+.node .nn{font:600 12.5px/1.35 var(--ui);display:flex;align-items:center;gap:5px}
+.node .nd{font:400 11px/1.4 var(--ui);color:var(--text-2)}
+.node.d{border-color:color-mix(in srgb,var(--up) 45%,transparent);background:var(--up-bg)}
+.node.d .nn{color:var(--up)}
+.node.w{border-color:color-mix(in srgb,var(--warn) 45%,transparent);background:var(--warn-bg)}
+.node.w .nn{color:var(--warn)}
+.node.p{border-color:color-mix(in srgb,var(--pred) 45%,transparent);background:var(--pred-bg)}
+.node.p .nn{color:var(--pred)}
+.node.t{border-style:dashed}
+.node.t .nn{color:var(--text-2)}
+.node.star .nn::after{content:"★";color:var(--accent);font-size:11px}
+.arrow{text-align:center;color:var(--text-3);font-size:13px;line-height:1;margin:2px 0}
+
+/* ── Ba đường dữ liệu ───────────────────────────────────────── */
+.lane .hop{display:flex;gap:var(--sp2);align-items:flex-start;padding:var(--sp2) 0;
+  border-top:1px dashed var(--border)}
+.lane .hop:first-of-type{border-top:none}
+.lane .hop b{font:600 10px/1.5 var(--mono);color:var(--text-3);min-width:16px}
+.lane .hop span{font-size:13px;line-height:1.5}
+.tempo{font:600 11px/1.5 var(--mono);letter-spacing:.04em;padding:2px 8px;border-radius:var(--r-pill);
+  background:var(--surface-2);border:1px solid var(--border);color:var(--text-2)}
+
+/* ── Timeline purge/embargo ─────────────────────────────────── */
+.fold{display:flex;height:34px;border-radius:var(--r-sm);overflow:hidden;
+  border:1px solid var(--border);margin-top:var(--sp2)}
+.seg{display:flex;align-items:center;justify-content:center;
+  font:600 10px/1 var(--mono);letter-spacing:.04em;text-align:center;padding:0 2px;overflow:hidden}
+.s-train{background:color-mix(in srgb,var(--pred) 22%,transparent);color:var(--text-1)}
+.s-purge{background:color-mix(in srgb,var(--down) 26%,transparent);color:var(--down)}
+.s-test{background:color-mix(in srgb,var(--up) 24%,transparent);color:var(--up)}
+.s-emb{background:color-mix(in srgb,var(--warn) 26%,transparent);color:var(--warn)}
+.s-idle{background:var(--surface-2);color:var(--text-3)}
+.fold-lbl{font:500 11px/1.5 var(--mono);color:var(--text-2);margin-top:var(--sp1)}
+
+/* ── Gate ladder ────────────────────────────────────────────── */
+.gates{counter-reset:g;display:grid;gap:var(--sp2)}
+.gate{display:grid;grid-template-columns:44px 1fr;gap:var(--sp3);align-items:start;
+  background:var(--surface-1);border:1px solid var(--border);border-left:3px solid var(--down);
+  border-radius:var(--r-md);padding:var(--sp3) var(--sp4);box-shadow:var(--shadow)}
+.gate .gn{counter-increment:g;font:700 15px/1.2 var(--mono);color:var(--down);
+  background:var(--down-bg);border-radius:var(--r-sm);text-align:center;padding:6px 0}
+.gate .gn::before{content:"G" counter(g)}
+.gate h4{margin:0 0 2px;font-size:14.5px}
+.gate p{margin:0;font-size:13px;line-height:1.6;color:var(--text-2);max-width:none}
+
+/* ── Lists ──────────────────────────────────────────────────── */
+ul.tick{list-style:none;padding:0;margin:0;display:grid;gap:6px}
+ul.tick li{padding-left:22px;position:relative;font-size:13.5px;line-height:1.6}
+ul.tick li::before{position:absolute;left:0;top:0;font-family:var(--mono);font-size:12px}
+ul.tick li.y::before{content:"✓";color:var(--up)}
+ul.tick li.n::before{content:"○";color:var(--text-3)}
+ul.tick li.w::before{content:"◐";color:var(--warn)}
+ol.steps{counter-reset:s;list-style:none;padding:0;margin:0;display:grid;gap:var(--sp2)}
+ol.steps li{counter-increment:s;padding-left:30px;position:relative;font-size:13.5px;line-height:1.6}
+ol.steps li::before{content:counter(s);position:absolute;left:0;top:1px;width:20px;height:20px;
+  border:1px solid var(--border);border-radius:var(--r-pill);font:600 11px/19px var(--mono);
+  text-align:center;color:var(--text-2);background:var(--surface-2)}
+
+footer{margin-top:var(--sp8);padding-top:var(--sp4);border-top:1px solid var(--border);
+  font-size:12.5px;color:var(--text-2);display:flex;justify-content:space-between;
+  gap:var(--sp3);flex-wrap:wrap}
+</style>
+
+<div class="wrap">
+
+<header class="head">
+  <div class="eyebrow"><span>cryptopred</span><span>·</span><span>25/08/2026</span><span>·</span>
+    <b>Tuần 1 / 12</b></div>
+  <h1>Bản đồ hệ thống <em>cryptopred</em></h1>
+  <p class="lede">Toàn cảnh những gì đã dựng, những gì còn trống, và thiết kế đầy đủ của
+    pipeline dự đoán hướng giá crypto — từ nến thô tới dashboard và cổng tiền thật.</p>
+
+  <div class="stats">
+    <div class="stat ok"><div class="k">Commit</div><div class="v">5</div><div class="s">M0 → prototype v6</div></div>
+    <div class="stat pd"><div class="k">Mã nguồn</div><div class="v">1.394</div><div class="s">dòng trong <code>src/</code></div></div>
+    <div class="stat ok"><div class="k">Test</div><div class="v">25 ✓</div><div class="s">6 skip (chờ M6)</div></div>
+    <div class="stat ok"><div class="k">Dữ liệu thật</div><div class="v">49.465</div><div class="s">nến BTC 1h · 2021→nay</div></div>
+    <div class="stat wp"><div class="k">Module xong</div><div class="v">1 / 15</div><div class="s">M0 · M1–M2 đang dở</div></div>
+  </div>
+</header>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<section>
+  <h2>Bức tranh 30 giây</h2>
+  <h3>Hệ thống chưa dự đoán được gì thật — và đó đúng là kế hoạch</h3>
+  <p>Mọi con số bạn thấy trên dashboard hiện tại là <strong>mô phỏng</strong>. Chưa có model nào
+    được huấn luyện, chưa có backtest nào chạy. Cái đã dựng xong là ba thứ khác, và theo master
+    plan thì đúng thứ tự này mới an toàn:</p>
+
+  <div class="grid g3" style="margin-top:var(--sp4)">
+    <div class="card stripe-up">
+      <h4>1 · Nền móng chạy được <span class="pill p-done">xong</span></h4>
+      <p class="small muted">Repo, môi trường, downloader idempotent đã kéo về 49.465 nến BTC thật,
+        lớp đọc dữ liệu qua DuckDB, 25 test xanh dưới 0,4 giây.</p>
+    </div>
+    <div class="card stripe-pred">
+      <h4>2 · Hợp đồng thiết kế <span class="pill p-design">xong</span></h4>
+      <p class="small muted">6 tài liệu (hiến pháp, đặc tả 15 module, design system, chiến lược
+        thực thi, kế hoạch UX) + prototype dashboard v6 tương tác được — làm hợp đồng cho code thật.</p>
+    </div>
+    <div class="card stripe-warn">
+      <h4>3 · Hàng rào chống tự lừa <span class="pill p-wip">một phần</span></h4>
+      <p class="small muted"><code>shift_all</code> và <code>assert_scale_free</code> đã chặn RULE 1+2
+        kèm test. Nhưng bộ kiểm định M6 — thứ quyết định repo nói thật hay nói dối — vẫn là stub.</p>
+    </div>
+  </div>
+
+  <div class="note warn">
+    <p><strong>Rủi ro lớn nhất lúc này không phải là chậm tiến độ.</strong> Là bắt đầu train model
+      trước khi bộ kiểm định M6 tồn tại. Lúc đó bạn sẽ có một con số đẹp và không có cách nào biết
+      nó thật hay giả. Đường găng vì vậy đặt <strong>W3 (PurgedWalkForward)</strong> chạy song song
+      ngay từ đầu, và <strong>W7 (5 phép thử rò rỉ)</strong> phải xanh trước khi có dòng code train nào.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<section>
+  <h2>High level design</h2>
+  <h3>Kiến trúc phân tầng — và trạng thái từng mảnh</h3>
+  <p>Sơ đồ dưới đây vừa là kiến trúc vừa là bản đồ tiến độ: màu của mỗi khối cho biết nó đã
+    chạy được hay chưa. Dữ liệu chảy từ trên xuống; hai tầng cuối bị khoá sau 4 cổng.</p>
+
+  <div class="legend">
+    <span><i style="background:var(--up-bg);border-color:var(--up)"></i> Đã chạy được</span>
+    <span><i style="background:var(--warn-bg);border-color:var(--warn)"></i> Đang dở</span>
+    <span><i style="background:var(--pred-bg);border-color:var(--pred)"></i> Mới có thiết kế / prototype</span>
+    <span><i style="background:var(--surface-2);border-style:dashed"></i> Stub — chưa làm</span>
+    <span><span style="color:var(--accent)">★</span> Module quan trọng nhất</span>
+  </div>
+
+  <div class="band">
+    <div class="band-l"><div class="bt">Nguồn</div><div class="bs">Binance</div></div>
+    <div class="nodes">
+      <div class="node d"><span class="nn">REST · ccxt</span><span class="nd">fetch_ohlcv phân trang 1000 nến/lần</span></div>
+      <div class="node t"><span class="nn">WebSocket kline</span><span class="nd">phát hiện nến đóng — M10</span></div>
+      <div class="node t"><span class="nn">WS depth · aggTrade</span><span class="nd">sổ lệnh + khớp lệnh — W15a</span></div>
+    </div>
+  </div>
+  <div class="arrow">↓</div>
+
+  <div class="band">
+    <div class="band-l"><div class="bt">Thu thập &amp; lưu trữ</div><div class="bs">M1 · M2</div></div>
+    <div class="nodes">
+      <div class="node d"><span class="nn">download.py</span><span class="nd">idempotent · chỉ nến đã đóng · bắt sàn sửa nến cũ</span></div>
+      <div class="node d"><span class="nn">universe.py</span><span class="nd">lọc 474 cặp · ảnh chụp theo tháng</span></div>
+      <div class="node w"><span class="nn">build_clean</span><span class="nd">đánh dấu lỗ hổng — CHƯA làm</span></div>
+      <div class="node d"><span class="nn">store.get_ohlcv</span><span class="nd">DuckDB · API đọc duy nhất</span></div>
+    </div>
+  </div>
+  <div class="arrow">↓</div>
+
+  <div class="band">
+    <div class="band-l"><div class="bt">Đặc trưng &amp; nhãn</div><div class="bs">M3 · M4</div></div>
+    <div class="nodes">
+      <div class="node t"><span class="nn">FeatureBuilder</span><span class="nd">9 nhóm · ~45 cột scale-free</span></div>
+      <div class="node d"><span class="nn">shift_all()</span><span class="nd">điểm nghẽn duy nhất áp RULE 2</span></div>
+      <div class="node d"><span class="nn">assert_scale_free()</span><span class="nd">chặn giá thô — RULE 1</span></div>
+      <div class="node t"><span class="nn">LabelBuilder</span><span class="nd">3 horizon · vùng chết thích ứng</span></div>
+    </div>
+  </div>
+  <div class="arrow">↓</div>
+
+  <div class="band">
+    <div class="band-l"><div class="bt">Kiểm định</div><div class="bs">M6 · quan trọng nhất</div></div>
+    <div class="nodes">
+      <div class="node t star"><span class="nn">PurgedWalkForward</span><span class="nd">8 fold · purge + embargo</span></div>
+      <div class="node t star"><span class="nn">5 phép thử rò rỉ</span><span class="nd">dịch nhãn · xáo · tương quan · đảo thời gian · ranh giới</span></div>
+    </div>
+  </div>
+  <div class="arrow">↓</div>
+
+  <div class="band">
+    <div class="band-l"><div class="bt">Huấn luyện</div><div class="bs">M5 · M7</div></div>
+    <div class="nodes">
+      <div class="node t"><span class="nn">4 baseline</span><span class="nd">phải thắng cả 4 — RULE 4</span></div>
+      <div class="node t"><span class="nn">LightGBM clf</span><span class="nd">p_up thô</span></div>
+      <div class="node t"><span class="nn">3× quantile</span><span class="nd">q10 / q50 / q90</span></div>
+      <div class="node t"><span class="nn">Isotonic</span><span class="nd">hiệu chỉnh xác suất — RULE 6</span></div>
+      <div class="node t"><span class="nn">MLflow Registry</span><span class="nd">git hash · seed · data hash</span></div>
+    </div>
+  </div>
+  <div class="arrow">↓</div>
+
+  <div class="band">
+    <div class="band-l"><div class="bt">Đánh giá</div><div class="bs">M8 → GATE 1</div></div>
+    <div class="nodes">
+      <div class="node t"><span class="nn">vectorbt</span><span class="nd">phí 0,10%/chiều + slippage 0,05%</span></div>
+      <div class="node t"><span class="nn">Tearsheet per-fold</span><span class="nd">≥6/8 fold có lãi</span></div>
+    </div>
+  </div>
+  <div class="arrow">↓</div>
+
+  <div class="band">
+    <div class="band-l"><div class="bt">Phục vụ</div><div class="bs">M9 · M10 · M11</div></div>
+    <div class="nodes">
+      <div class="node d"><span class="nn">schemas.py</span><span class="nd">hợp đồng Prediction — đã có</span></div>
+      <div class="node t"><span class="nn">FastAPI · 7 endpoint</span><span class="nd">ohlcv · prediction · accuracy · WS</span></div>
+      <div class="node t"><span class="nn">InferenceService</span><span class="nd">chạy KHI nến đóng, không phải mỗi giây</span></div>
+      <div class="node t"><span class="nn">PredictionStore</span><span class="nd">Parquet append + DuckDB</span></div>
+      <div class="node t"><span class="nn">OutcomeReconciler</span><span class="nd">chấm điểm dự đoán hết hạn</span></div>
+      <div class="node p"><span class="nn">Dashboard</span><span class="nd">prototype v6 tương tác được</span></div>
+      <div class="node d"><span class="nn">tokens.css</span><span class="nd">bảng màu đã kiểm định mù màu</span></div>
+    </div>
+  </div>
+  <div class="arrow">↓ &nbsp;<span style="color:var(--down);font-weight:600">khoá sau GATE 1–4</span></div>
+
+  <div class="band locked">
+    <div class="band-l"><div class="bt">Giao dịch</div><div class="bs">M12 · M13 · M14</div></div>
+    <div class="nodes">
+      <div class="node t"><span class="nn">Telegram alerts</span><span class="nd">chỉ khi hướng ĐỔI</span></div>
+      <div class="node t star"><span class="nn">RiskEngine</span><span class="nd">kill switch · 3 lối ra · đối soát</span></div>
+      <div class="node t"><span class="nn">Executor ccxt</span><span class="nd">Testnet ∥ shadow mainnet</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<section>
+  <h2>High level design · 4.2</h2>
+  <h3>Ba đường dữ liệu độc lập</h3>
+  <p>Đây là điểm mấu chốt của thiết kế realtime, và cũng là chỗ hầu hết dashboard dự đoán làm sai.
+    Ba đường chạy ở ba nhịp khác nhau và <strong>không phụ thuộc nhau</strong> — backend chết thì
+    giá trên màn hình vẫn chạy.</p>
+
+  <div class="grid g3" style="margin-top:var(--sp4)">
+    <div class="card stripe-up lane">
+      <h4>Đường giá <span class="tempo">vài lần/giây</span></h4>
+      <div class="hop"><b>1</b><span>Trình duyệt mở WebSocket <strong>thẳng tới Binance</strong></span></div>
+      <div class="hop"><b>2</b><span>Tick giá cập nhật hero + nến đang chạy</span></div>
+      <div class="hop"><b>3</b><span>Backend hoàn toàn không tham gia</span></div>
+      <p class="small muted" style="margin-top:var(--sp3)">Không tốn tài nguyên server, không có
+        điểm chết chung. Đây là lý do giá vẫn mượt khi model đang retrain.</p>
+    </div>
+    <div class="card stripe-pred lane">
+      <h4>Đường dự đoán <span class="tempo">mỗi nến đóng</span></h4>
+      <div class="hop"><b>1</b><span>Backend phát hiện nến đóng (<code>k.x=true</code>)</span></div>
+      <div class="hop"><b>2</b><span>Chạy inference → ghi PredictionStore</span></div>
+      <div class="hop"><b>3</b><span>Đẩy qua <code>WS /ws/predictions</code></span></div>
+      <p class="small muted" style="margin-top:var(--sp3)">Trong một nến chưa đóng, đầu vào model
+        gần như không đổi — chạy lại mỗi giây chỉ tạo ra một con số rung lắc vô nghĩa.</p>
+    </div>
+    <div class="card stripe-todo lane">
+      <h4>Đường lịch sử <span class="tempo">một lần</span></h4>
+      <div class="hop"><b>1</b><span>Mở trang → <code>GET /api/ohlcv?limit=500</code></span></div>
+      <div class="hop"><b>2</b><span><code>GET /api/predictions/history</code> vẽ track record</span></div>
+      <div class="hop"><b>3</b><span>Sau đó im lặng, nhường chỗ cho hai đường trên</span></div>
+      <p class="small muted" style="margin-top:var(--sp3)">Endpoint history là phát sinh mới từ
+        kế hoạch UX — đã bổ sung vào hợp đồng M9.</p>
+    </div>
+  </div>
+
+  <div class="note">
+    <p><strong>RULE 8 sống ở đây:</strong> mỗi đường có trạng thái tươi riêng. Đường giá im quá 5
+      giây → «Chậm»; mất kết nối → giá chuyển xám kèm dấu thời gian cuối; dự đoán quá
+      <code>valid_until</code> mà chưa có bản mới → «Dự đoán cũ». Backend chủ động phát sự kiện
+      <code>stale</code>, không để frontend tự đoán.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<section>
+  <h2>High level design · 4.3</h2>
+  <h3>Mô hình dữ liệu — bốn tầng, một chiều</h3>
+  <p>Dữ liệu chỉ chảy xuôi. Không tầng nào được ghi ngược lên tầng trên. Khi nghi ngờ:
+    xoá từ <code>clean/</code> trở xuống và dựng lại — <code>raw/</code> luôn còn nguyên.</p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Tầng</th><th>Nội dung</th><th>Bất biến được test</th><th class="tnum">Trạng thái</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><code>data/raw/</code><br><span class="small muted">bất biến</span></td>
+          <td>OHLCV nguyên bản từ sàn, phân vùng <code>symbol=/timeframe=/year=</code>.
+            Chỉ nến <strong>đã đóng</strong>.</td>
+          <td>index tăng dần · duy nhất · không nến đang hình thành</td>
+          <td class="tnum"><span class="pill p-done">chạy</span></td>
+        </tr>
+        <tr>
+          <td><code>data/clean/</code></td>
+          <td>Đã khử trùng lặp, sắp xếp, <strong>đánh dấu</strong> lỗ hổng bằng cờ
+            <code>gap_before</code> — không điền giá.</td>
+          <td>giá &gt; 0 · high ≥ low · volume ≥ 0 · không bịa dữ liệu</td>
+          <td class="tnum"><span class="pill p-todo">chưa</span></td>
+        </tr>
+        <tr>
+          <td><code>data/features/</code></td>
+          <td>~45 cột scale-free theo 9 nhóm, đã <code>shift(1)</code>, tên theo quy ước máy đọc được.</td>
+          <td>không cột nào ∈ {o,h,l,c,v} · không NaN sau warm-up · corr với nhãn &lt; 0,99</td>
+          <td class="tnum"><span class="pill p-wip">hàng rào</span></td>
+        </tr>
+        <tr>
+          <td><code>data/labels/</code></td>
+          <td><code>r_future</code>, <code>theta</code>, <code>label ∈ {−1,0,+1}</code>
+            cho 3 horizon.</td>
+          <td>H hàng cuối phải NaN · nhãn t chỉ phụ thuộc dữ liệu &gt; t</td>
+          <td class="tnum"><span class="pill p-todo">chưa</span></td>
+        </tr>
+        <tr>
+          <td><code>data/predictions/</code></td>
+          <td>Prediction + <code>outcome</code> + <code>hit</code> sau khi Reconciler chấm điểm.</td>
+          <td>dedupe theo (symbol, tf, predicted_at) · chạy lại không ghi trùng</td>
+          <td class="tnum"><span class="pill p-todo">chưa</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h4>Vũ trụ coin — chống bẫy sống sót</h4>
+  <p>Ảnh chụp danh sách đủ điều kiện <strong>theo từng tháng</strong> lưu tại
+    <code>raw/universe/month=YYYY-MM/</code>. Backtest tháng nào phải dùng đúng ảnh chụp tháng đó.
+    Nếu lấy top-40 của hôm nay rồi backtest ngược 3 năm, bạn đã âm thầm loại bỏ mọi coin đã chết —
+    kết quả sẽ đẹp giả tạo. Ảnh chụp <span class="num">2026-08</span> đã có: 474 cặp, 40 cặp trong
+    tập huấn luyện.</p>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<section>
+  <h2>High level design · 4.4</h2>
+  <h3>Bộ kiểm định — trái tim của repo</h3>
+  <p>Thư viện <code>mlfinlab</code> từng cung cấp sẵn purged CV đã đóng mã nguồn. Không còn lựa
+    chọn mã nguồn mở nào, nên module này <strong>phải tự viết</strong>. Đây chính xác là thứ quyết
+    định dự án nói thật hay nói dối.</p>
+
+  <div class="card" style="margin-top:var(--sp4)">
+    <h5>Một fold walk-forward</h5>
+    <div class="fold">
+      <div class="seg s-train" style="flex:0 0 46%">TRAIN</div>
+      <div class="seg s-purge" style="flex:0 0 7%">PURGE</div>
+      <div class="seg s-test" style="flex:0 0 18%">TEST</div>
+      <div class="seg s-emb" style="flex:0 0 7%">EMBARGO</div>
+      <div class="seg s-idle" style="flex:1">chưa dùng → fold sau</div>
+    </div>
+    <div class="fold-lbl">thời gian →</div>
+    <ul class="tick" style="margin-top:var(--sp4)">
+      <li class="n"><strong>Purge</strong> cắt H nến cuối tập train, vì nhãn của chúng nhìn vào
+        vùng test — không cắt là rò rỉ.</li>
+      <li class="n"><strong>Embargo</strong> chờ thêm H nến sau test trước khi dữ liệu đó được
+        dùng để train ở fold sau: tự tương quan không dừng lại đúng tại ranh giới.</li>
+      <li class="n"><strong>Bất biến được test:</strong> <code>train_end + purge ≤ test_start</code>
+        ở mọi fold · các tập test không giao nhau · tổng thời gian test ≥ 24 tháng khi 8 fold.</li>
+    </ul>
+  </div>
+
+  <h4>Năm phép thử rò rỉ — chạy mỗi lần train, không phải một lần</h4>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Phép thử</th><th>Cách làm</th><th>Dấu hiệu rò rỉ</th></tr></thead>
+      <tbody>
+        <tr><td>Dịch nhãn</td><td>Dịch toàn bộ nhãn thêm 1 bước, train lại</td>
+          <td>Điểm số <strong>tăng</strong> → chắc chắn có rò rỉ</td></tr>
+        <tr><td>Xáo trộn nhãn</td><td>Xáo ngẫu nhiên nhãn, train lại</td>
+          <td>Vẫn &gt; 50% đáng kể → model đang đọc thứ khác</td></tr>
+        <tr><td>Tương quan</td><td><code>corr(feature, label)</code></td>
+          <td>Bất kỳ feature nào &gt; 0,99 → rò rỉ kinh điển</td></tr>
+        <tr><td>Đảo thời gian</td><td>Train trên tương lai, test trên quá khứ</td>
+          <td>Điểm tương đương → đáng nghi</td></tr>
+        <tr><td>Ranh giới fold</td><td>So mẫu cuối train vs đầu test</td>
+          <td>Chồng lấn thời gian → purge sai</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note stop">
+    <p><strong>RULE 11 — ngưỡng nghi ngờ.</strong> Nếu directional accuracy out-of-sample vượt
+      <span class="num">60%</span> ở khung 1h, <strong>giả định là có rò rỉ</strong> cho tới khi
+      chứng minh được điều ngược lại. Thị trường crypto thanh khoản cao ở khung ngắn gần như là
+      random walk; mức <span class="num">52–55%</span> đã là một edge thật và đáng giá.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<section>
+  <h2>High level design · 4.5</h2>
+  <h3>Vòng đời một dự đoán</h3>
+  <p>Từ lúc nến đóng tới lúc con số được chấm điểm đúng/sai. Vòng khép kín này là thứ nuôi
+    cả <code>/api/accuracy</code>, dải track record trên chart, và tầng audit trôi hiệu chỉnh.</p>
+
+  <div class="grid g2" style="margin-top:var(--sp4)">
+    <div class="card stripe-pred">
+      <h5>Pha sinh</h5>
+      <ol class="steps">
+        <li>WS kline báo nến 14:00 đóng (<code>k.x=true</code>); fallback REST poll tại +5s nếu WS im.</li>
+        <li>Đọc <code>clean/</code>, dựng feature — mọi cột đi qua <code>shift_all()</code>.</li>
+        <li>Classifier → <code>p_up</code> thô → isotonic → <code>p_up_calibrated</code>.</li>
+        <li>3 quantile regressor → <code>q10 / q50 / q90</code>.</li>
+        <li>Áp vùng chết: &gt;0,58 TĂNG · &lt;0,42 GIẢM · còn lại KHÔNG RÕ.</li>
+        <li>Ghi PredictionStore (dedupe) → đẩy WebSocket → dashboard vẽ đường tím nét đứt.</li>
+      </ol>
+    </div>
+    <div class="card stripe-up">
+      <h5>Pha chấm điểm</h5>
+      <ol class="steps">
+        <li>Mỗi nến đóng, Reconciler quét các dự đoán có <code>valid_until ≤ now</code> chưa chấm.</li>
+        <li>Điền <code>outcome = log(close_now / last_close)</code>.</li>
+        <li>Điền <code>hit</code> = dấu của outcome có khớp <code>direction</code> không.</li>
+        <li>Chấm xong → chấm ✓/✗ hiện lên dải track record của chart.</li>
+        <li><code>/api/accuracy</code> tính lại tỉ lệ đúng 30 ngày <strong>kèm n=</strong>.</li>
+        <li>Audit A4 so Brier 30 ngày với Brier lúc đăng ký; lệch &gt;20% → cờ «cần retrain».</li>
+      </ol>
+    </div>
+  </div>
+
+  <h4>Hợp đồng dữ liệu — đã tồn tại trong code</h4>
+  <p><code>src/cryptopred/serving/schemas.py</code> định nghĩa <code>Prediction</code> dưới dạng
+    dataclass đông cứng. Đây là hợp đồng giữa backend và dashboard; đổi tên trường là breaking
+    change và phải cập nhật cả <code>web/app.js</code>. Trường
+    <code>p_up</code> thô <strong>chỉ để chẩn đoán</strong> — con số duy nhất được phép hiển thị là
+    <code>p_up_calibrated</code>.</p>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<section>
+  <h2>High level design · 4.6</h2>
+  <h3>Đường tới tiền thật — bốn cổng, không có ngoại lệ</h3>
+  <p>Kiến trúc auto-trade được dựng đầy đủ nhưng <strong>mặc định TẮT</strong>. Điều kiện mở đã
+    được định nghĩa bằng số ngay từ bây giờ, khi chưa có kết quả nào để sinh cảm xúc.</p>
+
+  <div class="gates" style="margin-top:var(--sp4)">
+    <div class="gate">
+      <div class="gn"></div>
+      <div>
+        <h4>Thống kê — cuối Phase 4</h4>
+        <p>≥8 fold trải ≥24 tháng · Sharpe sau phí ≥ 1,0 · max drawdown ≤ 25% ·
+          profit factor ≥ 1,2 · <strong>≥6/8 fold có lãi</strong> (không được để một fold gánh
+          toàn bộ) · thắng buy-and-hold sau phí.</p>
+      </div>
+    </div>
+    <div class="gate">
+      <div class="gn"></div>
+      <div>
+        <h4>Hiệu chỉnh xác suất</h4>
+        <p>Brier tốt hơn baseline · reliability diagram nằm trong ±10% quanh đường chéo ở mọi bin ·
+          kiểm chứng bằng lời: trong các lần model nói «60%», thực tế phải tăng ~60% số lần.</p>
+      </div>
+    </div>
+    <div class="gate">
+      <div class="gn"></div>
+      <div>
+        <h4>Chạy thật bằng tiền ảo — tối thiểu 60 ngày</h4>
+        <p>Hai vế song song: <strong>Testnet</strong> chứng minh đường ống (≥100 lệnh, 0 lệnh trùng,
+          0 lệnh mồ côi) · <strong>shadow run trên mainnet</strong> chứng minh kinh tế (PnL trong
+          ±30% so với backtest). Không chấm PnL trên Testnet — sổ lệnh ở đó quá mỏng.</p>
+      </div>
+    </div>
+    <div class="gate">
+      <div class="gn"></div>
+      <div>
+        <h4>An toàn kỹ thuật</h4>
+        <p>Kill switch · lỗ ngày 2% thì tự tắt và <strong>không tự bật lại</strong> · ≤1% vốn mỗi
+          lệnh · <code>clientOrderId</code> idempotent · đối soát 5 phút/lần · API key TẮT quyền rút
+          tiền · heartbeat 60s · khởi động lại luôn ở trạng thái TẮT.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="note stop">
+    <p><strong>Nói thẳng một lần.</strong> Vượt cả bốn cổng <em>không</em> có nghĩa là sẽ có lãi.
+      Bốn cổng này loại bỏ những cách thua <strong>có thể tránh được</strong> — lỗi kỹ thuật, rò rỉ
+      dữ liệu, tự lừa mình. Chúng không loại bỏ được rủi ro thị trường. Đây không phải lời khuyên
+      đầu tư.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<section>
+  <h2>High level design · 4.7</h2>
+  <h3>Lớp cắt ngang — audit và harness</h3>
+  <div class="grid g2">
+    <div class="card">
+      <h4>Sáu tầng audit chống nhiễu</h4>
+      <p class="small muted">Tầng nào đỏ thì tầng sau không còn ý nghĩa. Audit không bao giờ im
+        lặng — kết quả ghi vào <code>reports/</code> + MLflow, từ M12 thêm Telegram.</p>
+      <div class="tw" style="margin-top:var(--sp3)">
+        <table style="min-width:0">
+          <thead><tr><th>Tầng</th><th>Chống</th><th>Khi nào</th></tr></thead>
+          <tbody>
+            <tr><td>A0 lint</td><td>style trôi</td><td>mỗi lần sửa file</td></tr>
+            <tr><td>A1 guardrail</td><td>RULE 1+2 bị lách</td><td>mỗi commit</td></tr>
+            <tr><td>A2 5 phép thử</td><td>rò rỉ tinh vi</td><td>mỗi lần train</td></tr>
+            <tr><td>A3 chất lượng</td><td>trôi dữ liệu</td><td>mỗi lần tải</td></tr>
+            <tr><td>A4 calibration</td><td>«62%» hết đúng</td><td>hằng tuần</td></tr>
+            <tr><td>A5 live vs backtest</td><td>tự lừa khâu cuối</td><td>hằng ngày (shadow)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <h4>Harness — luật nào quên được thì chuyển thành máy</h4>
+      <p class="small muted"><code>CLAUDE.md</code> là lời khuyên; hook là luật. Trạng thái hiện tại:</p>
+      <ul class="tick" style="margin-top:var(--sp3)">
+        <li class="y">Skill <code>ai-coding</code> — quy trình 6 bước viết code</li>
+        <li class="y">Skill <code>visualize-dashboard</code> — 8 luật DS dạng thao tác</li>
+        <li class="n">Hook H1 <code>block_live_trading</code> — chặn lệnh động tới tiền</li>
+        <li class="n">Hook H2 <code>protect_raw</code> — <code>raw/</code> bất biến</li>
+        <li class="n">Hook H3 ruff tự động · H4 auto-test <code>validation/</code></li>
+        <li class="n">Hook H5 git pre-commit chặn khi test rò rỉ đỏ</li>
+        <li class="n">Agent <code>leakage-hunter</code> · <code>label-adversary</code> · <code>risk-reviewer</code></li>
+        <li class="n">Skill <code>feature-guardrails</code> · <code>leakage-audit</code> · <code>backtest-report</code></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<section>
+  <h2>Bảng module đầy đủ</h2>
+  <h3>M0 → M14 · trạng thái từng module</h3>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Module</th><th>Nội dung</th><th class="tnum">Mã nguồn</th><th>Còn thiếu</th><th class="tnum">Trạng thái</th></tr></thead>
+      <tbody>
+        <tr><td><strong>M0</strong> Nền móng</td>
+          <td>Repo, uv + Python 3.12, ruff, pytest, Makefile, CLAUDE.md, .env.example</td>
+          <td class="tnum">—</td><td class="muted small">—</td>
+          <td class="tnum"><span class="pill p-done">xong</span></td></tr>
+        <tr><td><strong>M1</strong> Thu thập</td>
+          <td>download.py idempotent + universe snapshot theo tháng</td>
+          <td class="tnum">800</td>
+          <td class="small">mẻ lớn 40 cặp × 3 khung · cột <code>taker_buy</code> từ endpoint klines</td>
+          <td class="tnum"><span class="pill p-wip">70%</span></td></tr>
+        <tr><td><strong>M2</strong> Lưu trữ</td>
+          <td>store.get_ohlcv · quality_report · available (DuckDB)</td>
+          <td class="tnum">↑</td>
+          <td class="small"><code>build_clean</code> — đánh dấu lỗ hổng</td>
+          <td class="tnum"><span class="pill p-wip">50%</span></td></tr>
+        <tr><td><strong>M3</strong> Đặc trưng ★</td>
+          <td>Hàng rào <code>shift_all</code> + <code>assert_scale_free</code> đã có test</td>
+          <td class="tnum">78</td>
+          <td class="small">9 nhóm feature · nhóm cross-market (dễ rò rỉ nhất)</td>
+          <td class="tnum"><span class="pill p-wip">hàng rào</span></td></tr>
+        <tr><td><strong>M4</strong> Nhãn</td>
+          <td>Công thức vùng chết đã đặc tả trong docstring</td>
+          <td class="tnum">32</td>
+          <td class="small">toàn bộ · 3 horizon · sàn theta</td>
+          <td class="tnum"><span class="pill p-todo">stub</span></td></tr>
+        <tr><td><strong>M5</strong> Model</td>
+          <td>Khung baselines + train + MLflow tag đã đặc tả</td>
+          <td class="tnum">49</td>
+          <td class="small">toàn bộ · 4 baseline trước tiên</td>
+          <td class="tnum"><span class="pill p-todo">stub</span></td></tr>
+        <tr><td><strong>M6</strong> Kiểm định ★★★</td>
+          <td>Signature <code>PurgedWalkForward</code> + 5 probe + 12 test (6 skip)</td>
+          <td class="tnum">110</td>
+          <td class="small"><strong>toàn bộ phần thân</strong> — module quan trọng nhất repo</td>
+          <td class="tnum"><span class="pill p-todo">stub</span></td></tr>
+        <tr><td><strong>M7</strong> Calibration</td>
+          <td>Đặc tả isotonic trên tập validation riêng</td>
+          <td class="tnum">↑</td><td class="small">toàn bộ</td>
+          <td class="tnum"><span class="pill p-todo">stub</span></td></tr>
+        <tr><td><strong>M8</strong> Backtest</td>
+          <td>Cấu hình phí đã nằm trong <code>config/model.yaml</code></td>
+          <td class="tnum">19</td><td class="small">toàn bộ · chấm GATE 1</td>
+          <td class="tnum"><span class="pill p-todo">stub</span></td></tr>
+        <tr><td><strong>M9</strong> API</td>
+          <td><code>schemas.py</code> — hợp đồng Prediction đã dùng được</td>
+          <td class="tnum">78</td>
+          <td class="small">7 endpoint FastAPI + WebSocket + MCP server</td>
+          <td class="tnum"><span class="pill p-wip">hợp đồng</span></td></tr>
+        <tr><td><strong>M10</strong> Inference</td>
+          <td>Thiết kế candle-close detector 2 nguồn + Store + Reconciler</td>
+          <td class="tnum">—</td><td class="small">toàn bộ</td>
+          <td class="tnum"><span class="pill p-todo">stub</span></td></tr>
+        <tr><td><strong>M11</strong> Dashboard</td>
+          <td>tokens.css kiểm định · <strong>prototype v6 tương tác được</strong></td>
+          <td class="tnum">218</td>
+          <td class="small">code thật W15a/b/c · lightweight-charts · nối WS Binance</td>
+          <td class="tnum"><span class="pill p-design">prototype</span></td></tr>
+        <tr><td><strong>M12</strong> Telegram</td>
+          <td>—</td><td class="tnum">1</td><td class="small">toàn bộ</td>
+          <td class="tnum"><span class="pill p-todo">stub</span></td></tr>
+        <tr><td><strong>M13</strong> RiskEngine ★★</td>
+          <td>Hằng số giới hạn + checklist GATE 4 trong docstring</td>
+          <td class="tnum">28</td>
+          <td class="small">toàn bộ · 3 lối ra phải viết trước lối vào</td>
+          <td class="tnum"><span class="pill p-lock">khoá</span></td></tr>
+        <tr><td><strong>M14</strong> Executor</td>
+          <td>—</td><td class="tnum">6</td>
+          <td class="small">toàn bộ · chỉ sau M13 + GATE 1+2</td>
+          <td class="tnum"><span class="pill p-lock">khoá</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<section>
+  <h2>Việc tiếp theo</h2>
+  <h3>Đường găng và ba quyết định đang chờ</h3>
+
+  <div class="grid g3">
+    <div class="card stripe-up">
+      <h4>W0 <span class="pill p-todo">0,5 ngày</span></h4>
+      <p class="small muted">Hooks H1–H3 + agent <code>leakage-hunter</code> + skill
+        <code>feature-guardrails</code>. Rẻ nhất trong toàn bộ WBS và bảo vệ mọi thứ phía sau.</p>
+    </div>
+    <div class="card stripe-warn">
+      <h4>W1 <span class="pill p-todo">0,5 ngày + chạy nền</span></h4>
+      <p class="small muted">Tải 3 năm × 40 cặp × 3 khung, thêm cột <code>taker_buy</code>.
+        Hiện mới có 1 trong 120 tổ hợp.</p>
+    </div>
+    <div class="card stripe-pred">
+      <h4>W3 <span class="pill p-todo">2 ngày</span></h4>
+      <p class="small muted">PurgedWalkForward + test ranh giới. Chạy <strong>song song</strong>
+        với W1–W2 — trọng tài phải có mặt trước cầu thủ.</p>
+    </div>
+  </div>
+
+  <p style="margin-top:var(--sp5)"><strong>Đường găng tới GATE 1:</strong>
+    <span class="num">W1 → W2 → W4/W5 → W6 → W7 → W9 → W10 → W11</span>. Mọi thứ sau GATE 1 đều
+    có thể chờ. Theo roadmap, đây là tuần 8–9 — và master plan đã nói thẳng rằng đây là nơi phần
+    lớn dự án chết: bạn sẽ có backtest đẹp, phát hiện rò rỉ, rồi con số tụt về quanh 51%.
+    Đó không phải thất bại, đó là lần đầu tiên bạn nhìn thấy sự thật.</p>
+
+  <div class="note warn">
+    <p><strong>Ba quyết định đang chờ bạn</strong> — không chặn W0–W3:</p>
+    <p>① <strong>Ngưỡng thanh khoản:</strong> giữ 5 triệu USD/30 ngày (thực đo cho 422/474 cặp lọt
+      qua — gần như không lọc) hay siết thành 150 triệu (≈5 triệu/ngày)?</p>
+    <p>② <strong>Số coin tải ở W1:</strong> đúng 40 theo config, hay 45–50 để dư cho coin rơi khỏi
+      universe giữa chừng?</p>
+    <p>③ <strong>Nếu trượt GATE 1:</strong> quay lại thêm feature (M3) hay đổi nhãn (M4) trước?
+      Nên quyết bằng đầu lạnh ngay bây giờ — đúng tinh thần RULE 9.</p>
+  </div>
+</section>
+
+<footer>
+  <span>cryptopred · bản đồ hệ thống · 25/08/2026</span>
+  <span>Nguồn: <code>docs/00–05</code> · <code>src/cryptopred/</code> · 5 commit</span>
+</footer>
+
+</div>

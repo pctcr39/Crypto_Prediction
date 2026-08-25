@@ -95,15 +95,18 @@ make check-data     # xem đang có dữ liệu gì
 
 | Phase | Module | Trạng thái |
 |---|---|---|
-| P0 · Nền móng | M0 | ✅ xong — khung repo, downloader chạy được |
-| P1 · Dữ liệu | M1 | 🔨 downloader + universe đã có; còn tải mẻ lớn 3 năm × 40 cặp |
-| P1 | M2 `store.build_clean` | ⬜ chưa làm |
-| P1 | M3 features | ⬜ chưa làm — mới có hàng rào `shift_all` / `assert_scale_free` |
-| P2 | M4 labels · M6 validation ★ | ⬜ chưa làm |
-| P3+ | M5, M7–M14 | ⬜ chưa làm |
+| P0 · Nền móng | M0 | ✅ xong — repo, test 25 xanh, downloader chạy được |
+| P1 · Dữ liệu | M1 | 🔶 downloader + universe snapshot xong; **còn** mẻ lớn 40 cặp × 3 khung + cột taker_buy (G3). Đã có: BTC 1h 49.465 nến |
+| P1 | M2 | 🔶 store đọc + quality_report xong; **còn** `build_clean` |
+| P1 | M3 | ⬜ chỉ có hàng rào `shift_all`/`assert_scale_free` (có test) |
+| P2 | M4 nhãn · M6 kiểm định ★ | ⬜ stub — 5 phép thử leakage đang `skip` |
+| P3–P4 | M5, M7, M8 | ⬜ stub |
+| P5 | M9–M11 | ⬜ stub — **prototype dashboard v6 là hợp đồng UI** (`docs/design/dashboard-prototype.html`, artifact đã publish): chart + khung 1m–1w chiếu model, chọn coin, trade setup M13, BUY/SELL paper, sổ lệnh mô phỏng |
+| P6–P7 | M12–M14 | ⬜ stub, khoá sau GATE |
 
-Stub nào chưa làm đều `raise NotImplementedError("M<n> — xem docs/…")`. Đó là cố ý:
-không có code giả vờ chạy được.
+Harness: skills `ai-coding` + `visualize-dashboard` ✅ · hooks H1–H5 ⬜ · agents ⬜ · MCP để M9.
+Docs: 00–03 gốc · 04 chiến lược (WBS W0–W18, 6 tầng audit) · 05 UX plan · 04_PHAN_TICH_VISHVAALGO · ADR-001. ADR-002..005 chưa viết.
+Quyết định chờ user: G4 (ngưỡng thanh khoản) · số coin tải W1 · chính sách khi trượt GATE 1.
 
 **Việc tiếp theo theo kế hoạch:** M3 (feature) và M6 (kiểm định) làm **song song** —
 bộ kiểm định phải tồn tại *trước khi* có model nào để tự lừa mình.
