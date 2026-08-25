@@ -262,6 +262,7 @@ Trong mỗi fold train: 80% đầu (theo thời gian) fit model, 20% cuối fit 
 - **Candle-close detector:** nguồn chính là WS kline Binance với cờ `k.x=true` (nến đóng); fallback REST poll tại `close+5s` nếu WS im — hai nguồn vì detector chết lặng lẽ là nguồn "Dự đoán cũ" số một.
 - **PredictionStore:** append `data/predictions/<tf>/year=*/predictions.parquet`, dedupe (symbol, tf, predicted_at) — chạy lại không ghi trùng, giống hệt triết lý M1.
 - **OutcomeReconciler (G2):** mỗi nến đóng, tìm prediction có `valid_until ≤ now` chưa chấm → điền `outcome = log(close_now/last_close)`, `hit = sign khớp direction` → nguồn duy nhất cho `/api/accuracy` và audit A4.
+- **Endpoint bổ sung theo 05 §3.5:** `GET /api/predictions/history?symbol=&timeframe=&limit=` — nguồn cho dải tín hiệu quá khứ trên chart.
 - Stale rule (RULE 8): `now > valid_until` mà chưa có bản mới → WS đẩy sự kiện `stale`, dashboard đổi trạng thái — backend chủ động nói, không để frontend tự đoán.
 
 ### 6.9 M11–M14 (phác — 03 đã specc kỹ)
@@ -291,7 +292,7 @@ M11: 3 file luồng (`priceStream/predictionStream/history.js`) + build componen
 | **W12** | FastAPI 6 endpoint + test | M9 | 2d | W11 | **P2** | DoD 03 §M9 |
 | **W13** | InferenceService + PredictionStore + **OutcomeReconciler** (G1, G2) | M10 | 2d | W12 | **P2** | 48h không sập; accuracy có n= |
 | **W14** | MCP `cryptopred-mcp` bọc /api/prediction | M9+ | 0.5d | W12 | **P2** | Hỏi "BTC 4h?" trong phiên Claude mới → có câu trả lời |
-| **W15** | Dashboard theo 14 component 02 §4 (✅ prototype đã dựng: `docs/design/dashboard-prototype.html`) | M11 | 5d | W13 | **P2** | Checklist tiếp cận 02 §6 tick đủ |
+| **W15** | Dashboard M11 — **tách W15a/b/c theo `05_DASHBOARD_UX_PLAN.md §6`** (✅ prototype v2: timestamp thật, thanh khung Binance, track record) | M11 | 5.5d | W13 | **P2** | Checklist 02 §6 + DoD từng gói trong 05 §6 |
 | **W16** | Telegram + scheduled task đêm/sáng + audit A4 | M12 | 1d | W13 | **P2** | Nhận tin trên điện thoại; không trùng sau restart |
 | **W17** | RiskEngine — nhóm 3 lối ra trước, mỗi giới hạn một test cố tình vi phạm | M13 | 3d | W11 (GATE 1) | **P3** | DoD 03 §M13 + `risk-reviewer` duyệt PR |
 | **W18** | Executor: Testnet ∥ Shadow-mainnet, audit A5 hằng ngày | M14 | 3d + 60 ngày | W17, GATE 1+2 | **P3** | GATE 3: ≥100 lệnh, 0 sự cố, ±30% |

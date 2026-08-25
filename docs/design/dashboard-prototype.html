@@ -116,7 +116,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer;pad
   gap:var(--sp-3);margin-bottom:var(--sp-3);flex-wrap:wrap}
 .tabs{display:inline-flex;background:var(--surface-2);border:1px solid var(--border);
   border-radius:var(--radius-md);padding:2px}
-.tab{min-width:56px;min-height:40px;padding:var(--sp-1) var(--sp-3);
+.tab{min-width:44px;min-height:40px;padding:var(--sp-1) var(--sp-3);
   border-radius:var(--radius-sm);font:500 14px/20px var(--font-ui);color:var(--text-2)}
 .tab[aria-selected="true"]{background:var(--surface-1);color:var(--text-1);
   box-shadow:0 0 0 1px var(--border)}
@@ -143,6 +143,8 @@ canvas{display:block;width:100%;height:100%}
 .legend-chip i{width:14px;height:0;border-top:2px dashed var(--pred)}
 .legend-chip b{width:10px;height:10px;border-radius:2px;background:var(--pred-band);
   border:1px solid var(--pred)}
+.legend-chip u{width:9px;height:9px;border-radius:var(--radius-pill);text-decoration:none;
+  border:1.5px solid var(--pred);background:var(--up)}
 
 /* bảng thay chart (chế độ bảng — checklist §6) */
 .data-table{display:none;overflow-x:auto}
@@ -267,16 +269,28 @@ canvas{display:block;width:100%;height:100%}
         </div>
         <div class="ph-right">
           <span class="status status--live">Live · <span class="num" id="tick-time">14:00:05</span> UTC</span>
-          <span class="status status--live" style="color:var(--text-3)">Dự đoán mới · nến 14:00 đã đóng</span>
+          <span class="status" style="color:var(--text-2)">Nến đóng &amp; dự đoán mới sau <b class="num" id="cd" style="color:var(--text-1)">54:55</b></span>
         </div>
       </div>
 
       <section class="card" id="chart-card">
         <div class="filter-row">
-          <div class="tabs" role="tablist" aria-label="Khung thời gian">
-            <button class="tab" role="tab" aria-selected="true">1h</button>
-            <button class="tab" role="tab" aria-selected="false">4h</button>
-            <button class="tab" role="tab" aria-selected="false">1d</button>
+          <div style="display:flex;align-items:center;gap:var(--sp-3);flex-wrap:wrap">
+            <div class="tabs" role="tablist" aria-label="Khung thời gian">
+              <button class="tab" role="tab" aria-selected="false">1m</button>
+              <button class="tab" role="tab" aria-selected="false">5m</button>
+              <button class="tab" role="tab" aria-selected="false">15m</button>
+              <button class="tab" role="tab" aria-selected="false">30m</button>
+              <button class="tab" role="tab" aria-selected="true">1h</button>
+              <button class="tab" role="tab" aria-selected="false">2h</button>
+              <button class="tab" role="tab" aria-selected="false">4h</button>
+              <button class="tab" role="tab" aria-selected="false">6h</button>
+              <button class="tab" role="tab" aria-selected="false">12h</button>
+              <button class="tab" role="tab" aria-selected="false">1d</button>
+              <button class="tab" role="tab" aria-selected="false">1w</button>
+            </div>
+            <span class="chip" id="model-chip"
+              title="Model chỉ có 3 khung (1h·4h·1d). Khung khác hiển thị dự đoán của model gần nhất, chiếu lên trục thời gian.">model 1h · trực tiếp</span>
           </div>
           <button class="ghost-btn" id="table-toggle" aria-pressed="false">Xem dạng bảng</button>
         </div>
@@ -289,6 +303,7 @@ canvas{display:block;width:100%;height:100%}
         <div class="chart-note">
           <span class="legend-chip"><i></i> Giá dự đoán (q50)</span>
           <span class="legend-chip"><b></b> Dải tin cậy q10–q90</span>
+          <span class="legend-chip"><u></u> Tín hiệu quá khứ · tô ✓ xanh / ✗ đỏ</span>
           <span>Trái ranh giới «Bây giờ» là dữ liệu thật · phải là phỏng đoán của model</span>
         </div>
 
@@ -413,6 +428,16 @@ canvas{display:block;width:100%;height:100%}
         <p class="spec-note">Trung thực với người dùng là yêu cầu thiết kế, không phải
           tuỳ chọn (00 §4.2).</p>
       </div>
+      <div class="card spec-card">
+        <h3>Khung thời gian ↔ model</h3>
+        <p class="spec-note" style="margin-top:0">Chart xem được <b>mọi khung Binance</b>
+          (1m → 1w); model chỉ có 3 (1h · 4h · 1d — RULE 11 không tin khung ngắn hơn).
+          Quy tắc chiếu: 1m–1h → model <b>1h</b> · 2h–6h → model <b>4h</b> ·
+          12h–1w → model <b>1d</b>.</p>
+        <p class="spec-note">Chip cạnh thanh khung luôn nói thật đang xem dự đoán của model
+          nào. Trục tương lai dùng <b>timestamp thật</b> (16:00 · 18:00 UTC), không dùng
+          «+4h» trừu tượng. Prototype này dữ liệu cố định ở khung 1h.</p>
+      </div>
     </div>
   </section>
 </div>
@@ -449,6 +474,15 @@ canvas{display:block;width:100%;height:100%}
     close = open;
   }
 
+  // Tín hiệu QUÁ KHỨ — track record 24 giờ gần nhất (mô phỏng).
+  // Model im lặng phần lớn thời gian (vùng chết); khi phát biểu, ~58% đúng.
+  const hist = {};
+  for (let i = N - 24; i < N; i++) {
+    if (rng() < 0.45) continue;                       // KHÔNG RÕ — không có tín hiệu
+    hist[i] = { dir: rng() < 0.5 ? "up" : "down",
+                p: Math.round(58 + rng() * 8), hit: rng() < 0.58 };
+  }
+
   const canvas = document.getElementById("chart");
   const wrap = document.getElementById("chart-wrap");
   const tt = document.getElementById("tt");
@@ -470,7 +504,7 @@ canvas{display:block;width:100%;height:100%}
       border: cssVar("--border"), t2: cssVar("--text-2"), t3: cssVar("--text-3"),
       s1: cssVar("--surface-1"), s2: cssVar("--surface-2"),
     };
-    const padL = 8, padR = 64, padT = 18, padB = 26;
+    const padL = 8, padR = 64, padT = 18, padB = 42;
     const plotW = W - padL - padR, plotH = Ht - padT - padB;
     const slots = N + H + 1.5;
     const slotW = plotW / slots;
@@ -495,7 +529,10 @@ canvas{display:block;width:100%;height:100%}
     ctx.fillStyle = C.t3; ctx.textAlign = "center";
     for (let i = 6; i < N; i += 12)   // bắt đầu i=6: nhãn đầu không bị mép trái cắt
       ctx.fillText(String(candles[i].hour).padStart(2, "0") + ":00", x(i), Ht - 8);
-    ctx.fillText("+4h", x(N + H - 1), Ht - 8);
+    // Trục tương lai dùng timestamp THẬT như Binance, không dùng "+4h" trừu tượng
+    ctx.fillStyle = C.t2;
+    for (let k = 2; k <= H; k += 2)
+      ctx.fillText(String((14 + k) % 24).padStart(2, "0") + ":00", x(N + k - 1), Ht - 8);
     ctx.textAlign = "left";
 
     // Nến: thân đặc, bấc 1px, khe 2px
@@ -538,6 +575,15 @@ canvas{display:block;width:100%;height:100%}
     ctx.fillStyle = C.pred; ctx.fill();
     ctx.lineWidth = 2; ctx.strokeStyle = C.s1; ctx.stroke();
 
+    // Dải tín hiệu quá khứ: viền tím = model từng phát biểu, tô theo kết quả
+    const yR = Ht - padB + 12;
+    for (const k in hist) {
+      const h = hist[k];
+      ctx.beginPath(); ctx.arc(x(+k), yR, 3.5, 0, 7);
+      ctx.fillStyle = h.hit ? C.up : C.down; ctx.fill();
+      ctx.lineWidth = 1.5; ctx.strokeStyle = C.pred; ctx.stroke();
+    }
+
     // Crosshair + highlight nến đang rê (02 §3.3)
     if (hover !== null) {
       const { i, my } = hover;
@@ -563,10 +609,13 @@ canvas{display:block;width:100%;height:100%}
     hover = { i: Math.min(i, N + H - 1), my };
     if (i < N) {
       const c = candles[i];
+      const h = hist[i];
       tt.innerHTML = `<div class="tt-title">${String(c.hour).padStart(2, "0")}:00 UTC · nến 1h</div>`
-        + `O ${fmt(c.open)} · H ${fmt(c.high)}<br>L ${fmt(c.low)} · C ${fmt(c.close)}`;
+        + `O ${fmt(c.open)} · H ${fmt(c.high)}<br>L ${fmt(c.low)} · C ${fmt(c.close)}`
+        + (h ? `<div class="tt-pred">Tín hiệu: ${h.dir === "up" ? "▲ TĂNG" : "▼ GIẢM"} ${h.p}% → ${h.hit ? "✓ đúng" : "✗ sai"}</div>`
+             : (i >= N - 24 ? `<div class="tt-pred">● KHÔNG RÕ — model im lặng</div>` : ""));
     } else {
-      tt.innerHTML = `<div class="tt-title"><span class="dot"></span>Dự đoán · +${i - N + 1}h</div>`
+      tt.innerHTML = `<div class="tt-title"><span class="dot"></span>Dự đoán · ${String((14 + i - N + 1) % 24).padStart(2, "0")}:00 UTC</div>`
         + `q90 ${fmt(PRED.q90)}<br>q50 ${fmt(PRED.q50)}<br>q10 ${fmt(PRED.q10)}`
         + `<div class="tt-pred">p(tăng) ${PRED.p_up}% · đã hiệu chỉnh</div>`;
     }
@@ -599,21 +648,40 @@ canvas{display:block;width:100%;height:100%}
   // Tick mô phỏng: giá nhích nhẹ mỗi 2.5s — hero NHÁY NỀN, không trượt vị trí (DS-RULE 2)
   const hero = document.getElementById("hero");
   const tickTime = document.getElementById("tick-time");
-  let sec = 5;
+  const cdEl = document.getElementById("cd");
+  let elapsed = 305;                                 // giây kể từ 14:00:00
+  setInterval(() => {                                // đồng hồ + đếm ngược nến (giống Binance)
+    elapsed = (elapsed + 1) % 3600;               // quay vòng, không để đếm ngược âm
+    tickTime.textContent = "14:" + String(Math.floor(elapsed / 60)).padStart(2, "0")
+      + ":" + String(elapsed % 60).padStart(2, "0");
+    const rem = 3600 - elapsed;
+    cdEl.textContent = String(Math.floor(rem / 60)).padStart(2, "0") + ":" + String(rem % 60).padStart(2, "0");
+  }, 1000);
+  const baseHigh = candles[N - 1].high, baseLow = candles[N - 1].low;
   setInterval(() => {
     const c = candles[N - 1];
-    const d = (rng() - 0.48) * 22;
-    c.close = Math.max(c.low, Math.min(c.high * 1.0005, c.close + d));
-    c.high = Math.max(c.high, c.close); c.low = Math.min(c.low, c.close);
+    // dao động HỒI QUY quanh mốc — không trôi vô hạn theo thời gian mở trang
+    const d = (rng() - 0.5) * 22 + (LAST_CLOSE - c.close) * 0.03;
+    c.close = Math.min(LAST_CLOSE * 1.003, Math.max(LAST_CLOSE * 0.997, c.close + d));
+    c.high = Math.max(baseHigh, c.close); c.low = Math.min(baseLow, c.close);
     hero.textContent = c.close.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     hero.classList.remove("flash-up", "flash-down");
     void hero.offsetWidth;                       // restart transition
     hero.classList.add(d >= 0 ? "flash-up" : "flash-down");
     setTimeout(() => hero.classList.remove("flash-up", "flash-down"), 220);
-    sec = (sec + 2) % 60;
-    tickTime.textContent = "14:00:" + String(sec).padStart(2, "0");
     draw();
   }, 2500);
+
+  // Chuyển khung: model chỉ có 3 — chip luôn nói thật đang chiếu model nào
+  const MODEL_FOR = { "1m": "1h", "5m": "1h", "15m": "1h", "30m": "1h", "1h": "1h",
+                      "2h": "4h", "4h": "4h", "6h": "4h", "12h": "1d", "1d": "1d", "1w": "1d" };
+  const chipEl = document.getElementById("model-chip");
+  document.querySelectorAll(".tab").forEach(b => b.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach(t => t.setAttribute("aria-selected", "false"));
+    b.setAttribute("aria-selected", "true");
+    const tf = b.textContent.trim(), m = MODEL_FOR[tf];
+    chipEl.textContent = tf === m ? `model ${m} · trực tiếp` : `model ${m} · chiếu lên khung ${tf}`;
+  }));
 
   // Vẽ lại khi đổi kích thước / đổi theme
   new ResizeObserver(draw).observe(wrap);

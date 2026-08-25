@@ -1,0 +1,123 @@
+# REVIEW & KẾ HOẠCH UX DASHBOARD
+
+> Phiên bản 1.0 · 25/08/2026 · Review prototype `docs/design/dashboard-prototype.html`
+> Mục tiêu: dashboard **thân thiện, dễ tương tác, thu hút** — mà không phản bội một luật trung thực nào của 00/02.
+> Liên quan: `02_DESIGN_SYSTEM.md` (luật hiển thị) · `04_EXECUTION_STRATEGY.md §7` (WBS W15)
+
+---
+
+## 1. REVIEW PROTOTYPE — 9 PHÁT HIỆN
+
+Prototype v1 đạt phần *đúng* (token, màu kiểm định, tách dự đoán/sự thật, trạng thái đủ) nhưng còn xa phần *đáng dùng hằng ngày*. Review theo con mắt một người dùng Binance quen thuộc:
+
+| # | Phát hiện | Vì sao quan trọng | Trạng thái |
+|---|---|---|---|
+| **R1** | Trục tương lai ghi «+4h» trừu tượng, không phải giờ thật | Người dùng Binance đọc mọi thứ theo timestamp UTC; «+4h» bắt họ tự tính | ✅ **đã sửa v2** — trục tương lai ghi 16:00 · 18:00 UTC, tooltip vùng dự đoán ghi giờ thật |
+| **R2** | Chỉ 3 tab khung (1h/4h/1d); Binance có 11+ | Cảm giác "đồ chơi" so với chart họ dùng hằng ngày | ✅ **v2 có UI** — thanh khung đầy đủ 1m→1w + quy tắc chiếu model (§3.2); logic dữ liệu thật ở W15a |
+| **R3** | Không thấy model **từng nói gì** trên chart — chỉ có 1 dự đoán hiện tại | Đây vừa là lỗ hổng lòng tin vừa là cơ hội thu hút lớn nhất: track record công khai là thứ giữ người dùng quay lại | ✅ **v2 mô phỏng** — dải chấm tín hiệu quá khứ (viền tím, tô ✓/✗) + tooltip kết quả; dữ liệu thật cần W13 (§3.5) |
+| **R4** | Không đếm ngược nến — Binance luôn có countdown | Countdown trả lời câu hỏi tự nhiên nhất: "bao giờ có dự đoán mới?" — lý do quay lại màn hình | ✅ **đã thêm v2** — «Nến đóng & dự đoán mới sau 54:43» |
+| **R5** | Không zoom / pan / kéo xem lịch sử | Tương tác tối thiểu của một chart tài chính | ⬜ W15a — lightweight-charts v5 có sẵn, **không tự chế trên Canvas** |
+| **R6** | Không có lớp giải thích cho người mới ("62% đã hiệu chỉnh" nghĩa là gì?) | "Thân thiện" với người không làm ML = mỗi con số dịch được ra tiếng người trong 1 chạm | ⬜ W15c |
+| **R7** | Coin selector sơ sài: không ghim ưa thích, không giá mini, không sắp xếp | Người dùng thật có 3–5 coin theo dõi thường trực | ⬜ W15c |
+| **R8** | Mobile mới chỉ "xếp chồng cho khỏi vỡ" | Phần lớn lượt xem giá là trên điện thoại | ⬜ W15c |
+| **R9** | *Bug:* mô phỏng giá trôi vô hạn theo thời gian mở trang (ratchet high/low) | Mở trang 30 phút là hero lệch khỏi dải dự đoán → prototype tự mâu thuẫn | ✅ **đã sửa** — dao động hồi quy quanh mốc, đồng hồ quay vòng |
+
+**Kết luận:** v2 đã xử lý toàn bộ nhóm *timestamp & track record* (R1–R4, R9). Phần còn lại (R5–R8) là việc của code thật W15 — prototype không nên chế lại thứ lightweight-charts cho không.
+
+---
+
+## 2. BA NGUYÊN TẮC — "THU HÚT BẰNG SỰ THẬT SỐNG ĐỘNG"
+
+Dashboard này không được phép câu kéo kiểu casino. Sự thu hút phải đến từ chính chất liệu của sản phẩm:
+
+1. **SỐNG** — màn hình luôn nhúc nhích một cách trung thực: giá tick realtime, countdown chạy, flash nền 150ms khi giá đổi. Không hoạt hoạ trang trí, không hiệu ứng giả realtime (DS-RULE 2).
+2. **RÕ** — mọi con số dịch được ra tiếng người trong một chạm: tooltip của meter là câu "Trong 100 lần model nói ~62%, thực tế tăng 58 lần (n=340)", không phải định nghĩa Brier score.
+3. **CHỨNG MINH ĐƯỢC** — track record nằm ngay trên chart, cả lúc model sai. Người dùng quay lại vì họ đang *theo dõi một cuộc thử nghiệm công khai*, không phải vì bị dụ.
+
+**Guardrail chống dark-pattern (không thương lượng):** không confetti/âm thanh khi có tín hiệu · không ẩn các lần sai · KHÔNG RÕ hiển thị thoải mái như một câu trả lời bình thường · accuracy luôn kèm n= · mọi engagement idea vi phạm RULE 6/7/8 bị loại từ vòng ý tưởng.
+
+---
+
+## 3. TIMESTAMP & TIMEFRAME GIỐNG BINANCE — THIẾT KẾ CHỐT
+
+### 3.1 Thanh khung đầy đủ
+`1m · 5m · 15m · 30m · 1h · 2h · 4h · 6h · 12h · 1d · 1w` — dữ liệu nến mọi khung đều lấy thẳng từ Binance (miễn phí, đường giá không qua backend).
+
+### 3.2 Model giữ nguyên 3 khung — và nói thật điều đó
+Nói thẳng: **không mở model xuống 1m/5m.** Khung ngắn gần như random walk (RULE 11) và phí nuốt sạch edge intraday dày lệnh (RULE 5) — model 1m sẽ chỉ sản xuất nhiễu đắt tiền. Thay vào đó:
+
+| Khung đang xem | Dự đoán hiển thị | Chip trung thực |
+|---|---|---|
+| 1m · 5m · 15m · 30m · 1h | model **1h** (horizon 4h) | «model 1h · chiếu lên khung 15m» |
+| 2h · 4h · 6h | model **4h** (horizon 24h) | «model 4h · chiếu lên khung 2h» |
+| 12h · 1d · 1w | model **1d** (horizon 1d) | «model 1d · chiếu lên khung 12h» |
+
+Dải q10–q90 và đường q50 vẽ theo **giờ UTC tuyệt đối** nên tự khớp mọi khung — chỉ số nến tương lai thay đổi, timestamp không. Nếu sau này bạn vẫn muốn model riêng cho khung ngắn, đó là thay đổi master plan (thêm nhãn, thêm walk-forward, thêm gate) — quyết định riêng, không gói vào W15.
+
+### 3.3 Trục thời gian — timestamp thật ở cả hai phía ranh giới
+Vùng tương lai đánh nhãn giờ UTC thật (16:00 · 18:00), đường dự đoán neo đúng `valid_until`. «Bây giờ» là ranh giới duy nhất giữa sự thật và phỏng đoán — người xem không bao giờ phải tự quy đổi «+4h».
+
+### 3.4 Countdown kép
+«Nến đóng & dự đoán mới sau **mm:ss**» — đồng bộ server-time như Binance (lệch giờ máy người dùng phải được bù bằng `serverTime` của API).
+
+### 3.5 Dự đoán theo TOÀN BỘ timestamp — dải tín hiệu quá khứ
+Mỗi nến đã đóng đều từng có một dự đoán. Thiết kế: hàng chấm dưới chart, mỗi chấm một nến có tín hiệu — **viền tím** (vật của model, RULE 7), **tô xanh ✓ / đỏ ✗** theo kết quả (ngữ nghĩa PnL), nến im lặng không có chấm. Hover nến → tooltip ghép «Tín hiệu 09:00: ▼ GIẢM 61% → ✓ đúng».
+
+**Hệ quả kiến trúc (quan trọng):** cần dữ liệu từ PredictionStore + OutcomeReconciler (W13) và một endpoint **mới** phải bổ sung vào hợp đồng API M9:
+
+```
+GET /api/predictions/history?symbol=&timeframe=&limit=200
+→ [{predicted_at, direction, p_up_calibrated, outcome, hit}, …]
+```
+
+---
+
+## 4. DANH MỤC NÂNG CẤP — XẾP ƯU TIÊN
+
+| ID | Nâng cấp | Giá trị | Effort | Gói | Trạng thái |
+|---|---|---|---|---|---|
+| UX-1 | Timestamp thật ở trục tương lai + tooltip | ★★★ | XS | — | ✅ v2 |
+| UX-2 | Thanh khung 1m→1w + chiếu model + chip trung thực | ★★★ | S | W15a | ✅ v2 (UI) |
+| UX-3 | Dải tín hiệu quá khứ + tooltip kết quả | ★★★ | M | W15b | ✅ v2 (mô phỏng) |
+| UX-4 | Countdown nến & dự đoán kế | ★★★ | XS | — | ✅ v2 |
+| UX-5 | Zoom / pan / kéo lịch sử (lightweight-charts v5) | ★★★ | S | W15a | ⬜ |
+| UX-6 | Lớp giải thích: tooltip tiếng người, «?» mỗi panel, tour 3 bước lần đầu mở | ★★★ | M | W15c | ⬜ |
+| UX-7 | Coin selector: ghim ★, giá mini + sparkline 24h, sort theo volume/%/tên | ★★ | M | W15c | ⬜ |
+| UX-8 | «Báo tôi khi có tín hiệu» → deep-link Telegram bot (nối M12) | ★★ | S | W16 | ⬜ |
+| UX-9 | Mobile thật: coin selector thành bottom-sheet, panel phải tab hoá, chart ưu tiên chiều cao | ★★ | M | W15c | ⬜ |
+| UX-10 | Share card PNG một dự đoán (kèm timestamp, n=, disclaimer) | ★ | S | P3 · tuỳ chọn | ⬜ |
+
+---
+
+## 5. WIREFRAME SAU NÂNG CẤP
+
+**Desktop (≥1280):** giữ khung 3 cột của 02 §5. Hàng lọc trên chart: thanh khung 11 mức + chip model + nút bảng. Dưới chart: dải tín hiệu quá khứ (cùng canvas). Panel phải thêm nút «?» ở mỗi card mở giải thích ngắn.
+
+**Mobile (<768):** header giá (hero + countdown ghim trên cùng) → chart cao ≥ 55vh, thanh khung cuộn ngang → PredictionCard → nút «Báo tôi khi có tín hiệu» → lịch sử. Coin selector = bottom-sheet mở từ nút cạnh symbol. Vùng chạm ≥44px giữ nguyên.
+
+---
+
+## 6. THỰC THI — W15 TÁCH BA GÓI
+
+| Gói | Nội dung | Ước lượng | Phụ thuộc | DoD |
+|---|---|---|---|---|
+| **W15a** Chart core | lightweight-charts v5 · 3 luồng dữ liệu tách file (02 §M11) · thanh khung 11 mức + chiếu model · timestamp thật · zoom/pan · countdown đồng bộ serverTime | 2.5d | W12 (API) | Mọi khung hiển thị đúng; chip nói thật; 1 giờ chạy không rò bộ nhớ |
+| **W15b** Track record | endpoint `predictions/history` (thêm vào M9) · dải tín hiệu quá khứ · accuracy overlay · SignalHistoryTable nối dữ liệu thật | 1.5d | **W13** (PredictionStore + OutcomeReconciler) | Chấm ✓/✗ khớp 100% với reconciler; accuracy kèm n= |
+| **W15c** Thân thiện | lớp giải thích + tour 3 bước · coin selector nâng cấp · mobile thật · trạng thái rỗng/lỗi/skeleton | 1.5d | W15a | Checklist 02 §6 tick đủ; người mới hiểu «62% đã hiệu chỉnh» sau ≤1 tooltip |
+
+Tổng ~5.5d — thay dòng W15 (5d) trong `04 §7`; đường găng không đổi (vẫn sau W13).
+
+**Việc phát sinh ngoài W15:** ① thêm endpoint history vào hợp đồng API khi làm W12 · ② M12 nhận thêm deep-link «Báo tôi» (UX-8) · ③ prototype v2 là tài liệu sống — mọi thay đổi thiết kế cập nhật vào đó trước, code thật theo sau.
+
+---
+
+## 7. ĐO THÀNH CÔNG
+
+- **Hiểu:** người chưa từng thấy sản phẩm giải thích được «▲ TĂNG 62%» sau ≤ 1 tooltip.
+- **Nhanh:** mở trang → chart + dự đoán đầu tiên < 3s trên mạng thường.
+- **Bền:** 1 giờ chạy liên tục không rò bộ nhớ; rút mạng → «Mất kết nối» trong ≤ 5s (DoD M11 giữ nguyên).
+- **Trung thực:** KHÔNG RÕ xuất hiện tự nhiên; các lần ✗ sai hiển thị ngang hàng với ✓ đúng; không con số nào thiếu n=.
+
+---
+
+*Liên quan: `02_DESIGN_SYSTEM.md` · `04_EXECUTION_STRATEGY.md` · prototype: `docs/design/dashboard-prototype.html`*
