@@ -182,6 +182,24 @@ canvas{display:block;width:100%;height:100%}
   margin-bottom:var(--sp-3)}
 .chip{font:500 11px/14px var(--font-num);color:var(--text-3);
   border:1px solid var(--border);border-radius:var(--radius-pill);padding:2px 8px}
+.pos{color:var(--up)} .neg{color:var(--down)}
+.profit-hero{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-3);
+  margin-top:var(--sp-3);padding:var(--sp-2) var(--sp-3);border-radius:var(--radius-md);
+  background:var(--pred-band);border:1px solid color-mix(in srgb,var(--pred) 40%,transparent)}
+.profit-hero .lbl{font:400 12px/16px var(--font-ui);color:var(--text-2)}
+.profit-hero .lbl small{color:var(--text-3);font-size:11px}
+.profit-hero .big{font:600 22px/28px var(--font-num);font-variant-numeric:tabular-nums}
+.steps{width:100%;border-collapse:collapse;margin-top:var(--sp-2);
+  font:400 13px/20px var(--font-num);font-variant-numeric:tabular-nums}
+.steps th{font:500 11px/14px var(--font-ui);letter-spacing:.06em;text-transform:uppercase;
+  color:var(--text-3);text-align:right;padding:var(--sp-1) var(--sp-2)}
+.steps th:first-child,.steps td:first-child{text-align:left}
+.steps td{padding:var(--sp-1) var(--sp-2);text-align:right;border-top:1px solid var(--border)}
+.steps .final td{font-weight:600}
+.qrange{display:flex;justify-content:space-between;align-items:center;gap:var(--sp-2);
+  margin-top:var(--sp-2);font:400 13px/20px var(--font-ui);color:var(--text-2)}
+.qrange .ql{display:inline-flex;align-items:center;gap:var(--sp-2)}
+.qrange .ql i{width:8px;height:8px;border-radius:99px;flex:none}
 .qrows{display:flex;flex-direction:column;gap:0;margin-top:var(--sp-3);
   border-top:1px solid var(--border)}
 .qrow{display:flex;justify-content:space-between;align-items:center;
@@ -210,6 +228,22 @@ canvas{display:block;width:100%;height:100%}
 .mini.up{color:var(--up)} .mini.down{color:var(--down)} .mini.flat{color:var(--text-2)}
 .hit{color:var(--up)} .miss{color:var(--down)}
 
+/* ── TradeSetup ───────────────────────────────────────────────── */
+.setup-inputs{display:flex;gap:var(--sp-3);margin-bottom:var(--sp-2)}
+.setup-inputs label{flex:1;font:500 11px/14px var(--font-ui);color:var(--text-3);
+  display:flex;flex-direction:column;gap:4px;text-transform:uppercase;letter-spacing:.05em}
+.sinput{width:100%;min-height:36px;padding:6px var(--sp-2);background:var(--surface-2);
+  border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-1);
+  font:500 14px/20px var(--font-num)}
+.srow{display:flex;justify-content:space-between;align-items:baseline;gap:var(--sp-2);
+  padding:var(--sp-2) 0;border-top:1px solid var(--border);
+  font:400 13px/20px var(--font-ui);color:var(--text-2)}
+.srow .sv{font:500 13px/20px var(--font-num);font-variant-numeric:tabular-nums;
+  color:var(--text-1);text-align:right}
+.srow .sv small{color:var(--text-3);font-size:11px;font-family:var(--font-ui)}
+.setup-flat{padding:var(--sp-3);border:1px dashed var(--border);border-radius:var(--radius-md);
+  font:400 13px/20px var(--font-ui);color:var(--text-2);text-align:center}
+
 /* ── Dải đặc tả bàn giao M11 ──────────────────────────────────── */
 .spec{margin-top:var(--sp-6);border-top:1px dashed var(--border);padding-top:var(--sp-5)}
 .spec>h2{margin:0 0 var(--sp-1);font:600 16px/24px var(--font-ui)}
@@ -222,6 +256,7 @@ canvas{display:block;width:100%;height:100%}
 .spec-note{font:400 12px/18px var(--font-ui);color:var(--text-3);margin:var(--sp-2) 0 0}
 .stale-demo{opacity:.75}
 .stale-demo .price-mini{color:var(--text-3);font:600 20px/28px var(--font-num)}
+.warn-banner[hidden]{display:none}   /* display:flex đè [hidden] của UA — phải chặn lại */
 .warn-banner{display:flex;gap:var(--sp-2);align-items:flex-start;
   background:color-mix(in srgb,var(--status-slow) 10%,transparent);
   border:1px solid color-mix(in srgb,var(--status-slow) 35%,transparent);
@@ -262,9 +297,9 @@ canvas{display:block;width:100%;height:100%}
     <main>
       <div class="price-header">
         <div class="ph-left">
-          <span class="ph-symbol">BTC/USDT · Binance Spot</span>
+          <span class="ph-symbol" id="ph-symbol">BTC/USDT · Binance Spot</span>
           <span class="price-hero num" id="hero">68,450.20</span>
-          <span class="ph-change num"><span class="pos">▲ +1,432.80 (+2.14%)</span>
+          <span class="ph-change num" id="ph-change"><span class="pos">▲ +1,432.80 (+2.14%)</span>
             <span style="color:var(--text-3)">24h</span></span>
         </div>
         <div class="ph-right">
@@ -317,20 +352,20 @@ canvas{display:block;width:100%;height:100%}
       </section>
 
       <section class="card hist" style="margin-top:var(--sp-4)" aria-label="Lịch sử tín hiệu">
-        <h2>Lịch sử tín hiệu · BTC/USDT 1h</h2>
+        <h2 id="hist-cap">Lịch sử tín hiệu · model 1h</h2>
         <table>
           <thead><tr><th scope="col">Nến</th><th scope="col">Tín hiệu</th>
             <th scope="col" class="r">p (hiệu chỉnh)</th><th scope="col" class="r">Thực tế 4h</th>
             <th scope="col" class="r">Kết quả</th></tr></thead>
           <tbody>
             <tr><td class="num">24/08 10:00</td><td><span class="mini up">▲ TĂNG</span></td>
-              <td class="r num">61%</td><td class="r num">+0.9%</td><td class="r hit">✓ đúng</td></tr>
+              <td class="r num">61%</td><td class="r num pos">+0.9%</td><td class="r hit">✓ đúng</td></tr>
             <tr><td class="num">24/08 09:00</td><td><span class="mini flat">● KHÔNG RÕ</span></td>
               <td class="r num">52%</td><td class="r num">+0.2%</td><td class="r" style="color:var(--text-3)">—</td></tr>
             <tr><td class="num">24/08 08:00</td><td><span class="mini down">▼ GIẢM</span></td>
-              <td class="r num">63%</td><td class="r num">−0.6%</td><td class="r hit">✓ đúng</td></tr>
+              <td class="r num">63%</td><td class="r num neg">−0.6%</td><td class="r hit">✓ đúng</td></tr>
             <tr><td class="num">24/08 07:00</td><td><span class="mini up">▲ TĂNG</span></td>
-              <td class="r num">59%</td><td class="r num">−0.4%</td><td class="r miss">✗ sai</td></tr>
+              <td class="r num">59%</td><td class="r num neg">−0.4%</td><td class="r miss">✗ sai</td></tr>
             <tr><td class="num">24/08 06:00</td><td><span class="mini flat">● KHÔNG RÕ</span></td>
               <td class="r num">55%</td><td class="r num">+0.1%</td><td class="r" style="color:var(--text-3)">—</td></tr>
           </tbody>
@@ -342,37 +377,79 @@ canvas{display:block;width:100%;height:100%}
     <aside class="side">
       <section class="card pred-card" aria-live="polite" aria-label="Dự đoán hiện tại">
         <div class="pc-head">
-          <h2 style="margin:0">Dự đoán · 4 giờ tới</h2>
-          <span class="chip num">lgbm-1h-v3</span>
+          <h2 style="margin:0" id="pred-title">Dự đoán · 4h tới</h2>
+          <span class="chip num" id="model-ver">lgbm-1h-v3</span>
         </div>
-        <span class="badge badge--up">▲ TĂNG <span class="num">62%</span></span>
+        <div class="warn-banner" id="oou" hidden style="margin-bottom:var(--sp-3)">⚠<span>
+          <b id="oou-sym">TUT/USDT</b> nằm <b>ngoài tập huấn luyện</b> — model vẫn dự đoán
+          được (feature scale-free, RULE 1) nhưng độ tin cậy thấp hơn.</span></div>
+        <span class="badge badge--up" id="dir-badge">▲ TĂNG <span class="num">62%</span></span>
         <div class="meter" role="img" aria-label="Xác suất tăng đã hiệu chỉnh 62 phần trăm">
-          <div class="meter-fill" style="width:62%"></div><div class="meter-notch"></div>
+          <div class="meter-fill" id="meter-fill" style="width:62%"></div><div class="meter-notch"></div>
         </div>
-        <div class="meter-label"><span>50% = tung đồng xu</span><span><b class="num">62%</b> · đã hiệu chỉnh</span></div>
-        <p class="meter-verbal">Trong 100 lần model nói ~62%, thực tế tăng 58 lần (n=340).</p>
+        <div class="meter-label"><span>50% = tung đồng xu</span><span id="meter-num"><b class="num">62%</b> · đã hiệu chỉnh</span></div>
+        <p class="meter-verbal" id="meter-verbal">Trong 100 lần model nói ~62%, thực tế tăng 58 lần (n=340).</p>
 
-        <div class="qrows">
-          <div class="qrow"><span class="ql"><i style="background:var(--pred);opacity:.45"></i>Kịch bản cao · q90</span>
-            <span class="qv num">69,850.00</span></div>
-          <div class="qrow q50"><span class="ql"><i style="background:var(--pred)"></i>Trung vị · q50</span>
-            <span class="qv num">68,910.00</span></div>
-          <div class="qrow" style="border-bottom:none">
-            <span class="ql"><i style="background:var(--pred);opacity:.45"></i>Kịch bản thấp · q10</span>
-            <span class="qv num">67,980.00</span></div>
+        <div class="profit-hero">
+          <span class="lbl"><span id="ph-h">Kỳ vọng 4h</span> nếu trung vị đúng<br>
+            <small id="ph-net">sau phí khứ hồi 0.30% ≈ +0.37%</small></span>
+          <b class="big num pos" id="ph-pct">+0.67%</b>
         </div>
+
+        <table class="steps" aria-label="Dự đoán theo từng mốc giờ">
+          <thead><tr><th scope="col">Mốc UTC</th><th scope="col">q50</th>
+            <th scope="col">Lợi nhuận</th></tr></thead>
+          <tbody id="steps-body"></tbody>
+        </table>
+
+        <div class="qrange">
+          <span class="ql"><i style="background:var(--pred)"></i><span id="q-range-lbl">Dải kịch bản 18:00</span></span>
+          <span class="num" style="color:var(--text-1)" id="q-range-vals">67,980 – 69,850</span>
+        </div>
+        <div class="qrange" style="margin-top:2px">
+          <span id="q-range-pcts">q10 <b class="neg num">−0.69%</b> · q90 <b class="pos num">+2.04%</b></span>
+          <span>RR <b class="num" style="color:var(--text-1)" id="q-rr">≈ 3.0:1</b></span>
+        </div>
+        <p class="meter-verbal">Kịch bản từ 3 model quantile — không phải cam kết lợi nhuận.</p>
 
         <div class="valid-until">
-          <span>Có hiệu lực đến <b class="num">18:00</b> UTC</span>
+          <span id="valid-until">Có hiệu lực đến <b class="num">18:00</b> UTC</span>
           <span class="status status--live">mới</span>
         </div>
       </section>
 
+      <section class="card" style="margin-top:var(--sp-4)" aria-label="Thiết lập lệnh gợi ý">
+        <div class="pc-head">
+          <h2 style="margin:0">Thiết lập lệnh · gợi ý</h2>
+          <span class="chip">auto-trade TẮT</span>
+        </div>
+        <div class="setup-inputs">
+          <label>Vốn (USDT)
+            <input type="number" id="cap-input" class="sinput num" value="1000" min="10" step="100"></label>
+          <label>Rủi ro / lệnh (%)
+            <input type="number" id="risk-input" class="sinput num" value="1.0" min="0.1" max="5" step="0.1"></label>
+        </div>
+        <div id="setup-body"></div>
+        <p class="meter-verbal">Sinh từ tín hiệu + luật M13: SL 1.5×ATR14 đặt <b>cùng lúc</b> với
+          lệnh vào · hết horizon chưa chạm mục tiêu → thoát · KHÔNG RÕ → đứng ngoài.
+          Hệ thống <b>không tự đặt lệnh</b> — RULE 9, TRADING_ENABLED=false.</p>
+      </section>
+
       <section class="card" style="margin-top:var(--sp-4)" aria-label="Độ chính xác gần đây">
-        <h2>Đúng hướng · 30 ngày</h2>
-        <div class="stat-row"><span class="stat-big">58%</span><span class="stat-n">n = 340 tín hiệu</span></div>
-        <p class="stat-sub">Chỉ tính nến có tín hiệu rõ (TĂNG/GIẢM). Hiệu chỉnh nằm trong ±10%
-          quanh đường chéo ở mọi bin ≥ 50 mẫu.</p>
+        <h2>Hiệu năng 30 ngày · theo khung</h2>
+        <div class="stat-row"><span class="stat-big">58%</span>
+          <span class="stat-n">đúng hướng · PF 1.21 · n = 340 (khung 1h)</span></div>
+        <table class="steps" aria-label="Hiệu năng theo từng khung">
+          <thead><tr><th scope="col">Khung</th><th scope="col">Đúng hướng</th>
+            <th scope="col">PF</th><th scope="col">n</th></tr></thead>
+          <tbody>
+            <tr><td>1h</td><td class="num">58%</td><td class="num">1.21</td><td class="num">340</td></tr>
+            <tr><td>4h</td><td class="num">55%</td><td class="num">1.34</td><td class="num">118</td></tr>
+            <tr><td>1d</td><td class="num">57%</td><td class="num">1.18</td><td class="num">64</td></tr>
+          </tbody>
+        </table>
+        <p class="stat-sub">PF = tổng lãi ÷ tổng lỗ, <b>sau phí</b> (GATE 1 cần ≥ 1.2). Chỉ tính nến
+          có tín hiệu rõ; hiệu chỉnh nằm trong ±10% quanh đường chéo ở mọi bin ≥ 50 mẫu.</p>
       </section>
 
       <section class="card" style="margin-top:var(--sp-4)" aria-label="Biến động kỳ vọng">
@@ -436,7 +513,27 @@ canvas{display:block;width:100%;height:100%}
           12h–1w → model <b>1d</b>.</p>
         <p class="spec-note">Chip cạnh thanh khung luôn nói thật đang xem dự đoán của model
           nào. Trục tương lai dùng <b>timestamp thật</b> (16:00 · 18:00 UTC), không dùng
-          «+4h» trừu tượng. Prototype này dữ liệu cố định ở khung 1h.</p>
+          «+4h» trừu tượng. Prototype sinh dữ liệu mô phỏng riêng cho từng khung; đổi tab là đổi nến, model, horizon và countdown thật.</p>
+      </div>
+      <div class="card spec-card">
+        <h3>Chọn coin & thiết lập lệnh</h3>
+        <p class="spec-note" style="margin-top:0"><b>Một model cho mọi coin (RULE 1):</b> quantile
+          của model là <b>phần trăm</b>, giá tuyệt đối = giá coin × (1 + %). Đổi coin là đổi toàn
+          bộ thang giá, ATR, và setup — model không cần biết đó là BTC 68.000$ hay DOGE 0,12$.
+          SOL demo hướng GIẢM, DOGE demo KHÔNG RÕ, TUT demo banner «ngoài tập huấn luyện».</p>
+        <p class="spec-note"><b>Thiết lập lệnh</b> là GỢI Ý đọc-hiểu, không phải nút đặt lệnh:
+          SHORT ghi chú «cần futures»; khối lượng = vốn × rủi ro ÷ khoảng SL, chặn trần bằng vốn;
+          lãi/lỗ ước tính đã trừ phí khứ hồi 0.30%.</p>
+      </div>
+      <div class="card spec-card">
+        <h3>Tham chiếu trình bày — VishvaAlgoAI</h3>
+        <p class="spec-note" style="margin-top:0"><b>Mượn:</b> geometry rõ ràng từng tín hiệu
+          (giá theo mốc giờ, dải kịch bản, RR), ma trận hiệu năng theo khung (đúng hướng ·
+          PF · n), và phí khứ hồi ghi ngay cạnh lợi nhuận.</p>
+        <p class="spec-note"><b>Không mượn:</b> con số không kiểm chứng được. RULE 11: win-rate
+          cao ở khung ngắn phải qua bộ dò rò rỉ trước khi tin — chính bài tham chiếu cũng giữ
+          lane 3m ở chế độ nghiên cứu vì LCB95 âm. Mọi % ở đây là <b>kịch bản</b> kèm n=,
+          không phải cam kết.</p>
       </div>
     </div>
   </section>
@@ -444,53 +541,131 @@ canvas{display:block;width:100%;height:100%}
 
 <script>
 /* ══════════════════════════════════════════════════════════════════
-   Chart Canvas — nến + dự đoán, theo 02 §3.
-   Mô phỏng: 72 nến 1h kết thúc 24/08/2026 14:00 UTC, close cuối 68,450.20;
-   dự đoán q10/q50/q90 lấy đúng ví dụ hợp đồng dữ liệu 00 §5.
+   v5 — CHỌN COIN + THIẾT LẬP LỆNH.
+   · Mỗi (coin × khung) sinh bộ nến mô phỏng riêng, seed cố định.
+   · Model là SCALE-FREE (RULE 1): quantile lưu dạng %, giá tuyệt đối
+     = giá coin × (1 + %). Một model phục vụ mọi coin.
+   · p_up lệch theo coin (demo đủ 3 trạng thái: TĂNG / GIẢM / KHÔNG RÕ).
+   · TradeSetup theo luật M13: SL 1.5×ATR14, thoát hết horizon,
+     KHÔNG RÕ → đứng ngoài. Không có nút đặt lệnh (RULE 9).
    ══════════════════════════════════════════════════════════════════ */
 (() => {
-  const N = 72, H = 4, LAST_CLOSE = 68450.20;
-  const PRED = { q10: 67980, q50: 68910, q90: 69850, p_up: 62 };
+  const NOW0 = Date.UTC(2026, 7, 24, 14, 0, 5);
+  const N = 72, FUT_CAP = 16, FEE_RT = 0.30;
+  const MIN = 60e3, HR = 3600e3, DAY = 86400e3;
 
-  // RNG có seed — chạy lại vẫn ra đúng một chart
+  const TFS = { "1m": MIN, "5m": 5*MIN, "15m": 15*MIN, "30m": 30*MIN, "1h": HR,
+                "2h": 2*HR, "4h": 4*HR, "6h": 6*HR, "12h": 12*HR, "1d": DAY, "1w": 7*DAY };
+  const MODEL_FOR = { "1m": "1h", "5m": "1h", "15m": "1h", "30m": "1h", "1h": "1h",
+                      "2h": "4h", "4h": "4h", "6h": "4h", "12h": "1d", "1d": "1d", "1w": "1d" };
+  // Quantile dạng PHẦN TRĂM — scale-free, dùng chung cho mọi coin (RULE 1)
+  const MODELS = {
+    "1h": { step: HR,   horizon: 4*HR,  p_up: 62, n: 340, ver: "lgbm-1h-v3",
+            q10p: -0.687, q50p: 0.6716, q90p: 2.0449 },
+    "4h": { step: 4*HR, horizon: 24*HR, p_up: 61, n: 118, ver: "lgbm-4h-v2",
+            q10p: -2.2648, q50p: 1.3875, q90p: 4.0172 },
+    "1d": { step: DAY,  horizon: DAY,   p_up: 55, n: 64,  ver: "lgbm-1d-v2",
+            q10p: -2.849, q50p: 0.9493, q90p: 4.8926 },
+  };
+  // off: lệch p_up theo coin → demo đủ trạng thái. vol: hệ số biến động riêng.
+  const COINS = {
+    "BTC/USDT":  { base: 68450.20, dec: 2, chg24: 2.14,  vol: 1.0,  off: 0,   inU: true },
+    "ETH/USDT":  { base: 3245.80,  dec: 2, chg24: 1.62,  vol: 1.15, off: -2,  inU: true },
+    "SOL/USDT":  { base: 158.42,   dec: 2, chg24: -0.87, vol: 1.4,  off: -24, inU: true },   // GIẢM
+    "XRP/USDT":  { base: 1.1835,   dec: 4, chg24: 0.34,  vol: 1.25, off: -1,  inU: true },
+    "DOGE/USDT": { base: 0.12840,  dec: 5, chg24: -1.95, vol: 1.8,  off: -10, inU: true },   // KHÔNG RÕ
+    "BNB/USDT":  { base: 612.35,   dec: 2, chg24: 0.51,  vol: 0.9,  off: 1,   inU: true },
+    "TUT/USDT":  { base: 0.07420,  dec: 5, chg24: -4.20, vol: 2.2,  off: -3,  inU: false },  // ngoài tập HL
+  };
+
   const mulberry32 = s => () => {
     s |= 0; s = s + 0x6d2b79f5 | 0;
     let t = Math.imul(s ^ s >>> 15, 1 | s);
     t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
     return ((t ^ t >>> 14) >>> 0) / 4294967296;
   };
-  const rng = mulberry32(20260824);
+  const hashStr = str => [...str].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) | 0, 7);
 
-  // Sinh nến lùi từ close cuối để chốt đúng giá hero
-  const candles = [];
-  let close = LAST_CLOSE;
-  for (let i = N - 1; i >= 0; i--) {
-    const ret = (rng() - 0.485) * 0.008;
-    const open = close / (1 + ret);
-    const hi = Math.max(open, close) * (1 + rng() * 0.0035);
-    const lo = Math.min(open, close) * (1 - rng() * 0.0035);
-    const hour = (14 - (N - 1 - i) % 24 + 48) % 24;
-    candles[i] = { open, high: hi, low: lo, close, hour };
-    close = open;
+  const state = { coinSym: "BTC/USDT", tf: "1h" };
+
+  function buildData() {
+    const { coinSym, tf } = state;
+    const coin = COINS[coinSym], step = TFS[tf];
+    const lastMs = Math.floor(NOW0 / step) * step;
+    const rng = mulberry32(20260824 + (step / 1000) % 997 + hashStr(coinSym));
+    const vol = 0.008 * Math.sqrt(step / HR) * coin.vol;
+    const candles = [];
+    let close = coin.base;
+    for (let i = N - 1; i >= 0; i--) {
+      const ret = (rng() - 0.485) * vol;
+      const open = close / (1 + ret);
+      const hi = Math.max(open, close) * (1 + rng() * vol * 0.45);
+      const lo = Math.min(open, close) * (1 - rng() * vol * 0.45);
+      candles[i] = { open, high: hi, low: lo, close, ts: lastMs - (N - 1 - i) * step };
+      close = open;
+    }
+    const hist = {};
+    for (let i = N - 24; i < N; i++) {
+      if (rng() < 0.45) continue;
+      hist[i] = { dir: rng() < 0.5 ? "up" : "down", p: Math.round(58 + rng() * 8), hit: rng() < 0.58 };
+    }
+
+    const modelTf = MODEL_FOR[tf], m = MODELS[modelTf];
+    const predAt = Math.floor(NOW0 / m.step) * m.step;
+
+    // p_up theo coin + quantile scale-free → giá tuyệt đối của coin này
+    const pu = Math.min(95, Math.max(5, m.p_up + coin.off));
+    const dirScale = Math.max(-1.5, Math.min(1.5, (pu - 50) / (m.p_up - 50)));
+    const q50p = m.q50p * dirScale;
+    const q90p = q50p + (m.q90p - m.q50p) * coin.vol;
+    const q10p = q50p - (m.q50p - m.q10p) * coin.vol;
+
+    // ATR14 đơn giản từ nến của khung đang xem — nền cho SL 1.5×ATR (M13)
+    const atrPct = candles.slice(-14).reduce((a, c) => a + (c.high - c.low), 0) / 14 / coin.base * 100;
+
+    Object.assign(state, {
+      coin, step, candles, hist, model: m, modelTf, lastMs, predAt,
+      target: predAt + m.horizon, base: coin.base, dec: coin.dec,
+      pu, q10p, q50p, q90p,
+      q10: coin.base * (1 + q10p / 100), q50: coin.base * (1 + q50p / 100), q90: coin.base * (1 + q90p / 100),
+      atrPct,
+      baseHigh: candles[N - 1].high, baseLow: candles[N - 1].low,
+      rngTick: mulberry32(7 + step % 101 + hashStr(coinSym)),
+    });
   }
 
-  // Tín hiệu QUÁ KHỨ — track record 24 giờ gần nhất (mô phỏng).
-  // Model im lặng phần lớn thời gian (vùng chết); khi phát biểu, ~58% đúng.
-  const hist = {};
-  for (let i = N - 24; i < N; i++) {
-    if (rng() < 0.45) continue;                       // KHÔNG RÕ — không có tín hiệu
-    hist[i] = { dir: rng() < 0.5 ? "up" : "down",
-                p: Math.round(58 + rng() * 8), hit: rng() < 0.58 };
-  }
+  // ── Định dạng ───────────────────────────────────────────────────
+  const two = n => String(n).padStart(2, "0");
+  const fmtT = (ms, step) => {
+    const d = new Date(ms);
+    if (step < HR) return two(d.getUTCHours()) + ":" + two(d.getUTCMinutes());
+    if (step < 2 * HR) return two(d.getUTCHours()) + ":00";   // ≥2h: giờ lặp vô nghĩa → hiện ngày
+    return two(d.getUTCDate()) + "/" + two(d.getUTCMonth() + 1);
+  };
+  const fmtFull = ms => {
+    const d = new Date(ms);
+    return two(d.getUTCHours()) + ":" + two(d.getUTCMinutes()) + " · " + two(d.getUTCDate()) + "/" + two(d.getUTCMonth() + 1);
+  };
+  const fmtCd = ms => {
+    const s = Math.max(0, Math.floor(ms / 1000));
+    if (s >= 86400) return Math.floor(s / 86400) + "d " + two(Math.floor(s % 86400 / 3600)) + ":" + two(Math.floor(s % 3600 / 60));
+    if (s >= 3600) return two(Math.floor(s / 3600)) + ":" + two(Math.floor(s % 3600 / 60)) + ":" + two(s % 60);
+    return two(Math.floor(s / 60)) + ":" + two(s % 60);
+  };
+  const fmt = v => v.toLocaleString("en-US", { minimumFractionDigits: state.dec, maximumFractionDigits: state.dec });
+  const fmtUsd = v => v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const lerp = (a, b, f) => a + (b - a) * f;
+  const pctStr = v => (v >= 0 ? "+" : "−") + Math.abs(v).toFixed(2) + "%";
 
-  const canvas = document.getElementById("chart");
-  const wrap = document.getElementById("chart-wrap");
-  const tt = document.getElementById("tt");
+  const $ = id => document.getElementById(id);
+  const canvas = $("chart"), wrap = $("chart-wrap"), tt = $("tt");
   const ctx = canvas.getContext("2d");
   let hover = null;
-
   const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
-  const fmt = v => v.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+
+  const futBars = () => Math.min(FUT_CAP, Math.max(1, Math.ceil((state.target - state.lastMs) / state.step)));
+  const futFrac = () => Math.min(1, (futBars() * state.step) / (state.target - state.lastMs));
+  const dirOf = pu => pu > 58 ? "up" : pu < 42 ? "down" : "unclear";
 
   function draw() {
     const dpr = window.devicePixelRatio || 1;
@@ -499,44 +674,42 @@ canvas{display:block;width:100%;height:100%}
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, W, Ht);
 
-    const C = {
-      up: cssVar("--up"), down: cssVar("--down"), pred: cssVar("--pred"),
-      border: cssVar("--border"), t2: cssVar("--text-2"), t3: cssVar("--text-3"),
-      s1: cssVar("--surface-1"), s2: cssVar("--surface-2"),
-    };
+    const C = { up: cssVar("--up"), down: cssVar("--down"), pred: cssVar("--pred"),
+                border: cssVar("--border"), t1: cssVar("--text-1"), t2: cssVar("--text-2"),
+                t3: cssVar("--text-3"), s1: cssVar("--surface-1"), s2: cssVar("--surface-2") };
+    const { candles, hist, step } = state;
+    const FB = futBars(), fEnd = futFrac(), clamped = fEnd < 1;
+
     const padL = 8, padR = 64, padT = 18, padB = 42;
     const plotW = W - padL - padR, plotH = Ht - padT - padB;
-    const slots = N + H + 1.5;
-    const slotW = plotW / slots;
+    const slotW = plotW / (N + FB + 1.5);
     const x = i => padL + (i + 0.5) * slotW;
 
-    let lo = Math.min(PRED.q10, ...candles.map(c => c.low));
-    let hi = Math.max(PRED.q90, ...candles.map(c => c.high));
+    const q10v = lerp(state.base, state.q10, fEnd), q90v = lerp(state.base, state.q90, fEnd);
+    let lo = Math.min(q10v, ...candles.map(c => c.low));
+    let hi = Math.max(q90v, ...candles.map(c => c.high));
     const pad = (hi - lo) * 0.06; lo -= pad; hi += pad;
     const y = p => padT + (1 - (p - lo) / (hi - lo)) * plotH;
 
-    // Lưới: CHỈ ngang (02 §3.1), nhãn giá bên phải
+    // Lưới ngang + nhãn giá — bước lưới tự chọn theo THANG GIÁ của coin (RULE 1)
     ctx.font = "500 11px 'JetBrains Mono', monospace";
-    ctx.globalAlpha = 1;
-    const step = 500, g0 = Math.ceil(lo / step) * step;
-    for (let p = g0; p < hi; p += step) {
+    const raw = (hi - lo) / 6;
+    const mag = Math.pow(10, Math.floor(Math.log10(raw)));
+    const gstep = [1, 2, 5, 10].map(k => k * mag).find(g => g >= raw) || 10 * mag;
+    for (let p = Math.ceil(lo / gstep) * gstep; p < hi; p += gstep) {
       ctx.strokeStyle = C.border; ctx.globalAlpha = 0.2;
       ctx.beginPath(); ctx.moveTo(padL, y(p)); ctx.lineTo(W - padR, y(p)); ctx.stroke();
       ctx.globalAlpha = 1; ctx.fillStyle = C.t2;
       ctx.fillText(fmt(p), W - padR + 8, y(p) + 4);
     }
-    // Nhãn giờ dưới trục, thưa
     ctx.fillStyle = C.t3; ctx.textAlign = "center";
-    for (let i = 6; i < N; i += 12)   // bắt đầu i=6: nhãn đầu không bị mép trái cắt
-      ctx.fillText(String(candles[i].hour).padStart(2, "0") + ":00", x(i), Ht - 8);
-    // Trục tương lai dùng timestamp THẬT như Binance, không dùng "+4h" trừu tượng
+    for (let i = 6; i < N; i += 12) ctx.fillText(fmtT(candles[i].ts, step), x(i), Ht - 8);
     ctx.fillStyle = C.t2;
-    for (let k = 2; k <= H; k += 2)
-      ctx.fillText(String((14 + k) % 24).padStart(2, "0") + ":00", x(N + k - 1), Ht - 8);
+    ctx.fillText(clamped ? "→" : fmtT(state.target, step < HR ? MIN : step), x(N + FB - 1), Ht - 8);
     ctx.textAlign = "left";
 
-    // Nến: thân đặc, bấc 1px, khe 2px
-    const bodyW = Math.max(3, slotW - 2);
+    // Nến
+    const bodyW = Math.max(2, slotW - 2);
     for (let i = 0; i < N; i++) {
       const c = candles[i], col = c.close >= c.open ? C.up : C.down;
       ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = 1;
@@ -545,37 +718,60 @@ canvas{display:block;width:100%;height:100%}
       ctx.fillRect(x(i) - bodyW / 2, Math.min(yo, yc), bodyW, Math.max(1, Math.abs(yo - yc)));
     }
 
-    // Đường giá hiện tại: 1px nét đứt --text-2 + pill giá bên phải
+    // Giá hiện tại
     const yNow = y(candles[N - 1].close);
     ctx.setLineDash([3, 3]); ctx.strokeStyle = C.t2; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(padL, yNow); ctx.lineTo(W - padR, yNow); ctx.stroke();
     ctx.setLineDash([]);
-    ctx.fillStyle = C.s2; const label = fmt(candles[N - 1].close);
-    ctx.fillRect(W - padR + 2, yNow - 9, padR - 6, 18);
-    ctx.fillStyle = cssVar("--text-1"); ctx.fillText(label, W - padR + 8, yNow + 4);
+    ctx.fillStyle = C.s2; ctx.fillRect(W - padR + 2, yNow - 9, padR - 6, 18);
+    ctx.fillStyle = C.t1; ctx.fillText(fmt(candles[N - 1].close), W - padR + 8, yNow + 4);
 
-    // Ranh giới «Bây giờ» (02 §3.2)
+    // Ranh giới «Bây giờ»
     const xB = padL + N * slotW;
     ctx.strokeStyle = C.border; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(xB, padT - 6); ctx.lineTo(xB, Ht - padB); ctx.stroke();
     ctx.fillStyle = C.t3; ctx.font = "500 10px 'Inter', sans-serif";
     ctx.fillText("Bây giờ", xB + 4, padT + 2);
 
-    // Dự đoán: dải q10–q90 loe từ điểm neo, KHÔNG viền
-    const x0 = x(N - 1), y0 = yNow, xE = x(N + H - 1);
+    // Dải + đường q50 nổi bật
+    const x0 = x(N - 1), y0 = yNow, xE = x(N + FB - 1);
     ctx.fillStyle = cssVar("--pred-band");
     ctx.beginPath(); ctx.moveTo(x0, y0);
-    ctx.lineTo(xE, y(PRED.q90)); ctx.lineTo(xE, y(PRED.q10)); ctx.closePath(); ctx.fill();
-    // Đường q50: 2px NÉT ĐỨT tím (RULE 7 / DS-RULE 4)
-    ctx.setLineDash([6, 4]); ctx.strokeStyle = C.pred; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(xE, y(PRED.q50)); ctx.stroke();
-    ctx.setLineDash([]);
-    // Điểm neo 8px, viền 2px màu nền card (vòng cách nền)
-    ctx.beginPath(); ctx.arc(xE, y(PRED.q50), 4, 0, 7);
-    ctx.fillStyle = C.pred; ctx.fill();
-    ctx.lineWidth = 2; ctx.strokeStyle = C.s1; ctx.stroke();
+    ctx.lineTo(xE, y(q90v)); ctx.lineTo(xE, y(q10v)); ctx.closePath(); ctx.fill();
 
-    // Dải tín hiệu quá khứ: viền tím = model từng phát biểu, tô theo kết quả
+    const yQ = y(lerp(state.base, state.q50, fEnd));
+    ctx.setLineDash([7, 5]); ctx.strokeStyle = C.pred; ctx.lineWidth = 3;
+    ctx.shadowColor = C.pred; ctx.shadowBlur = 9;
+    ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(xE, yQ); ctx.stroke();
+    ctx.shadowBlur = 0; ctx.setLineDash([]);
+
+    for (let t = state.predAt + state.model.step; t < state.lastMs + FB * state.step; t += state.model.step) {
+      if (t <= state.lastMs) continue;
+      const f = (t - state.lastMs) / (state.target - state.lastMs);
+      const vx = lerp(x0, xE, f / fEnd), vy = lerp(y0, yQ, f / fEnd);
+      ctx.beginPath(); ctx.arc(vx, vy, 3, 0, 7);
+      ctx.fillStyle = C.pred; ctx.fill();
+      ctx.lineWidth = 1.5; ctx.strokeStyle = C.s1; ctx.stroke();
+    }
+
+    if (!clamped) {
+      ctx.beginPath(); ctx.arc(xE, yQ, 4, 0, 7);
+      ctx.fillStyle = C.pred; ctx.fill();
+      ctx.lineWidth = 2; ctx.strokeStyle = C.s1; ctx.stroke();
+      ctx.fillStyle = C.pred; ctx.fillRect(W - padR + 2, yQ - 9, padR - 6, 18);
+      ctx.fillStyle = C.s1; ctx.font = "600 10px 'JetBrains Mono', monospace";
+      ctx.fillText(fmt(state.q50), W - padR + 6, yQ + 3.5);
+      ctx.fillStyle = C.pred;
+      ctx.fillText(pctStr(state.q50p), W - padR + 6, yQ + 16);
+    } else {
+      ctx.fillStyle = C.pred; ctx.font = "600 10px 'Inter', sans-serif";
+      ctx.textAlign = "right";
+      ctx.fillText("→ đích " + fmtFull(state.target), xE - 4, yQ - 8);
+      ctx.textAlign = "left";
+    }
+    ctx.font = "500 11px 'JetBrains Mono', monospace";
+
+    // Dải tín hiệu quá khứ
     const yR = Ht - padB + 12;
     for (const k in hist) {
       const h = hist[k];
@@ -584,109 +780,223 @@ canvas{display:block;width:100%;height:100%}
       ctx.lineWidth = 1.5; ctx.strokeStyle = C.pred; ctx.stroke();
     }
 
-    // Crosshair + highlight nến đang rê (02 §3.3)
     if (hover !== null) {
       const { i, my } = hover;
       ctx.setLineDash([2, 3]); ctx.strokeStyle = C.t3; ctx.lineWidth = 1;
       ctx.beginPath(); ctx.moveTo(x(i), padT); ctx.lineTo(x(i), Ht - padB); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(padL, my); ctx.lineTo(W - padR, my); ctx.stroke();
       ctx.setLineDash([]);
-      ctx.fillStyle = C.s2;
       const pv = lo + (1 - (my - padT) / plotH) * (hi - lo);
-      ctx.fillRect(W - padR + 2, my - 9, padR - 6, 18);
-      ctx.fillStyle = cssVar("--text-1"); ctx.font = "500 11px 'JetBrains Mono', monospace";
-      ctx.fillText(fmt(pv), W - padR + 8, my + 4);
+      ctx.fillStyle = C.s2; ctx.fillRect(W - padR + 2, my - 9, padR - 6, 18);
+      ctx.fillStyle = C.t1; ctx.fillText(fmt(pv), W - padR + 8, my + 4);
     }
   }
 
-  // Tooltip: OHLC bên trái ranh giới, q10/q50/q90 + p_up bên phải
+  // ── Tooltip ─────────────────────────────────────────────────────
   wrap.addEventListener("mousemove", e => {
     const r = wrap.getBoundingClientRect();
     const mx = e.clientX - r.left, my = e.clientY - r.top;
-    const slotW = (wrap.clientWidth - 72) / (N + H + 1.5);
+    const FB = futBars();
+    const slotW = (wrap.clientWidth - 72) / (N + FB + 1.5);
     const i = Math.floor((mx - 8) / slotW);
-    if (i < 0 || i >= N + H) { hover = null; tt.style.display = "none"; draw(); return; }
-    hover = { i: Math.min(i, N + H - 1), my };
+    if (i < 0 || i >= N + FB) { hover = null; tt.style.display = "none"; draw(); return; }
+    hover = { i, my };
+    const { candles, hist } = state;
     if (i < N) {
-      const c = candles[i];
-      const h = hist[i];
-      tt.innerHTML = `<div class="tt-title">${String(c.hour).padStart(2, "0")}:00 UTC · nến 1h</div>`
+      const c = candles[i], h = hist[i];
+      tt.innerHTML = `<div class="tt-title">${fmtFull(c.ts)} UTC · nến ${state.tf}</div>`
         + `O ${fmt(c.open)} · H ${fmt(c.high)}<br>L ${fmt(c.low)} · C ${fmt(c.close)}`
         + (h ? `<div class="tt-pred">Tín hiệu: ${h.dir === "up" ? "▲ TĂNG" : "▼ GIẢM"} ${h.p}% → ${h.hit ? "✓ đúng" : "✗ sai"}</div>`
              : (i >= N - 24 ? `<div class="tt-pred">● KHÔNG RÕ — model im lặng</div>` : ""));
     } else {
-      tt.innerHTML = `<div class="tt-title"><span class="dot"></span>Dự đoán · ${String((14 + i - N + 1) % 24).padStart(2, "0")}:00 UTC</div>`
-        + `q90 ${fmt(PRED.q90)}<br>q50 ${fmt(PRED.q50)}<br>q10 ${fmt(PRED.q10)}`
-        + `<div class="tt-pred">p(tăng) ${PRED.p_up}% · đã hiệu chỉnh</div>`;
+      const k = i - N + 1;
+      const tMs = state.lastMs + k * state.step;
+      const f = Math.min(1, (tMs - state.lastMs) / (state.target - state.lastMs));
+      const v = lerp(state.base, state.q50, f), pct = (v / state.base - 1) * 100;
+      tt.innerHTML = `<div class="tt-title"><span class="dot"></span>Dự đoán · ${fmtFull(tMs)} UTC</div>`
+        + `Mốc này (q50): ${fmt(v)} <b class="${pct >= 0 ? "pos" : "neg"}">${pctStr(pct)}</b>`
+        + `<br>Đích ${fmtFull(state.target)} — q90 ${fmt(state.q90)} · q50 ${fmt(state.q50)} · q10 ${fmt(state.q10)}`
+        + `<div class="tt-pred">p(tăng) ${state.pu}% · đã hiệu chỉnh · model ${state.modelTf}</div>`;
     }
     tt.style.display = "block";
-    const flip = mx > wrap.clientWidth - 190;
+    const flip = mx > wrap.clientWidth - 210;
     tt.style.left = flip ? (mx - tt.offsetWidth - 14) + "px" : (mx + 14) + "px";
     tt.style.top = Math.max(4, my - 20) + "px";
     draw();
   });
   wrap.addEventListener("mouseleave", () => { hover = null; tt.style.display = "none"; draw(); });
 
-  // Chế độ bảng (checklist 02 §6)
-  const tbody = document.getElementById("table-body");
-  tbody.innerHTML = candles.slice(-12).reverse().map(c => {
-    const up = c.close >= c.open;
-    return `<tr><td class="num">${String(c.hour).padStart(2, "0")}:00</td>`
-      + `<td class="num">${fmt(c.open)}</td><td class="num">${fmt(c.high)}</td>`
-      + `<td class="num">${fmt(c.low)}</td><td class="num">${fmt(c.close)}</td>`
-      + `<td><span class="mini ${up ? "up" : "down"}">${up ? "▲ tăng" : "▼ giảm"}</span></td></tr>`;
-  }).join("");
-  const toggle = document.getElementById("table-toggle");
+  // ── Thiết lập lệnh (M13) ────────────────────────────────────────
+  function renderSetup() {
+    const body = $("setup-body");
+    const dir = dirOf(state.pu);
+    if (dir === "unclear") {
+      body.innerHTML = `<div class="setup-flat">● KHÔNG RÕ — model đứng ngoài
+        (p = ${state.pu}% nằm trong vùng chết 42–58%).<br>
+        Luật M13: không tín hiệu → không lệnh; vị thế đang mở sẽ được đóng.</div>`;
+      return;
+    }
+    const cap = Math.max(10, parseFloat($("cap-input").value) || 1000);
+    const riskPct = Math.min(5, Math.max(0.1, parseFloat($("risk-input").value) || 1));
+    const slPct = 1.5 * state.atrPct;                       // M13: SL = 1.5×ATR14
+    const long = dir === "up";
+    const slPrice = state.base * (1 + (long ? -slPct : slPct) / 100);
+    const tpPrice = long ? state.q90 : state.q10;           // TP tại kịch bản xa (q90/q10)
+    const tpPct = Math.abs((tpPrice / state.base - 1) * 100);
+    const sizeRaw = cap * riskPct / slPct;
+    const size = Math.min(cap, sizeRaw);                    // spot không vay — trần bằng vốn
+    const riskReal = size * slPct / cap;
+    const tpUsd = size * (tpPct - FEE_RT) / 100;
+    const slUsd = -size * (slPct + FEE_RT) / 100;
+    const rr = tpPct / slPct;
+    const row = (l, v) => `<div class="srow"><span>${l}</span><span class="sv">${v}</span></div>`;
+    body.innerHTML =
+      row("Hướng", long
+        ? `<span class="mini up">▲ LONG</span>`
+        : `<span class="mini down">▼ SHORT</span> <small>cần futures — spot: đứng ngoài</small>`)
+      + row("Vào lệnh · thị trường", `${fmt(state.base)}`)
+      + row("Stop-loss · 1.5×ATR14", `${fmt(slPrice)} <small>${pctStr(long ? -slPct : slPct)}</small>`)
+      + row(`Take-profit · ${long ? "q90" : "q10"}`, `${fmt(tpPrice)} <small>${pctStr(long ? tpPct : -tpPct)}</small>`)
+      + row("RR (TP/SL)", `${rr.toFixed(1)} : 1`)
+      + row("Khối lượng đề xuất", `${fmtUsd(size)} USDT <small>rủi ro thực ${riskReal.toFixed(2)}% vốn</small>`)
+      + row("Nếu chạm TP", `<b class="pos">+${fmtUsd(tpUsd)} USDT</b> <small>đã trừ phí</small>`)
+      + row("Nếu chạm SL", `<b class="neg">−${fmtUsd(-slUsd)} USDT</b> <small>đã trừ phí</small>`)
+      + row("Thoát hạn", `${fmtFull(state.target)} <small>chưa chạm gì → thoát thị trường</small>`);
+  }
+  $("cap-input").addEventListener("input", renderSetup);
+  $("risk-input").addEventListener("input", renderSetup);
+
+  // ── Cập nhật toàn màn hình ──────────────────────────────────────
+  const chipEl = $("model-chip");
+
+  function applyAll() {
+    buildData();
+    const m = state.model, mtf = state.modelTf, tf = state.tf, sym = state.coinSym;
+
+    // Header giá
+    $("ph-symbol").textContent = `${sym} · Binance Spot`;
+    $("hero").textContent = fmt(state.base);
+    const chg = state.coin.chg24, chgAbs = Math.abs(state.base * chg / 100 / (1 + chg / 100));
+    $("ph-change").innerHTML =
+      `<span class="${chg >= 0 ? "pos" : "neg"}">${chg >= 0 ? "▲ +" : "▼ −"}${chgAbs.toLocaleString("en-US",
+        { minimumFractionDigits: state.dec, maximumFractionDigits: state.dec })} (${pctStr(chg)})</span>
+       <span style="color:var(--text-3)">24h</span>`;
+
+    chipEl.textContent = tf === mtf ? `model ${mtf} · trực tiếp` : `model ${mtf} · chiếu lên khung ${tf}`;
+    $("model-ver").textContent = m.ver;
+    $("hist-cap").textContent = `Lịch sử tín hiệu · ${sym} · model ${mtf}`;
+    const hTxt = m.horizon >= DAY ? m.horizon / DAY + " ngày" : m.horizon / HR + "h";
+    $("pred-title").textContent = `Dự đoán · ${hTxt} tới`;
+    $("meter-verbal").textContent =
+      `Trong 100 lần model nói ~${state.pu}%, thực tế đúng ~${state.pu - 4} lần (n=${m.n}).`;
+    canvas.setAttribute("aria-label",
+      `Biểu đồ nến ${sym} khung ${tf} kèm dự đoán của model ${mtf} tới ${fmtFull(state.target)} UTC. Dữ liệu chi tiết ở chế độ bảng.`);
+
+    // Banner ngoài tập huấn luyện (trung thực — 00 §4.2)
+    $("oou").hidden = state.coin.inU;
+    $("oou-sym").textContent = sym;
+
+    // Badge + meter theo vùng chết
+    const dir = dirOf(state.pu);
+    const badge = $("dir-badge");
+    badge.className = "badge badge--" + dir;
+    badge.innerHTML = dir === "up" ? `▲ TĂNG <span class="num">${state.pu}%</span>`
+      : dir === "down" ? `▼ GIẢM <span class="num">${100 - state.pu}%</span>`
+      : `● KHÔNG RÕ <span class="num">${state.pu}%</span>`;
+    const fill = $("meter-fill");
+    fill.style.width = state.pu + "%";
+    fill.style.background = dir === "up" ? "var(--up)" : dir === "down" ? "var(--down)" : "var(--text-3)";
+    $("meter-num").innerHTML = `<b class="num">${state.pu}%</b> · đã hiệu chỉnh`;
+
+    // Profit hero + bảng mốc native của model
+    $("ph-h").textContent = "Kỳ vọng " + hTxt;
+    const heroEl = $("ph-pct");
+    heroEl.textContent = pctStr(state.q50p);
+    heroEl.className = "big num " + (state.q50p >= 0 ? "pos" : "neg");
+    $("ph-net").textContent = `sau phí khứ hồi ${FEE_RT.toFixed(2)}% ≈ ${pctStr(state.q50p - Math.sign(state.q50p || 1) * FEE_RT)}`;
+
+    const kMax = Math.round(m.horizon / m.step);
+    let rows = "";
+    for (let k = 1; k <= kMax; k++) {
+      const tMs = state.predAt + k * m.step;
+      const v = lerp(state.base, state.q50, k / kMax), pct = (v / state.base - 1) * 100;
+      rows += `<tr${k === kMax ? ' class="final"' : ""}><td>${m.horizon > 12 * HR ? fmtFull(tMs) : fmtT(tMs, HR)}</td>`
+        + `<td class="num">${fmt(v)}</td><td class="num ${pct >= 0 ? "pos" : "neg"}">${pctStr(pct)}</td></tr>`;
+    }
+    $("steps-body").innerHTML = rows;
+
+    $("q-range-lbl").textContent = "Dải kịch bản " + fmtFull(state.target);
+    $("q-range-vals").textContent = `${fmt(state.q10)} – ${fmt(state.q90)}`;
+    $("q-range-pcts").innerHTML =
+      `q10 <b class="neg num">${pctStr(state.q10p)}</b> · q90 <b class="pos num">${pctStr(state.q90p)}</b>`;
+    const up = state.q90 - state.base, dn = state.base - state.q10;
+    $("q-rr").textContent = "≈ " + (dn > 0 ? (up / dn).toFixed(1) : "∞") + ":1";
+    $("valid-until").innerHTML = `Có hiệu lực đến <b class="num">${fmtFull(state.target)}</b> UTC`;
+
+    // Chế độ bảng
+    $("table-body").innerHTML = state.candles.slice(-12).reverse().map(c => {
+      const isUp = c.close >= c.open;
+      return `<tr><td class="num">${fmtT(c.ts, state.step < HR ? MIN : state.step)}</td>`
+        + `<td class="num">${fmt(c.open)}</td><td class="num">${fmt(c.high)}</td>`
+        + `<td class="num">${fmt(c.low)}</td><td class="num">${fmt(c.close)}</td>`
+        + `<td><span class="mini ${isUp ? "up" : "down"}">${isUp ? "▲ tăng" : "▼ giảm"}</span></td></tr>`;
+    }).join("");
+
+    renderSetup();
+    draw();
+  }
+
+  // ── Sự kiện: đổi khung + đổi coin ───────────────────────────────
+  document.querySelectorAll(".tab").forEach(b => b.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach(t => t.setAttribute("aria-selected", "false"));
+    b.setAttribute("aria-selected", "true");
+    state.tf = b.textContent.trim();
+    applyAll();
+  }));
+  document.querySelectorAll(".coin-row").forEach(row => row.addEventListener("click", () => {
+    document.querySelectorAll(".coin-row").forEach(r => r.setAttribute("aria-current", "false"));
+    row.setAttribute("aria-current", "true");
+    state.coinSym = row.querySelector(".coin-sym").textContent.trim();
+    applyAll();
+  }));
+
+  const toggle = $("table-toggle");
   toggle.addEventListener("click", () => {
     const on = toggle.getAttribute("aria-pressed") !== "true";
     toggle.setAttribute("aria-pressed", String(on));
     toggle.textContent = on ? "Xem biểu đồ" : "Xem dạng bảng";
-    document.getElementById("chart-card").classList.toggle("table-mode", on);
+    $("chart-card").classList.toggle("table-mode", on);
     if (!on) draw();
   });
 
-  // Tick mô phỏng: giá nhích nhẹ mỗi 2.5s — hero NHÁY NỀN, không trượt vị trí (DS-RULE 2)
-  const hero = document.getElementById("hero");
-  const tickTime = document.getElementById("tick-time");
-  const cdEl = document.getElementById("cd");
-  let elapsed = 305;                                 // giây kể từ 14:00:00
-  setInterval(() => {                                // đồng hồ + đếm ngược nến (giống Binance)
-    elapsed = (elapsed + 1) % 3600;               // quay vòng, không để đếm ngược âm
-    tickTime.textContent = "14:" + String(Math.floor(elapsed / 60)).padStart(2, "0")
-      + ":" + String(elapsed % 60).padStart(2, "0");
-    const rem = 3600 - elapsed;
-    cdEl.textContent = String(Math.floor(rem / 60)).padStart(2, "0") + ":" + String(rem % 60).padStart(2, "0");
-  }, 1000);
-  const baseHigh = candles[N - 1].high, baseLow = candles[N - 1].low;
+  // ── Đồng hồ + đếm ngược + tick giá ──────────────────────────────
+  const hero = $("hero"), tickTime = $("tick-time"), cdEl = $("cd");
+  let elapsed = 0;
   setInterval(() => {
-    const c = candles[N - 1];
-    // dao động HỒI QUY quanh mốc — không trôi vô hạn theo thời gian mở trang
-    const d = (rng() - 0.5) * 22 + (LAST_CLOSE - c.close) * 0.03;
-    c.close = Math.min(LAST_CLOSE * 1.003, Math.max(LAST_CLOSE * 0.997, c.close + d));
-    c.high = Math.max(baseHigh, c.close); c.low = Math.min(baseLow, c.close);
-    hero.textContent = c.close.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    elapsed++;
+    const nowMs = NOW0 + elapsed * 1000;
+    const d = new Date(nowMs);
+    tickTime.textContent = two(d.getUTCHours()) + ":" + two(d.getUTCMinutes()) + ":" + two(d.getUTCSeconds());
+    cdEl.textContent = fmtCd(state.lastMs + state.step - nowMs);
+  }, 1000);
+
+  setInterval(() => {
+    const c = state.candles[N - 1];
+    const d = (state.rngTick() - 0.5) * state.base * 0.00032 + (state.base - c.close) * 0.03;
+    c.close = Math.min(state.base * 1.003, Math.max(state.base * 0.997, c.close + d));
+    c.high = Math.max(state.baseHigh, c.close); c.low = Math.min(state.baseLow, c.close);
+    hero.textContent = fmt(c.close);
     hero.classList.remove("flash-up", "flash-down");
-    void hero.offsetWidth;                       // restart transition
+    void hero.offsetWidth;
     hero.classList.add(d >= 0 ? "flash-up" : "flash-down");
     setTimeout(() => hero.classList.remove("flash-up", "flash-down"), 220);
     draw();
   }, 2500);
 
-  // Chuyển khung: model chỉ có 3 — chip luôn nói thật đang chiếu model nào
-  const MODEL_FOR = { "1m": "1h", "5m": "1h", "15m": "1h", "30m": "1h", "1h": "1h",
-                      "2h": "4h", "4h": "4h", "6h": "4h", "12h": "1d", "1d": "1d", "1w": "1d" };
-  const chipEl = document.getElementById("model-chip");
-  document.querySelectorAll(".tab").forEach(b => b.addEventListener("click", () => {
-    document.querySelectorAll(".tab").forEach(t => t.setAttribute("aria-selected", "false"));
-    b.setAttribute("aria-selected", "true");
-    const tf = b.textContent.trim(), m = MODEL_FOR[tf];
-    chipEl.textContent = tf === m ? `model ${m} · trực tiếp` : `model ${m} · chiếu lên khung ${tf}`;
-  }));
-
-  // Vẽ lại khi đổi kích thước / đổi theme
   new ResizeObserver(draw).observe(wrap);
   new MutationObserver(draw).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
   matchMedia("(prefers-color-scheme: light)").addEventListener("change", draw);
-  draw();
+
+  applyAll();
 })();
 </script>

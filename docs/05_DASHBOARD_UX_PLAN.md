@@ -18,7 +18,7 @@ Prototype v1 đạt phần *đúng* (token, màu kiểm định, tách dự đo�
 | **R4** | Không đếm ngược nến — Binance luôn có countdown | Countdown trả lời câu hỏi tự nhiên nhất: "bao giờ có dự đoán mới?" — lý do quay lại màn hình | ✅ **đã thêm v2** — «Nến đóng & dự đoán mới sau 54:43» |
 | **R5** | Không zoom / pan / kéo xem lịch sử | Tương tác tối thiểu của một chart tài chính | ⬜ W15a — lightweight-charts v5 có sẵn, **không tự chế trên Canvas** |
 | **R6** | Không có lớp giải thích cho người mới ("62% đã hiệu chỉnh" nghĩa là gì?) | "Thân thiện" với người không làm ML = mỗi con số dịch được ra tiếng người trong 1 chạm | ⬜ W15c |
-| **R7** | Coin selector sơ sài: không ghim ưa thích, không giá mini, không sắp xếp | Người dùng thật có 3–5 coin theo dõi thường trực | ⬜ W15c |
+| **R7** | Coin selector sơ sài: không ghim ưa thích, không giá mini, không sắp xếp | Người dùng thật có 3–5 coin theo dõi thường trực | 🔶 **v5 chọn coin đã hoạt động** (UX-14); ghim/sparkline/sort còn lại ở W15c |
 | **R8** | Mobile mới chỉ "xếp chồng cho khỏi vỡ" | Phần lớn lượt xem giá là trên điện thoại | ⬜ W15c |
 | **R9** | *Bug:* mô phỏng giá trôi vô hạn theo thời gian mở trang (ratchet high/low) | Mở trang 30 phút là hero lệch khỏi dải dự đoán → prototype tự mâu thuẫn | ✅ **đã sửa** — dao động hồi quy quanh mốc, đồng hồ quay vòng |
 
@@ -77,7 +77,7 @@ GET /api/predictions/history?symbol=&timeframe=&limit=200
 | ID | Nâng cấp | Giá trị | Effort | Gói | Trạng thái |
 |---|---|---|---|---|---|
 | UX-1 | Timestamp thật ở trục tương lai + tooltip | ★★★ | XS | — | ✅ v2 |
-| UX-2 | Thanh khung 1m→1w + chiếu model + chip trung thực | ★★★ | S | W15a | ✅ v2 (UI) |
+| UX-2 | Thanh khung 1m→1w + chiếu model + chip trung thực | ★★★ | S | W15a | ✅ **v4 đầy đủ** — đổi tab là đổi nến/model/horizon/countdown thật; đích ngoài màn hình ghi «→ đích hh:mm» thay vì vẽ sai; model 1d demo trạng thái KHÔNG RÕ (vùng chết) |
 | UX-3 | Dải tín hiệu quá khứ + tooltip kết quả | ★★★ | M | W15b | ✅ v2 (mô phỏng) |
 | UX-4 | Countdown nến & dự đoán kế | ★★★ | XS | — | ✅ v2 |
 | UX-5 | Zoom / pan / kéo lịch sử (lightweight-charts v5) | ★★★ | S | W15a | ⬜ |
@@ -86,6 +86,17 @@ GET /api/predictions/history?symbol=&timeframe=&limit=200
 | UX-8 | «Báo tôi khi có tín hiệu» → deep-link Telegram bot (nối M12) | ★★ | S | W16 | ⬜ |
 | UX-9 | Mobile thật: coin selector thành bottom-sheet, panel phải tab hoá, chart ưu tiên chiều cao | ★★ | M | W15c | ⬜ |
 | UX-10 | Share card PNG một dự đoán (kèm timestamp, n=, disclaimer) | ★ | S | P3 · tuỳ chọn | ⬜ |
+| UX-11 | **PredictionCard v3:** bảng dự đoán theo từng mốc giờ + lợi nhuận % mỗi mốc, profit hero (kèm sau-phí 0.30% khứ hồi), dải kịch bản q10↔q90 + RR | ★★★ | S | W15b | ✅ v3 |
+| UX-12 | **Đường dự đoán nổi bật hơn:** 3px + quầng sáng tím, chấm mốc từng giờ, pill đích trên trục giá ghi q50 + % kỳ vọng | ★★ | XS | W15a | ✅ v3 |
+| UX-13 | Ma trận hiệu năng theo khung (đúng hướng · PF · n cho 1h/4h/1d) thay AccuracyPanel đơn khung | ★★ | S | W15b | ✅ v3 (mô phỏng) |
+| UX-14 | **Chọn coin hoạt động thật (v5):** đổi coin là đổi toàn bộ thang giá/nến/ATR/setup; quantile model là **%** nên một model phục vụ mọi coin (demo sống RULE 1); SOL demo GIẢM, DOGE demo KHÔNG RÕ, TUT hiện banner «ngoài tập huấn luyện» | ★★★ | M | W15a | ✅ v5 |
+| UX-15 | **TradeSetupCard (v5):** vốn + rủi ro%/lệnh do người dùng nhập → SL 1.5×ATR14, TP q90/q10, RR, khối lượng (trần bằng vốn), lãi/lỗ USDT đã trừ phí, thoát hạn theo horizon — đúng 3 lối ra M13; SHORT ghi «cần futures»; KHÔNG RÕ → «model đứng ngoài»; chip **auto-trade TẮT**, không có nút đặt lệnh (RULE 9) | ★★★ | M | W15b + M13 | ✅ v5 |
+
+### 4.1 Tham chiếu trình bày — VishvaAlgoAI (bài Medium v36.2)
+
+Người dùng chỉ định tham chiếu bài "v36.2 Neural Trading Bot — 79.6% win rate, 3.33 PF". Những gì **mượn về cách trình bày** (đã vào v3): geometry rõ ràng từng tín hiệu (giá theo mốc giờ, dải kịch bản, RR — họ ghi entry/SL/TP/RR ngay trong mỗi alert) · ma trận hiệu năng theo từng khung (win rate · PF · expectancy · n — bảng "promotion matrix" của họ) · phí khứ hồi ghi cạnh lợi nhuận (họ tính 0.60% notional; ta 0.30% theo RULE 5).
+
+Những gì **không mượn**: con số tiêu đề. RULE 11 của ta coi mọi win-rate cao ở khung ngắn là nghi vấn cho tới khi qua bộ dò rò rỉ — và công bằng mà nói, chính bài đó cũng giữ lane 3m ở chế độ nghiên cứu vì LCB95 âm (n=103 cho lane 15m là cỡ mẫu mỏng). Dashboard của ta hiển thị kịch bản kèm n=, không hiển thị lời hứa.
 
 ---
 
