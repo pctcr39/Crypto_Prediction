@@ -169,6 +169,34 @@ canvas{display:block;width:100%;height:100%}
 .tape-row{display:flex;justify-content:space-between;gap:var(--sp-2);padding:2px 0;
   font:400 12px/18px var(--font-num);font-variant-numeric:tabular-nums}
 
+/* ── Lớp bám sát (phương án C) ────────────────────────────────── */
+.trk-head{display:flex;justify-content:space-between;align-items:baseline;gap:var(--sp-2);
+  margin-bottom:var(--sp-2)}
+.trk-status{font:600 13px/20px var(--font-ui)}
+.trk-big{font:600 26px/32px var(--font-num);font-variant-numeric:tabular-nums}
+.trk-sub{font:400 12px/18px var(--font-ui);color:var(--text-2);margin:0 0 var(--sp-3)}
+.trk-bars{display:flex;flex-direction:column;gap:var(--sp-2);margin:var(--sp-3) 0}
+.trk-bar{display:grid;grid-template-columns:78px 1fr 62px;align-items:center;gap:var(--sp-2);
+  font:500 11px/16px var(--font-ui);color:var(--text-3)}
+.trk-track{position:relative;height:8px;border-radius:var(--radius-pill);background:var(--surface-2);
+  overflow:hidden}
+.trk-fill{position:absolute;inset:0 auto 0 0;border-radius:var(--radius-pill);
+  transition:width var(--dur-base) var(--ease)}
+.trk-fill.time{background:var(--text-3)}
+.trk-val{text-align:right;font:500 12px/16px var(--font-num);font-variant-numeric:tabular-nums;
+  color:var(--text-1)}
+/* Thước dải: q10 ─── giá ─── q90 */
+.trk-band{position:relative;height:26px;margin:var(--sp-3) 0 var(--sp-1)}
+.trk-band-track{position:absolute;top:11px;left:0;right:0;height:4px;border-radius:var(--radius-pill);
+  background:var(--pred-band);border:1px solid color-mix(in srgb,var(--pred) 35%,transparent)}
+.trk-mid{position:absolute;top:6px;width:1px;height:14px;background:var(--pred)}
+.trk-dot{position:absolute;top:5px;width:14px;height:14px;margin-left:-7px;border-radius:50%;
+  border:2px solid var(--surface-1);transition:left var(--dur-base) var(--ease)}
+.trk-ends{display:flex;justify-content:space-between;font:400 11px/16px var(--font-num);
+  font-variant-numeric:tabular-nums;color:var(--text-3)}
+.trk-rows{margin-top:var(--sp-2)}
+.lock-note{font:400 11px/16px var(--font-ui);color:var(--text-3);margin:var(--sp-2) 0 0}
+
 /* ── Prediction / setup / paper ───────────────────────────────── */
 .badge{display:inline-flex;align-items:center;gap:var(--sp-2);padding:6px var(--sp-3);
   border-radius:var(--radius-pill);font:500 14px/20px var(--font-ui)}
@@ -334,6 +362,44 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
         </div>
       </section>
 
+      <section class="card" style="margin-top:var(--sp-4)" aria-label="Bám sát dự đoán"
+               aria-live="polite">
+        <div class="pc-head">
+          <h2 style="margin:0">Bám sát</h2>
+          <span class="chip" id="trk-countdown">—</span>
+        </div>
+        <div class="trk-head">
+          <span class="trk-status" id="trk-status">—</span>
+          <span class="trk-big num" id="trk-progress">—</span>
+        </div>
+        <p class="trk-sub" id="trk-sub">Đang chờ dự đoán đầu tiên…</p>
+
+        <div class="trk-bars">
+          <div class="trk-bar"><span>Quãng đường</span>
+            <span class="trk-track"><i class="trk-fill" id="trk-fill-move" style="width:0%"></i></span>
+            <span class="trk-val" id="trk-move-v">—</span></div>
+          <div class="trk-bar"><span>Thời gian</span>
+            <span class="trk-track"><i class="trk-fill time" id="trk-fill-time" style="width:0%"></i></span>
+            <span class="trk-val" id="trk-time-v">—</span></div>
+        </div>
+
+        <div class="trk-band">
+          <span class="trk-band-track"></span>
+          <span class="trk-mid" id="trk-mid" style="left:50%"></span>
+          <span class="trk-dot" id="trk-dot" style="left:50%"></span>
+        </div>
+        <div class="trk-ends"><span id="trk-lo">—</span><span id="trk-hi">—</span></div>
+
+        <div class="trk-rows">
+          <div class="bal-row"><span id="trk-need-lbl">Còn phải đi tới q50</span><span class="sv" id="trk-need">—</span></div>
+          <div class="bal-row"><span>Nếu vào lệnh lúc chốt</span><span class="sv" id="trk-pnl">—</span></div>
+        </div>
+        <p class="lock-note" id="trk-lock">—</p>
+        <p class="meter-verbal">Dự đoán <b>khoá lại khi nến đóng</b> và không đổi cho tới nến kế —
+          model không có gì mới để nói trong lúc nến đang chạy. Phần cập nhật từng giây ở trên là
+          <b>số học trên dự đoán đã khoá</b>, không phải model đoán lại.</p>
+      </section>
+
       <section class="card" style="margin-top:var(--sp-4)" aria-label="Thiết lập lệnh gợi ý">
         <div class="pc-head"><h2>Thiết lập lệnh · gợi ý</h2><span class="chip">auto-trade TẮT</span></div>
         <div class="setup-inputs">
@@ -402,6 +468,7 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
     candles: [], book: null, tape: [], tickers: {},
     conn: "connecting", lastTick: 0, timeOffset: 0,
     ws: null, retry: 0, hover: null,
+    locked: null,          // ★ dự đoán đã khoá — chỉ đổi khi nến đóng
   };
   const paper = { cash: 10000, assets: {} };
   const $ = id => document.getElementById(id);
@@ -512,7 +579,9 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
     // Hàng coin đang chọn bám giá trực tiếp — không để lệch với hero
     const row = document.querySelector(`.coin-row[data-sym="${S.sym}"] .coin-px`);
     if (row) row.textContent = fmt(c.close);
-    updHeader(); updWallet(); renderPrediction(); draw();
+    // ★ PHƯƠNG ÁN C: model chỉ "nói lại" khi nến đóng
+    if (c.closed) { relock(); renderPrediction(); }
+    updHeader(); updWallet(); renderTracking(); draw();
   }
 
   function onTrade(t) {
@@ -583,28 +652,120 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
   /* ── Minh hoạ "dự đoán" — KHÔNG phải model ────────────────── */
   // Hướng: dấu của động lượng 12 nến (baseline thô, chưa hiệu chỉnh).
   // Dải: ±1σ log-return thực tế nhân √horizon. Chỉ để trình bày giao diện.
-  function demoOutlook() {
-    const c = S.candles; if (c.length < 30) return null;
+  // PHƯƠNG ÁN C — dự đoán tính từ nến ĐÃ ĐÓNG và KHOÁ LẠI cho tới nến kế.
+  // Model thật cũng sẽ chạy đúng nhịp này: nến đang hình thành là dữ liệu
+  // out-of-distribution (volume mới đi 1/3, high/low chưa xong), và 44/45
+  // feature vốn đứng yên suốt cả nến — chạy lại chỉ sinh số rung lắc.
+  function computeOutlook() {
+    // chỉ lấy tới nến đã đóng cuối cùng — bỏ nến đang chạy
+    const all = S.candles;
+    const c = all[all.length - 1] && all[all.length - 1].closed ? all : all.slice(0, -1);
+    if (c.length < 30) return null;
     const rets = [];
     for (let i = c.length - 30; i < c.length; i++) rets.push(Math.log(c[i].close / c[i - 1].close));
     const mean = rets.reduce((a, b) => a + b, 0) / rets.length;
     const sd = Math.sqrt(rets.reduce((a, b) => a + (b - mean) ** 2, 0) / rets.length) || 1e-6;
     const mom = Math.log(c[c.length - 1].close / c[c.length - 13].close);
-    const px = c[c.length - 1].close;
+    const px = c[c.length - 1].close;              // GIÁ NEO — đóng băng tại đây
     const sig = sd * Math.sqrt(HORIZON_BARS);
     const drift = Math.max(-1.5, Math.min(1.5, mom / (sd * Math.sqrt(12)))) * sig * 0.4;
     const step = TF_MS[S.tf];
-    const lastClosed = c[c.length - 1].closed ? c[c.length - 1].ts : c[c.length - 2].ts;
+    const lastClosed = c[c.length - 1].ts;
     return {
       px, sd, sig, score: Math.round(50 + Math.max(-14, Math.min(14, drift / sig * 22))),
       mid: px * Math.exp(drift), lo: px * Math.exp(drift - sig), hi: px * Math.exp(drift + sig),
       anchor: lastClosed + step, target: lastClosed + step + HORIZON_BARS * step, step,
+      lockedAt: lastClosed + step,                 // thời điểm nến đóng = lúc khoá
       atrPct: c.slice(-14).reduce((a, x) => a + (x.high - x.low), 0) / 14 / px * 100,
     };
   }
 
+  // Đọc dự đoán đang khoá. KHÔNG tính lại — mọi nơi dùng chung một bản.
+  const outlook = () => S.locked;
+
+  function relock() { S.locked = computeOutlook(); }
+
+  // ── LỚP BÁM SÁT — cập nhật từng tick, thuần SỐ HỌC trên dự đoán đã khoá ──
+  function renderTracking() {
+    const o = S.locked;
+    if (!o || !S.candles.length) return;
+    const px = S.candles[S.candles.length - 1].close;
+    const nowMs = now();
+
+    // Quãng đường đã đi so với đích q50 (âm = đi ngược, >100% = vượt đích)
+    const move = (px - o.px) / (o.mid - o.px || 1e-9);
+    // Thời gian đã trôi trong horizon
+    const elapsed = Math.min(1, Math.max(0, (nowMs - o.anchor) / (o.target - o.anchor)));
+    const long = o.mid >= o.px;
+
+    const st = $("trk-status"), pr = $("trk-progress"), sub = $("trk-sub");
+    let label, cls, note;
+    if (px > o.hi)      { label = "Vượt dải trên"; cls = "pos";
+                          note = "Giá đã ra ngoài kịch bản lạc quan nhất (q90)."; }
+    else if (px < o.lo) { label = "Thủng dải dưới"; cls = "neg";
+                          note = "Giá đã ra ngoài kịch bản bi quan nhất (q10)."; }
+    else if (move >= 1) { label = "Đã chạm đích"; cls = "pos";
+                          note = "Giá đã tới mức q50 trước hạn — dự đoán này coi như xong."; }
+    else if (move <= 0) { label = "Đi ngược"; cls = "neg";
+                          note = "Giá đang đi ngược hướng dự đoán."; }
+    else if (move > elapsed + 0.15) { label = "Nhanh hơn dự đoán"; cls = "pos";
+                          note = "Quãng đường đi nhanh hơn nhịp thời gian."; }
+    else if (move < elapsed - 0.15) { label = "Chậm hơn dự đoán"; cls = "";
+                          note = "Thời gian trôi nhanh hơn quãng đường — dự đoán đang trễ nhịp."; }
+    else                { label = "Đang bám"; cls = "";
+                          note = "Giá đi đúng nhịp so với dự đoán."; }
+    st.textContent = label;
+    st.className = "trk-status " + cls;
+    pr.textContent = pctStr(move * 100);
+    pr.className = "trk-big num " + (move >= 0 ? "pos" : "neg");
+    sub.textContent = note;
+
+    const pc = v => Math.min(100, Math.max(0, v * 100));
+    const fm = $("trk-fill-move");
+    fm.style.width = pc(move) + "%";
+    fm.style.background = move >= 0 ? "var(--up)" : "var(--down)";
+    $("trk-move-v").textContent = (move * 100).toFixed(0) + "%";
+    $("trk-fill-time").style.width = pc(elapsed) + "%";
+    $("trk-time-v").textContent = (elapsed * 100).toFixed(0) + "%";
+
+    // Thước dải: vị trí giá giữa q10 và q90
+    const band = Math.min(1, Math.max(0, (px - o.lo) / (o.hi - o.lo || 1e-9)));
+    const dot = $("trk-dot");
+    dot.style.left = (band * 100) + "%";
+    dot.style.background = px > o.hi || px < o.lo ? "var(--accent)"
+      : (px >= o.px ? "var(--up)" : "var(--down)");
+    $("trk-mid").style.left = Math.min(100, Math.max(0,
+      (o.mid - o.lo) / (o.hi - o.lo || 1e-9) * 100)) + "%";
+    $("trk-lo").textContent = fmt(o.lo);
+    $("trk-hi").textContent = fmt(o.hi);
+
+    // Đã vượt đích thì đổi hẳn nhãn — nếu không sẽ mâu thuẫn với trạng thái phía trên
+    const need = (o.mid / px - 1) * 100;
+    if (move >= 1) {
+      $("trk-need-lbl").textContent = "Đã vượt q50";
+      $("trk-need").innerHTML = `<b class="pos">${Math.abs(need).toFixed(2)}%</b>`
+        + ` <small style="color:var(--text-3)">quá đích</small>`;
+    } else {
+      $("trk-need-lbl").textContent = "Còn phải đi tới q50";
+      $("trk-need").innerHTML = Math.abs(need) < 0.005 ? "đã tới"
+        : `<b class="${need >= 0 ? "pos" : "neg"}">${pctStr(need)}</b>`;
+    }
+
+    // Nếu vào lệnh theo tín hiệu ngay lúc khoá — đã trừ phí khứ hồi.
+    // KHÔNG RÕ thì không có lệnh nào để tính (luật M13: không tín hiệu → không lệnh).
+    if (o.score <= 58 && o.score >= 42) {
+      $("trk-pnl").innerHTML = `<span style="color:var(--text-3)">—</span>`
+        + ` <small style="color:var(--text-3)">KHÔNG RÕ · không vào lệnh</small>`;
+    } else {
+      const net = (px / o.px - 1) * 100 * (long ? 1 : -1) - FEE_RT;
+      $("trk-pnl").innerHTML = `<b class="${net >= 0 ? "pos" : "neg"}">${pctStr(net)}</b>`
+        + ` <small style="color:var(--text-3)">đã trừ phí</small>`;
+    }
+
+  }
+
   function renderPrediction() {
-    const o = demoOutlook(); if (!o) return;
+    const o = outlook(); if (!o) return;
     const dir = o.score > 58 ? "up" : o.score < 42 ? "down" : "unclear";
     const b = $("dir-badge");
     b.className = "badge badge--" + dir;
@@ -616,6 +777,11 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
     f.style.background = dir === "up" ? "var(--up)" : dir === "down" ? "var(--down)" : "var(--text-3)";
     $("meter-num").innerHTML = `<b class="num">${o.score}%</b> · chưa hiệu chỉnh`;
     $("pred-title").textContent = `Minh hoạ · ${HORIZON_BARS} nến ${S.tf} tới`;
+    $("model-chip").textContent = `khoá lúc ${fmtT(o.lockedAt, o.step)} · chưa có model`;
+    // Hai dòng này CHỈ đổi khi khoá lại — thuộc về đây, không phải lớp bám sát
+    $("trk-countdown").textContent = "đích " + fmtT(o.target, o.step);
+    $("trk-lock").textContent = `Khoá lúc ${fmtFull(o.lockedAt)} UTC · giá neo ${fmt(o.px)}`
+      + ` · đích ${fmtFull(o.target)}`;
 
     let rows = "";
     for (let k = 1; k <= HORIZON_BARS; k++) {
@@ -633,7 +799,7 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
   /* ── Thiết lập lệnh (luật M13, ATR từ nến thật) ────────────── */
   function renderSetup(o) {
     const body = $("setup-body");
-    o = o || demoOutlook(); if (!o) return;
+    o = o || outlook(); if (!o) return;
     const dir = o.score > 58 ? "up" : o.score < 42 ? "down" : "unclear";
     if (dir === "unclear") {
       body.innerHTML = `<div class="setup-flat">● KHÔNG RÕ — đứng ngoài
@@ -728,7 +894,7 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
                 border: cssVar("--border"), t1: cssVar("--text-1"), t2: cssVar("--text-2"),
                 t3: cssVar("--text-3"), s1: cssVar("--surface-1"), s2: cssVar("--surface-2") };
     const cs = S.candles.slice(-VIEW), N = cs.length;
-    const o = demoOutlook(), FB = HORIZON_BARS;
+    const o = outlook(), FB = HORIZON_BARS;
     const padL = 8, padR = 66, padT = 18, padB = 26;
     const plotW = W - padL - padR, plotH = H - padT - padB;
     const slotW = plotW / (N + FB + 1.5);
@@ -821,7 +987,7 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
     const i = Math.floor((mx - 8) / slotW);
     if (i < 0 || i >= N + FB) { S.hover = null; tt.style.display = "none"; draw(); return; }
     S.hover = { i, my };
-    const o = demoOutlook();
+    const o = outlook();
     if (i < N) {
       const c = cs[i];
       const tk = c.vol > 0 ? (c.takerBuy / c.vol * 100).toFixed(0) : "—";
@@ -891,7 +1057,8 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
   async function reload() {
     try {
       await loadKlines();
-      updHeader(); renderPrediction(); updWallet(); draw();
+      relock();
+      updHeader(); renderPrediction(); renderTracking(); updWallet(); draw();
       connectWS();
     } catch (err) { setConn("down", "Không tải được dữ liệu"); }
   }
@@ -903,6 +1070,7 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
       const rem = (Math.floor(now() / step) + 1) * step - now();
       $("cd").textContent = fmtCd(rem);
     }
+    renderTracking();   // thời gian vẫn trôi kể cả khi giá đứng im
     if (S.conn === "live" && Date.now() - S.lastTick > 5000) setConn("slow");
   }, 1000);
 

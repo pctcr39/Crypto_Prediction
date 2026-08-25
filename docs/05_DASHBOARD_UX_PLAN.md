@@ -70,6 +70,22 @@ GET /api/predictions/history?symbol=&timeframe=&limit=200
 → [{predicted_at, direction, p_up_calibrated, outcome, hit}, …]
 ```
 
+### 3.5b Nhịp dự đoán — chốt phương án C (25/08/2026)
+
+Người dùng kỳ vọng "dự đoán realtime liên tục". Ba phương án đã cân nhắc:
+
+| | Cách | Được | Mất |
+|---|---|---|---|
+| A | Model khung ngắn hơn (5m/15m) | tần suất thật | hit-rate về ~51%; hoà vốn khung phút cần **250%** (`09 §3.2`) |
+| B | Dự đoán "tạm tính" trong nến | cảm giác liên tục | phải train thêm bộ feature cho nến dở dang; người xem neo vào số tạm |
+| **C ✅** | **Model chạy khi nến đóng · lớp bám sát chạy từng giây** | realtime thật, trung thực, rẻ | `p_up` không nhảy — nhưng nó *không nên* nhảy |
+
+**Lý do kỹ thuật chọn C:** ① model huấn luyện trên nến ĐÃ ĐÓNG — nến đang hình thành là dữ liệu out-of-distribution; ② 44/45 feature tính từ nến đã đóng, đứng yên suốt cả nến; ③ số rung lắc trông như thông tin nhưng là nhiễu (RULE 8).
+
+> **Tần suất cập nhật không làm dự đoán mới hơn — chỉ làm nó ồn hơn.** Một dự đoán cho mốc 18:00 vẫn là dự đoán cho 18:00, dù tính lại 1 lần hay 3.600 lần.
+
+**Cái gì cập nhật từng giây mà không nói dối:** giá/sổ lệnh/tape (đo đạc) · vị trí giá trong dải · % quãng đường tới q50 · thời gian còn lại · trạng thái bám sát · uPnL. **Cái gì đứng yên:** câu trả lời của model.
+
 ### 3.6 Kết nối Binance — hai tầng, hai số phận
 
 | Tầng | Là gì | Khi nào có thật |
@@ -102,6 +118,7 @@ Prototype luôn mô phỏng cả hai tầng vì artifact chặn mạng ngoài (C
 | UX-15 | **TradeSetupCard (v5):** vốn + rủi ro%/lệnh do người dùng nhập → SL 1.5×ATR14, TP q90/q10, RR, khối lượng (trần bằng vốn), lãi/lỗ USDT đã trừ phí, thoát hạn theo horizon — đúng 3 lối ra M13; SHORT ghi «cần futures»; KHÔNG RÕ → «model đứng ngoài»; chip **auto-trade TẮT**, không có nút đặt lệnh (RULE 9) | ★★★ | M | W15b + M13 | ✅ v5 |
 | UX-16 | **BUY/SELL chế độ PAPER (v6):** nút Mua/Bán kiểu Binance, ví ảo 10.000 USDT, %-nhanh 25–100, khớp mô phỏng phí taker 0.10%/chiều, giá vào trung bình, uPnL sống theo tick, **vạch VỊ THẾ trên chart**; bán khi ví trống → thông điệp spot; chip «chưa kết nối Binance» | ★★★ | M | W15b → nối M13 paper thật | ✅ v6 |
 | UX-17 | **Sổ lệnh + khớp lệnh kiểu Binance (v6):** 6 asks/6 bids kèm thanh depth, mid + mũi hướng, tape chảy ~0.9s/lệnh, thanh tỷ lệ Mua/Bán (tiền thân trực quan của feature `taker_buy_ratio` G3). Bản thật W15a nối WS công khai @depth · @aggTrade, không cần API key — artifact CSP chặn mạng ngoài nên prototype mô phỏng | ★★ | M | W15a | ✅ v6 (mô phỏng) |
+| UX-18 | **Lớp bám sát — phương án C (v7):** dự đoán **khoá lại khi nến đóng** (tính từ nến ĐÃ ĐÓNG, đóng băng cho tới nến kế); lớp bám sát cập nhật **từng giây** bằng số học trên dự đoán đã khoá: quãng đường đã đi vs thời gian đã trôi (2 thanh so kè), vị trí giá trong dải q10–q90, còn phải đi bao nhiêu tới q50 (đổi nhãn khi đã vượt), uPnL nếu vào lệnh lúc chốt (KHÔNG RÕ → không tính), trạng thái 6 mức: đang bám · nhanh hơn · chậm hơn · đi ngược · đã chạm đích · ra ngoài dải | ★★★ | M | W15b | ✅ v7 |
 
 ### 4.1 Tham chiếu trình bày — VishvaAlgoAI (bài Medium v36.2)
 
