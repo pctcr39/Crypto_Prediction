@@ -57,6 +57,7 @@ python -m cryptopred.data.universe --refresh
 | [`docs/03_MODULE_SPECS.md`](docs/03_MODULE_SPECS.md) | Đặc tả chi tiết M0–M14 |
 | [`docs/04_EXECUTION_STRATEGY.md`](docs/04_EXECUTION_STRATEGY.md) | Chiến lược thực thi: harness map, chế độ audit, detail design, WBS |
 | [`docs/05_DASHBOARD_UX_PLAN.md`](docs/05_DASHBOARD_UX_PLAN.md) | Review prototype + kế hoạch UX dashboard (timestamp Binance, track record) |
+| [`docs/06_HIGH_LEVEL_DESIGN.md`](docs/06_HIGH_LEVEL_DESIGN.md) | **HLD** — 14 sơ đồ: bối cảnh, container, pipeline, ER, sequence, walk-forward, state machine, 4 cổng |
 | [`docs/adr/`](docs/adr/) | Nhật ký quyết định kiến trúc |
 
 ## Cấu trúc
