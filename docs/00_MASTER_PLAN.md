@@ -211,7 +211,8 @@ Tôi đã cho một agent rà soát hơn 60 repo trên GitHub. Bảng dưới l�
 |---|---|---|---|
 | Dữ liệu | **ccxt** (43.7k★, cập nhật hằng ngày) | MIT | Một API cho 100+ sàn. WebSocket đã được gộp vào bản free từ v1.95 — không cần trả phí. |
 | Lưu trữ | **Parquet + DuckDB** | MIT | Miễn phí, không cần cài server, truy vấn SQL trên file. Đủ cho vài GB dữ liệu nến. |
-| Chỉ báo | **pandas-ta-classic** (MIT) | MIT | 192 chỉ báo, **không cần thư viện C**. Là nhánh còn sống của pandas-ta. |
+| Chỉ báo (đường chính) | **hexital** (MIT, v4.0.2 · 25/08/2026) | MIT | Chỉ báo tăng dần O(1), **dùng chung cho cả backtest lẫn live** — xem S-RULE 2 ở `05_STREAMING_ARCHITECTURE.md`. Đây là nguồn chân lý duy nhất về chỉ báo. |
+| Chỉ báo (thăm dò) | **pandas-ta-classic** (MIT) | MIT | 192 chỉ báo, không cần thư viện C. **Chỉ dùng trong notebook để thăm dò** — không được nuôi model bằng nó, vì sẽ tạo train/serve skew. |
 | Chỉ báo (tuỳ chọn) | **ta-lib-python** | BSD-2 | Nhanh hơn nhiều. Từ v0.6.5 đã có wheel dựng sẵn nên không còn đau đầu cài đặt như xưa. |
 | Baseline | **statsforecast** | Apache-2.0 | Seasonal-naive và AutoARIMA để làm mốc so sánh bắt buộc (RULE 4). |
 | Model chính | **LightGBM** (18.7k★) | MIT | Trên dữ liệu bảng nhiễu và ít mẫu như crypto, gradient boosting thắng deep learning trong đa số trường hợp. |
@@ -223,7 +224,7 @@ Tôi đã cho một agent rà soát hơn 60 repo trên GitHub. Bảng dưới l�
 | Backend | **FastAPI + uvicorn** | MIT | WebSocket native, async, docs tự sinh. Nhẹ và dễ học. |
 | Chart | **TradingView lightweight-charts v5** (16.1k★) | Apache-2.0 | 45KB, nhìn và chạy đúng chuẩn TradingView. |
 | Theo dõi | **MLflow** | Apache-2.0 | `pip install mlflow && mlflow ui` là xong. Không cần tài khoản, không phụ thuộc nhà cung cấp. |
-| Lập lịch | **APScheduler** → **Prefect** | MIT/Apache | Bắt đầu bằng APScheduler cho đơn giản, lên Prefect khi cần retry và observability. |
+| Lập lịch | **asyncio** (đóng nến) + **systemd timer** (retrain đêm) | — | Đóng nến là sự kiện, không phải lịch — phản ứng theo cờ `x:true` của Binance, đừng lập lịch theo đồng hồ máy. Xem `05_STREAMING_ARCHITECTURE.md`. APScheduler 4.x vẫn alpha; Prefect/Dagster là thừa cho một job mỗi đêm. |
 | Cảnh báo | **Telegram Bot API** | — | Miễn phí, 5 phút cài đặt. |
 | Giao dịch | **ccxt** + risk engine tự viết | MIT | Xem §7. |
 
@@ -417,6 +418,10 @@ Bạn đã chọn auto-trade tiền thật. Tôi sẽ dựng đầy đủ kiến
 >
 > - **Vế A — Testnet:** chứng minh phần kỹ thuật. Idempotency, đối soát, xử lý lỗi, kill switch. Tiêu chí là "0 sự cố", **không** phải PnL.
 > - **Vế B — Shadow run trên dữ liệu mainnet thật:** hệ thống chạy đầy đủ trên giá thật và ghi lại lệnh nó *sẽ* đặt, nhưng không gửi đi. Khớp lệnh mô phỏng ở giá thật cộng phí và trượt giá. Tiêu chí ±30% so với backtest được chấm ở vế này, không phải ở Testnet.
+>
+> 🆕 **Dùng Binance Demo Mode thay Testnet ở vế A — nhưng vế B giữ nguyên.** Binance đã ra Demo Mode (`wss://demo-stream.binance.com`, REST `https://demo-api.binance.com/api`) với giá và sổ lệnh *tương tự* thị trường thật, giới hạn IP và bộ lọc giống production. Nó tốt hơn Testnet cho vế A rõ rệt.
+>
+> ⛔ **Nhưng Demo Mode không bao giờ được dùng để chấm PnL.** Tài liệu Binance nói thẳng: *"Realistic market data is **not equal to** 'real' market data. **Do not assume trading strategies that work in Demo Mode will work in the live exchange.**"* Một môi trường mà chính nhà cung cấp cảnh báo đừng suy ra kết luận về chiến lược thì không đủ tư cách mở khoá tiền thật. Vế B — shadow run trên giá mainnet thật — là bắt buộc, không có ngoại lệ (RULE 9).
 
 ### GATE 4 — An toàn kỹ thuật
 
@@ -481,6 +486,8 @@ Crypto_Prediction/
 │   ├── 01_CLAUDE_HANDBOOK.md    # Cẩm nang toàn bộ tính năng Claude
 │   ├── 02_DESIGN_SYSTEM.md      # Design system cho dashboard
 │   ├── 03_MODULE_SPECS.md       # Đặc tả chi tiết M0–M14
+│   ├── 04_PHAN_TICH_VISHVAALGO.md  # Mổ xẻ một bot thương mại
+│   ├── 05_STREAMING_ARCHITECTURE.md # ★ Kiến trúc streaming 6 tầng
 │   └── adr/                     # Nhật ký quyết định kiến trúc
 ├── config/
 │   ├── symbols.yaml             # Bộ lọc vũ trụ coin
@@ -528,4 +535,4 @@ Ba câu hỏi còn mở, có thể trả lời sau, không chặn việc bắt �
 
 ---
 
-*Tài liệu liên quan: `01_CLAUDE_HANDBOOK.md` · `02_DESIGN_SYSTEM.md` · `03_MODULE_SPECS.md`*
+*Tài liệu liên quan: `01_CLAUDE_HANDBOOK.md` · `02_DESIGN_SYSTEM.md` · `03_MODULE_SPECS.md` · `04_PHAN_TICH_VISHVAALGO.md` · `05_STREAMING_ARCHITECTURE.md`*

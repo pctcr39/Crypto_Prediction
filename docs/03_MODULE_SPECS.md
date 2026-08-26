@@ -97,24 +97,29 @@
 | **Mục tiêu** | Sinh ~45 đặc trưng **scale-free**, đã dịch thời gian, không rò rỉ |
 | **Input** | `data/clean/` |
 | **Output** | `data/features/` |
-| **Thư viện** | `pandas-ta-classic` (MIT), tuỳ chọn `ta-lib` |
+| **Thư viện** | **`hexital`** (MIT, tăng dần O(1)) — nguồn chân lý duy nhất · `pandas-ta-classic` chỉ để thăm dò trong notebook |
 | **Liên quan** | RULE 1, RULE 2 |
 | **Thời gian** | 1 tuần |
 
 **Việc cụ thể**
 
-1. Cài đúng `pandas-ta-classic`, **không phải `pandas-ta`** (repo gốc đã bị xoá khỏi GitHub, package PyPI đổi chủ không rõ lý do — rủi ro chuỗi cung ứng thực sự).
+1. **Viết một cài đặt chỉ báo duy nhất bằng `hexital`, dùng chung cho backtest và live.** Đây là yêu cầu kiến trúc, không phải tối ưu hoá — xem S-RULE 2 ở `05_STREAMING_ARCHITECTURE.md`. Train bằng `pandas-ta` rồi phục vụ bằng thư viện khác sẽ tạo **train/serve skew**: model gặp một phân phối hơi lệch so với lúc học, không có exception nào, chỉ có hiệu suất live tệ hơn backtest mà không rõ lý do.
+2. Nếu dùng `pandas-ta-classic` để thăm dò, nhớ **không phải `pandas-ta`** (package PyPI đã đổi tay maintainer, lịch sử release bị cắt — rủi ro chuỗi cung ứng).
 2. Sinh feature theo 9 nhóm ở §4.3 kế hoạch tổng thể.
 3. **Mỗi feature đi qua một hàm bọc duy nhất** áp `.shift(1)` — không để bất kỳ đường vòng nào.
 4. Nhóm liên thị trường: nạp lợi suất BTC, tính lợi suất tương đối và beta 30 ngày. Đây là nhóm feature giá trị nhất và cũng dễ rò rỉ nhất (phải căn đúng timestamp giữa hai coin).
 5. Chuẩn hoá **bên trong mỗi fold**, không bao giờ trên toàn chuỗi.
 
 **Cạm bẫy**
+- **`pandas.ewm(adjust=True)` — mặc định — không phải công thức EMA đệ quy.** Nó hội tụ về `adjust=False` nhưng khác rõ rệt trong giai đoạn khởi động. Đây là nguồn train/serve skew phổ biến nhất.
+- **Chỉ báo làm mượt kiểu Wilder (RSI, ATR, ADX) có bộ nhớ vô hạn** — bản khởi động từ nến 500 không bao giờ bằng chính xác bản tính từ nến 0. Phải làm ấm tối thiểu **5 lần chu kỳ dài nhất** (EMA200 ⇒ 1.000 nến) trước khi tin giá trị.
 - Cửa sổ trượt căn giữa (`center=True`) là rò rỉ tương lai. Cấm.
 - Chỉ báo có giai đoạn khởi động (EMA200 cần 200 nến). Tính lại **trong từng fold**, đừng tính một lần trên cả chuỗi rồi cắt.
 - `fillna(method='bfill')` kéo dữ liệu tương lai về quá khứ. Cấm `bfill`, chỉ dùng `ffill`.
 
 **Definition of Done**
+- [ ] `test_incremental_matches_batch` — bản tăng dần khớp bản batch tới 1e-9 **sau warmup**
+- [ ] Vector có cờ `warmed_up`; `warmed_up=False` thì **không được** đưa vào predict
 - [ ] `test_no_lookahead` xanh (xem M6)
 - [ ] Không feature nào có tương quan > 0.99 với nhãn (dấu hiệu rò rỉ kinh điển)
 - [ ] Ma trận feature không có NaN sau giai đoạn khởi động
@@ -323,11 +328,17 @@ Cấu hình bắt buộc: phí taker 0,10% mỗi chiều, slippage 0,05%. Chạy
 
 **Nguyên tắc chủ đạo:** Chỉ chạy suy luận **khi nến đóng**, không phải mỗi giây. Trong một nến chưa hoàn thành, đầu vào của model gần như không đổi — chạy lại chỉ tạo ra con số rung lắc gây hiểu lầm.
 
+**Phát hiện đóng nến theo sự kiện, không theo đồng hồ.** Payload kline của Binance có trường `x` (*"Is this kline closed?"*). Chỉ coi `x: true` là chốt. Không lập lịch theo đồng hồ máy — luồng kline đẩy mỗi **2000ms**, nên sự kiện đóng nến tới trễ tối đa 2 giây so với mốc giờ, và giờ máy không phải giờ sàn.
+
+**Gom batch, gọi `predict()` đúng một lần** trên ma trận `(N, 45)` cho toàn bộ symbol vừa đóng nến. Gọi lẻ 400 lần chậm hơn nhiều lần mà không được gì — chi phí gọi hàm Python/NumPy mới là thứ chiếm ưu thế ở quy mô này, không phải bản thân phép tính (~52µs mỗi dòng).
+
 Xử lý: nến đóng trễ, sàn mất kết nối, model lỗi (giữ dự đoán cũ + đánh dấu `stale`, không bao giờ im lặng).
 
 **Definition of Done**
 - [ ] Chạy 48 giờ liên tục không sập, không rò bộ nhớ
 - [ ] Mọi dự đoán ghi vào DB kèm timestamp để đối chiếu về sau
+- [ ] Rút cáp mạng → watchdog phát hiện trong ≤30 giây và tự phục hồi
+- [ ] Nến 4h/1d tự tổng hợp khớp tuyệt đối với REST Binance trên 1.000 mốc
 
 **Học Claude:** Scheduled tasks
 > Thực hành: đặt một tác vụ định kỳ chạy lúc 7h sáng, tổng hợp dự đoán 24h qua và độ chính xác thực tế, gửi báo cáo.
@@ -387,7 +398,7 @@ Chỉ gửi khi `p_up_calibrated` vượt ngưỡng và hướng **đổi** so v
 
 **Nhóm 1 — giới hạn vốn:** kill switch · lỗ ngày 2% thì tự tắt và không tự bật lại · ≤1% vốn mỗi lệnh · ≤5% tổng exposure.
 
-**Nhóm 2 — toàn vẹn kỹ thuật:** idempotent order theo `clientOrderId` · đối soát với số dư sàn mỗi 5 phút · heartbeat, mất kết nối >60s thì chuyển chế độ an toàn · khởi động luôn ở trạng thái TẮT.
+**Nhóm 2 — toàn vẹn kỹ thuật:** idempotent order theo `clientOrderId` · đối soát với số dư sàn mỗi 5 phút · heartbeat, mất kết nối >60s thì chuyển chế độ an toàn · khởi động luôn ở trạng thái TẮT · **systemd `WatchdogSec` đo "có tick không" chứ không phải "process còn sống không"** · **dead man's switch bên ngoài** (Healthchecks) để bắt trường hợp cả máy chết.
 
 **Nhóm 3 — lối ra cho từng vị thế (thường bị quên, và là nhóm thiếu nó thì hai nhóm trên vô nghĩa):**
 - Stop-loss theo bội số ATR (khuyến nghị 1,5×ATR14), **đặt cùng lúc với lệnh vào**, không đặt sau.
