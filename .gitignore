@@ -36,3 +36,6 @@ reports/
 .DS_Store
 .idea/
 .vscode/
+
+# ── Khoá của harness — không đưa vào git ────────────────────────
+.claude/scheduled_tasks.lock

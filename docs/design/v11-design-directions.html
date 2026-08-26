@@ -1,0 +1,533 @@
+<title>Sáu Hướng V11</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,500&family=IBM+Plex+Sans+Condensed:wght@600&family=Chakra+Petch:wght@500;600;700&family=Space+Grotesk:wght@500;700&family=Archivo:wght@600;800&family=Instrument+Sans:wght@400;500;600&family=Spline+Sans+Mono:wght@500;600&family=JetBrains+Mono:wght@600&display=swap">
+<style>
+  /* ═══ Gallery chrome — cam kết một thế giới tối duy nhất ═══ */
+  :root{
+    --bg:#08090C; --panel:#0E1015; --panel-2:#14171E; --line:#20242D;
+    --t1:#E9EBEF; --t2:#9AA1AD; --t3:#5C6370;
+    --up:#26a69a; --down:#ef5350; --pred:#8b7be8; --gold:#f0b90b;
+    --ui:'Instrument Sans',system-ui,sans-serif;
+    --mono:'IBM Plex Mono',ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--t1);font:400 15px/24px var(--ui)}
+  .wrap{max-width:1060px;margin:0 auto;padding:56px 24px 80px}
+  header.masthead{margin-bottom:40px}
+  .kicker{font:600 11px/16px var(--mono);letter-spacing:.22em;text-transform:uppercase;color:var(--t3)}
+  h1{font:700 44px/50px 'Space Grotesk',var(--ui);margin:10px 0 14px;text-wrap:balance;letter-spacing:-.01em}
+  .lede{max-width:64ch;color:var(--t2);margin:0}
+  .lede b{color:var(--t1);font-weight:600}
+  .method{display:flex;gap:18px;flex-wrap:wrap;margin-top:18px;font:500 12px/18px var(--mono);color:var(--t3)}
+  .method span b{color:var(--t2);font-weight:500}
+
+  /* Bảng điểm tổng */
+  .scoreboard{margin:36px 0 56px;border:1px solid var(--line);border-radius:10px;overflow-x:auto;background:var(--panel)}
+  table{border-collapse:collapse;width:100%;min-width:640px;font:500 13px/20px var(--mono)}
+  th,td{padding:10px 14px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+  th{font:600 10px/14px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--t3)}
+  th:first-child,td:first-child{text-align:left}
+  tr:last-child td{border-bottom:0}
+  td.name{font-family:var(--ui);font-weight:600}
+  td .tot{color:var(--t1);font-weight:600}
+  tr.win td{background:linear-gradient(90deg,rgba(240,185,11,.05),transparent 60%)}
+  tr.win td.name::after{content:"ĐỀ XUẤT";font:600 9px/14px var(--mono);letter-spacing:.12em;color:var(--gold);border:1px solid rgba(240,185,11,.4);border-radius:3px;padding:1px 6px;margin-left:10px;vertical-align:2px}
+  td .medal{font-family:var(--ui)}
+
+  /* Thẻ hướng thiết kế */
+  .dir{margin:0 0 64px;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--panel)}
+  .dir-head{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;padding:20px 24px 4px}
+  .rank{font:700 13px/22px var(--mono);color:var(--t3)}
+  .dir-head h2{margin:0;font:700 24px/30px 'Space Grotesk',var(--ui)}
+  .chips{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+  .chip{font:600 11px/16px var(--mono);padding:3px 9px;border-radius:4px;border:1px solid var(--line);color:var(--t2);white-space:nowrap}
+  .chip b{color:var(--t1)}
+  .chip.tot{border-color:rgba(240,185,11,.45);color:var(--gold)}
+  .chip.wow-win{border-color:rgba(139,123,232,.5);color:var(--pred)}
+  .tagline{padding:0 24px 18px;margin:0;color:var(--t2);max-width:78ch}
+
+  .mockframe{border-block:1px solid var(--line);background:#000}
+  .mock{position:relative;height:340px;overflow:hidden;font-variant-numeric:tabular-nums}
+  .mock,.mock *{pointer-events:none}
+
+  .dir-body{display:grid;grid-template-columns:1.1fr .9fr;gap:0}
+  @media(max-width:840px){.dir-body{grid-template-columns:1fr}}
+  .dir-col{padding:20px 24px}
+  .dir-col+.dir-col{border-left:1px solid var(--line)}
+  @media(max-width:840px){.dir-col+.dir-col{border-left:0;border-top:1px solid var(--line)}}
+  .dir h3{font:600 11px/16px var(--mono);letter-spacing:.18em;text-transform:uppercase;color:var(--t3);margin:0 0 12px}
+  .sig{list-style:none;margin:0;padding:0;display:grid;gap:9px}
+  .sig li{padding-left:16px;position:relative;color:var(--t2);font-size:14px;line-height:22px}
+  .sig li::before{content:"▸";position:absolute;left:0;color:var(--t3)}
+  .sig li b{color:var(--t1);font-weight:600}
+  .quote{border-left:2px solid var(--line);padding:2px 0 2px 14px;margin:0 0 14px;color:var(--t2);font-size:14px;line-height:22px}
+  .quote:last-child{margin-bottom:0}
+  .quote .who{display:block;font:600 10px/18px var(--mono);letter-spacing:.14em;color:var(--t3);text-transform:uppercase;margin-top:2px}
+  .quote.neg{border-left-color:rgba(239,83,80,.5)}
+  .quote.pos{border-left-color:rgba(38,166,154,.5)}
+  .meta{margin-top:16px;font:500 12px/20px var(--mono);color:var(--t3)}
+  .meta b{color:var(--t2);font-weight:500}
+  .steal{margin-top:16px;padding:12px 14px;border:1px dashed var(--line);border-radius:8px;font-size:13px;line-height:21px;color:var(--t2)}
+  .steal b{color:var(--gold);font:600 10px/16px var(--mono);letter-spacing:.14em;text-transform:uppercase;display:block;margin-bottom:4px}
+
+  /* Đề xuất cuối */
+  .verdict{border:1px solid rgba(240,185,11,.35);border-radius:14px;background:linear-gradient(180deg,rgba(240,185,11,.05),transparent 40%),var(--panel);padding:28px 28px 24px;margin-top:8px}
+  .verdict h2{font:700 26px/32px 'Space Grotesk',var(--ui);margin:6px 0 12px}
+  .verdict p{color:var(--t2);max-width:74ch}
+  .graft{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px;margin:18px 0 6px;padding:0;list-style:none}
+  .graft li{border:1px solid var(--line);border-radius:8px;padding:10px 14px;font-size:13px;line-height:20px;color:var(--t2);background:var(--panel-2)}
+  .graft li b{display:block;color:var(--t1);font-weight:600;font-size:13.5px}
+  .graft li small{color:var(--t3);font:500 10px/16px var(--mono);letter-spacing:.1em;text-transform:uppercase}
+  footer{margin-top:48px;color:var(--t3);font:500 12px/20px var(--mono)}
+
+  /* ══════════ MOCK DÙNG CHUNG: nến + nón dự đoán (SVG symbol) ══════════ */
+  .mk-svg{width:100%;height:100%;display:block}
+  .mk-svg .cu{fill:var(--up)} .mk-svg .cd{fill:var(--down)}
+  .mk-svg .wick{stroke:var(--t3);stroke-width:1}
+  .mk-svg .cone{fill:var(--pred);opacity:.14}
+  .mk-svg .cone-e{stroke:var(--pred);stroke-width:1.5;stroke-dasharray:6 4;fill:none}
+  .mk-svg .cone-m{stroke:var(--pred);stroke-width:2;stroke-dasharray:7 5;fill:none}
+  .mk-svg .nowl{stroke:#aab2c8;stroke-width:1;opacity:.5}
+
+  /* ══════════ 1 · THÉP & MỰC (terminal) ══════════ */
+  .d-ter{--mup:#26a69a;--mdn:#ef5350;background:#05070A;font-family:'IBM Plex Mono',monospace;color:#E6E8EC}
+  .d-ter .st{height:22px;display:flex;gap:14px;align-items:center;padding:0 10px;background:#0B0D12;border-bottom:1px solid #1C2028;font:500 9px/22px 'IBM Plex Mono',monospace;color:#9AA1AD}
+  .d-ter .st .live{color:#26a69a}.d-ter .st .live::before{content:"◉ "}
+  .d-ter .st .rt{margin-left:auto;color:#565D6A}
+  .d-ter .grid{position:absolute;inset:22px 0 24px;display:grid;grid-template-columns:2.2fr 1fr 1fr;grid-template-rows:1.5fr 1fr;gap:1px;background:#1C2028;padding:1px}
+  .d-ter .pn{background:#0B0D12;min-width:0;overflow:hidden;display:flex;flex-direction:column}
+  .d-ter .pb{display:flex;justify-content:space-between;height:16px;padding:0 6px;background:#12151C;border-bottom:1px solid #1C2028;font:600 7.5px/16px 'IBM Plex Sans Condensed',sans-serif;letter-spacing:.12em;color:#9AA1AD;text-transform:uppercase}
+  .d-ter .pb i{font:500 8px/16px 'IBM Plex Mono',monospace;color:#565D6A;font-style:normal}
+  .d-ter .chart{grid-row:1/3}
+  .d-ter .cwrap{flex:1;position:relative}
+  .d-ter .ohlc{position:absolute;top:4px;left:8px;font:500 7.5px/12px 'IBM Plex Mono',monospace;color:#9AA1AD;z-index:2}
+  .d-ter .ob{padding:5px 6px;display:grid;gap:3px;font:500 8px/11px 'IBM Plex Mono',monospace}
+  .d-ter .ob .r{display:flex;justify-content:space-between;position:relative;padding:0 2px}
+  .d-ter .ob .r i{position:absolute;inset:0 0 0 auto;opacity:.14}
+  .d-ter .ob .a{color:#ef5350}.d-ter .ob .a i{background:#ef5350}
+  .d-ter .ob .b{color:#26a69a}.d-ter .ob .b i{background:#26a69a}
+  .d-ter .pred{padding:6px;font:italic 500 15px/20px 'IBM Plex Mono',monospace;color:var(--pred)}
+  .d-ter .pred small{display:block;font:500 7px/10px 'IBM Plex Mono',monospace;color:#565D6A;font-style:normal;margin-top:2px}
+  .d-ter .badge{align-self:flex-start;margin:6px;font:600 6.5px/10px 'IBM Plex Mono',monospace;color:var(--pred);border:1px solid rgba(139,123,232,.4);padding:1px 4px;letter-spacing:.1em}
+  .d-ter .num{font:500 12px/16px 'IBM Plex Mono',monospace;padding:4px 6px}
+  .d-ter .tape{position:absolute;left:0;right:0;bottom:0;height:24px;display:flex;background:#0B0D12;border-top:1px solid #1C2028}
+  .d-ter .tape span{flex:1;display:flex;justify-content:space-between;align-items:center;padding:0 8px;border-right:1px solid #1C2028;font:500 8px/24px 'IBM Plex Mono',monospace;color:#9AA1AD}
+  .d-ter .tape b{font-weight:500}
+  .d-ter .tape .g{color:#26a69a}.d-ter .tape .r2{color:#ef5350}
+  .d-ter .tabline{position:absolute;top:22px;left:0;width:88px;height:2px;background:#F0B90B;z-index:3}
+
+  /* ══════════ 2 · FLIGHT DECK (mission) ══════════ */
+  .d-mis{background:#05070C radial-gradient(circle,#16213A 1px,transparent 1.4px);background-size:14px 14px;color:#D6E1F5;font-family:'Chakra Petch',sans-serif}
+  .d-mis::before{content:"";position:absolute;inset:0;background:radial-gradient(700px 55% at 50% -8%,#0D1526,transparent 70%)}
+  .d-mis .scr{position:absolute;background:#0C121E;border:1px solid #24304A;border-radius:4px;box-shadow:inset 0 1px 0 #ffffff08,0 8px 24px #00000066;overflow:hidden}
+  .d-mis .sh{height:16px;padding:0 8px;background:#121A2B;border-bottom:1px solid #24304A;display:flex;justify-content:space-between;font:600 7px/16px 'Chakra Petch',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8291AD}
+  .d-mis .scr.main{left:12px;top:34px;width:58%;bottom:66px}
+  .d-mis .hero{position:absolute;left:14px;top:26px;font:600 30px/32px 'IBM Plex Mono',monospace;text-shadow:0 0 24px #9DB8FF26;z-index:2}
+  .d-mis .hero small{display:block;font:600 7px/12px 'Chakra Petch',sans-serif;letter-spacing:.18em;color:#8291AD}
+  .d-mis .clocks{position:absolute;right:12px;top:8px;display:flex;gap:12px;font:600 10px/18px 'IBM Plex Mono',monospace;color:#D6E1F5}
+  .d-mis .clocks small{color:#55627D;font:600 6.5px/10px 'Chakra Petch',sans-serif;letter-spacing:.14em;display:block}
+  .d-mis .scr.gau{right:12px;top:34px;width:36%;height:118px}
+  .d-mis .ringwrap{display:flex;align-items:center;gap:10px;padding:8px}
+  .d-mis .ring{width:74px;height:74px}
+  .d-mis .ring .bgc{stroke:#24304A;fill:none;stroke-width:7}
+  .d-mis .ring .val{stroke:var(--pred);fill:none;stroke-width:7;stroke-linecap:round;stroke-dasharray:118 205}
+  .d-mis .ring text{font:600 13px 'IBM Plex Mono',monospace;fill:#D6E1F5}
+  .d-mis .rlbl{font:600 7px/11px 'Chakra Petch',sans-serif;letter-spacing:.12em;color:#8291AD;text-transform:uppercase}
+  .d-mis .rlbl b{display:block;font:italic 500 11px/16px 'IBM Plex Mono',monospace;color:var(--pred)}
+  .d-mis .lamps{position:absolute;right:12px;top:160px;width:36%;display:grid;grid-template-columns:1fr 1fr;gap:5px}
+  .d-mis .lamp{height:30px;display:grid;place-items:center;border:1px solid #24304A;border-radius:3px;background:#121A2B;color:#55627D;font:700 7.5px/10px 'Chakra Petch',sans-serif;letter-spacing:.1em}
+  .d-mis .lamp span{font-size:6px;color:#55627D}
+  .d-mis .sim{position:absolute;right:12px;bottom:66px;width:36%;height:34px;background:#0C121E;border:1px solid #24304A;border-top:3px solid;border-image:repeating-linear-gradient(45deg,#F0B90B 0 6px,#0C121E 6px 12px) 1;display:flex;align-items:center;gap:8px;padding:0 8px;font:700 8px/12px 'Chakra Petch',sans-serif;letter-spacing:.12em;color:#8291AD}
+  .d-mis .sim b{border:1px solid #F0B90B;color:#F0B90B;padding:1px 5px;border-radius:2px;font-size:7px}
+  .d-mis .tick{position:absolute;left:0;right:0;bottom:0;height:22px;background:#0C121E;border-top:1px solid #24304A;display:flex;align-items:center;gap:16px;padding:0 10px;font:500 8px/22px 'IBM Plex Mono',monospace;color:#8291AD;white-space:nowrap;overflow:hidden}
+  .d-mis .tick b{color:#55627D;font-weight:500}
+  .d-mis .brk{position:absolute;width:8px;height:8px;border:1.5px solid rgba(214,225,245,.35)}
+  .d-mis .brk.tl{top:-1px;left:-1px;border-width:1.5px 0 0 1.5px}
+  .d-mis .brk.br{bottom:-1px;right:-1px;border-width:0 1.5px 1.5px 0}
+  .d-mis .annun{position:absolute;left:12px;top:8px;display:flex;gap:6px;font:600 6.5px/14px 'Chakra Petch',sans-serif;letter-spacing:.1em}
+  .d-mis .annun span{padding:0 6px;border:1px solid #24304A;border-radius:2px;color:#55627D;background:#121A2B}
+  .d-mis .annun .on{color:#26a69a;background:rgba(38,166,154,.1);box-shadow:inset 0 0 12px rgba(38,166,154,.25);border-color:rgba(38,166,154,.4)}
+
+  /* ══════════ 3 · ON AIR (broadcast) ══════════ */
+  .d-bro{background:radial-gradient(120% 90% at 50% 0%,#0a1020 0%,#05070D 55%);color:#EDF1F7;font-family:'Archivo',sans-serif}
+  .d-bro .net{height:26px;display:flex;align-items:center;gap:12px;padding:0 12px;background:#0C1220;border-bottom:1px solid #22304C}
+  .d-bro .onair{display:inline-flex;gap:5px;align-items:center;padding:2px 8px;border-radius:3px;border:1px solid #26a69a;color:#26a69a;font:700 8px/12px 'Archivo',sans-serif;letter-spacing:.14em}
+  .d-bro .onair i{width:5px;height:5px;border-radius:50%;background:currentColor;animation:blink 2s infinite}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+  .d-bro .clock{margin-left:auto;font:600 10px/26px 'IBM Plex Mono',monospace;color:#8B96AC}
+  .d-bro .slate{position:absolute;left:14px;top:38px;display:flex;align-items:center;gap:8px;font:800 15px/20px 'Archivo',sans-serif;letter-spacing:.04em;text-transform:uppercase;z-index:2}
+  .d-bro .slate::before{content:"";width:4px;height:1.1em;background:#f0b90b}
+  .d-bro .slate small{font:500 6.5px/10px 'IBM Plex Mono',monospace;color:#566179;letter-spacing:.08em;align-self:flex-end;padding-bottom:2px}
+  .d-bro .mon{position:absolute;left:12px;right:12px;top:62px;bottom:96px;background:#0C1220;border:1px solid #22304C;border-radius:2px}
+  .d-bro .mon .ct{position:absolute;width:8px;height:8px;border:0 solid #566179}
+  .d-bro .ct.a{top:-1px;left:-1px;border-top-width:1px;border-left-width:1px}
+  .d-bro .ct.b{bottom:-1px;right:-1px;border-bottom-width:1px;border-right-width:1px}
+  .d-bro .px{position:absolute;right:16px;top:8px;font:800 26px/30px 'Archivo',sans-serif;z-index:2}
+  .d-bro .px small{display:block;text-align:right;font:600 8px/12px 'IBM Plex Mono',monospace;color:#26a69a}
+  .d-bro .lower{position:absolute;left:12px;bottom:44px;right:110px;background:rgba(17,26,46,.92);border-left:3px solid #f0b90b;padding:6px 12px;z-index:3}
+  .d-bro .lower .kick{font:700 8px/12px 'Archivo',sans-serif;letter-spacing:.14em;color:#f0b90b;text-transform:uppercase}
+  .d-bro .lower .head{font:700 13px/18px 'Archivo',sans-serif}
+  .d-bro .tape{position:absolute;left:0;right:0;bottom:0;height:30px;background:#111A2E;border-top:1px solid #22304C;overflow:hidden;display:flex;align-items:center}
+  .d-bro .track{display:flex;gap:26px;white-space:nowrap;font:600 10px/30px 'Archivo',sans-serif;letter-spacing:.04em;animation:roll 18s linear infinite;padding-left:12px}
+  @keyframes roll{to{transform:translateX(-50%)}}
+  .d-bro .track b{color:#26a69a;font-weight:600}.d-bro .track s{color:#ef5350;text-decoration:none}
+  .d-bro .track i{color:#f0b90b;font-style:normal}
+  @media (prefers-reduced-motion:reduce){.d-bro .track{animation:none}.d-bro .onair i{animation:none}}
+
+  /* ══════════ 4 · HOLO-DECK (neon) ══════════ */
+  .d-neo{background:radial-gradient(700px 320px at 50% -8%,#0a1526 0%,transparent 62%),#04060B;color:#E8F0FF;font-family:'Chakra Petch',sans-serif}
+  .d-neo .floor{position:absolute;left:-10%;right:-10%;bottom:-6px;height:90px;transform:perspective(160px) rotateX(52deg);transform-origin:top;background:repeating-linear-gradient(90deg,rgba(94,168,255,.14) 0 1px,transparent 1px 26px),repeating-linear-gradient(0deg,rgba(94,168,255,.1) 0 1px,transparent 1px 18px)}
+  .d-neo .rail{height:30px;display:flex;align-items:center;gap:12px;padding:0 12px;background:#0A1220;border-bottom:1px solid rgba(94,168,255,.3);font:600 8px/30px 'Chakra Petch',sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#8FA3C8}
+  .d-neo .cd{margin-left:auto;width:18px;height:18px;border-radius:50%;background:conic-gradient(rgba(94,168,255,.45) 0 68%,rgba(94,168,255,.08) 68% 100%);display:grid;place-items:center;font:600 6px 'JetBrains Mono',monospace;color:#E8F0FF}
+  .d-neo .pn{position:absolute;background:#0A1220;border:1px solid #1B2B44;clip-path:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,0 100%)}
+  .d-neo .pn h4{margin:0;padding:5px 8px 3px;font:600 7px/10px 'Chakra Petch',sans-serif;letter-spacing:.18em;color:#8FA3C8;text-transform:uppercase}
+  .d-neo .pn h4 i{color:#55688C;font-style:normal}
+  .d-neo .hook{position:absolute;width:10px;height:10px;border:0 solid rgba(94,168,255,.45)}
+  .d-neo .hook.l{left:-1px;bottom:-1px;border-width:0 0 1.5px 1.5px}
+  .d-neo .hook.r{right:-1px;bottom:-1px;border-width:0 1.5px 1.5px 0}
+  .d-neo .main{left:12px;top:42px;width:60%;bottom:78px}
+  .d-neo .hero{position:absolute;left:14px;top:6px;font:600 24px/28px 'JetBrains Mono',monospace;color:#E8F0FF;text-shadow:0 0 18px rgba(38,166,154,.35);z-index:2}
+  .d-neo .side{right:12px;top:42px;width:33%;height:96px}
+  .d-neo .plasma{padding:6px 8px;display:grid;gap:4px}
+  .d-neo .plasma div{height:7px;border-radius:1px;position:relative}
+  .d-neo .plasma .a{background:linear-gradient(90deg,transparent,rgba(239,83,80,.18));box-shadow:inset -2px 0 0 rgba(239,83,80,.7)}
+  .d-neo .plasma .b{background:linear-gradient(90deg,transparent,rgba(38,166,154,.18));box-shadow:inset -2px 0 0 rgba(38,166,154,.7)}
+  .d-neo .predpn{right:12px;top:148px;width:33%;height:64px}
+  .d-neo .predpn .v{padding:2px 8px;font:500 14px/20px 'JetBrains Mono',monospace;color:var(--pred);text-shadow:0 0 8px rgba(139,123,232,.5)}
+  .d-neo .wm{position:absolute;right:16px;bottom:84px;font:600 6.5px/10px 'Chakra Petch',sans-serif;letter-spacing:.2em;color:rgba(139,123,232,.55);z-index:2}
+
+  /* ══════════ 5 · PRIVATE DESK (glass) ══════════ */
+  .d-gla{background:radial-gradient(600px 320px at 50% -8%,rgba(143,176,255,.07),transparent 60%),radial-gradient(480px 300px at 88% 108%,rgba(143,176,255,.04),transparent 55%),#060810;color:#E8ECF6;font-family:'Instrument Sans',sans-serif}
+  .d-gla .bar{position:absolute;left:50%;top:10px;transform:translateX(-50%);width:70%;height:34px;border-radius:999px;background:rgba(16,20,32,.6);backdrop-filter:blur(10px);border:1px solid rgba(148,163,199,.14);box-shadow:inset 0 1px 0 rgba(255,255,255,.09),0 16px 48px rgba(0,0,0,.5);display:flex;align-items:center;gap:14px;padding:0 18px;font:500 9px/34px 'Instrument Sans',sans-serif;color:#9AA3B8;z-index:4}
+  .d-gla .bar b{color:#E8ECF6;font-weight:600}
+  .d-gla .slab{position:absolute;left:16px;top:58px;width:60%;bottom:24px;border-radius:18px;background:linear-gradient(#0A0E18,#070A12);border:1px solid rgba(148,163,199,.14);box-shadow:inset 0 1px 0 rgba(255,255,255,.09),0 12px 40px rgba(0,0,0,.45);overflow:hidden}
+  .d-gla .px{position:absolute;left:18px;top:10px;font:600 22px/26px 'Spline Sans Mono',monospace;letter-spacing:-.02em;z-index:2}
+  .d-gla .px small{display:block;font:500 8px/12px 'Instrument Sans',sans-serif;color:#9AA3B8}
+  .d-gla .focal{position:absolute;right:16px;top:70px;width:32%;height:150px;border-radius:14px;background:rgba(28,34,52,.72);backdrop-filter:blur(12px);border:1px solid rgba(148,163,199,.14);box-shadow:inset 0 1px 0 rgba(255,255,255,.09),0 24px 60px rgba(0,0,0,.55);padding:12px 14px;z-index:3}
+  .d-gla .focal h4{margin:0 0 6px;font:600 8px/12px 'Instrument Sans',sans-serif;letter-spacing:.16em;color:#9AA3B8;text-transform:uppercase}
+  .d-gla .focal .v{font:500 18px/24px 'Spline Sans Mono',monospace;color:var(--pred);text-shadow:0 0 6px rgba(139,123,232,.35)}
+  .d-gla .focal .rng{font:500 9px/16px 'Spline Sans Mono',monospace;color:#9AA3B8}
+  .d-gla .hr{height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.1),transparent);margin:8px 0}
+  .d-gla .focal small{font-size:8px;line-height:12px;color:#5F6880;display:block}
+  .d-gla .lamp{position:absolute;right:16px;bottom:28px;width:32%;font:500 8.5px/14px 'Instrument Sans',sans-serif;color:#9AA3B8}
+  .d-gla .lamp i{display:inline-block;width:6px;height:6px;border-radius:50%;background:#26a69a;margin-right:6px;box-shadow:0 0 8px rgba(38,166,154,.6)}
+
+  /* ══════════ 6 · ĐÀI THIÊN VĂN (observatory) ══════════ */
+  .d-obs{background:radial-gradient(700px 420px at 72% -12%,#1B2350,transparent 62%),radial-gradient(520px 340px at 8% 108%,#10162E,transparent 55%),#05060E;color:#E8EAF6;font-family:'Space Grotesk',sans-serif}
+  .d-obs .stars,.d-obs .stars::after{content:"";position:absolute;width:2px;height:2px;border-radius:50%;background:transparent;
+    box-shadow:40px 30px 0 rgba(231,235,246,.5),120px 80px 0 rgba(231,235,246,.3),210px 40px 0 rgba(231,235,246,.45),330px 110px 0 rgba(231,235,246,.3),430px 60px 0 rgba(231,235,246,.5),520px 150px 0 rgba(231,235,246,.25),610px 90px 0 rgba(231,235,246,.4),700px 50px 0 rgba(231,235,246,.3),760px 170px 0 rgba(231,235,246,.45),260px 200px 0 rgba(231,235,246,.2),90px 220px 0 rgba(231,235,246,.35),470px 240px 0 rgba(231,235,246,.3),640px 260px 0 rgba(231,235,246,.25),160px 150px 0 rgba(231,235,246,.28)}
+  .d-obs .stars::after{box-shadow:80px 260px 0 rgba(231,235,246,.3),300px 290px 0 rgba(231,235,246,.2),560px 300px 0 rgba(231,235,246,.35),720px 230px 0 rgba(231,235,246,.3)}
+  .d-obs .meteor{position:absolute;right:70px;top:44px;width:26px;height:1.5px;background:linear-gradient(90deg,rgba(199,207,242,.8),transparent);transform:rotate(-30deg)}
+  .d-obs .console{position:absolute;background:rgba(12,16,32,.66);backdrop-filter:blur(8px);border:1px solid rgba(199,207,242,.12);border-radius:10px;box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 12px 40px rgba(0,0,0,.45)}
+  .d-obs .console h4{margin:0;padding:8px 12px 4px;font:500 7.5px/11px 'Space Grotesk',sans-serif;letter-spacing:.18em;color:#5A6284;text-transform:uppercase}
+  .d-obs .dome{left:14px;top:36px;width:62%;bottom:26px}
+  .d-obs .px{position:absolute;left:16px;top:6px;font:600 22px/26px 'IBM Plex Mono',monospace;text-shadow:0 0 24px rgba(199,207,242,.18);z-index:2}
+  .d-obs .meridian{position:absolute;top:26px;bottom:8px;left:64%;width:1px;background:linear-gradient(rgba(199,207,242,.5),rgba(199,207,242,.08))}
+  .d-obs .meridian::before{content:"◆";position:absolute;top:-12px;left:-4px;font-size:7px;color:#C7CFF2}
+  .d-obs .mlbl{position:absolute;top:14px;left:calc(64% + 6px);font:500 6.5px/10px 'Space Grotesk',sans-serif;letter-spacing:.14em;color:#C7CFF2;opacity:.75}
+  .d-obs .orbit{right:14px;top:36px;width:31%;height:128px}
+  .d-obs .orb{width:82px;height:82px;margin:4px auto 0;display:block}
+  .d-obs .orb .bgc{stroke:rgba(255,255,255,.06);fill:none;stroke-width:8}
+  .d-obs .orb .val{stroke:var(--pred);fill:none;stroke-width:8;stroke-linecap:round;stroke-dasharray:96 210}
+  .d-obs .orb .sat{fill:#C7CFF2}
+  .d-obs .orb text{font:500 12px 'IBM Plex Mono',monospace;fill:#E8EAF6}
+  .d-obs .atm{right:14px;top:176px;width:31%;bottom:26px;overflow:hidden}
+  .d-obs .atm .band{height:24px;display:flex;align-items:center;padding:0 10px;font:500 6.5px 'Space Grotesk',sans-serif;letter-spacing:.16em;color:#8E96B8;text-transform:uppercase}
+  .d-obs .atm .b1{background:#2A1A3E}.d-obs .atm .b2{background:#1A2142}.d-obs .atm .b3{background:#10162E}
+
+  .askrow{margin-top:14px;font-size:13px;color:var(--t3)}
+</style>
+
+<div class="wrap">
+<header class="masthead">
+  <div class="kicker">cryptopred · đề xuất giao diện v11 · 26-08-2026</div>
+  <h1>Sáu hướng hoành tráng — và một đề xuất</h1>
+  <p class="lede">Sáu design director pitch sáu thế giới thẩm mỹ khác nhau cho dashboard;
+  ba giám khảo độc lập chấm chéo theo ba lăng kính: <b>WOW</b> (có đáng khoe không),
+  <b>TRUNG THỰC</b> (đối kháng — hiệu ứng nào vi phạm RULE 7/8, làm minh hoạ trông như model thật),
+  <b>KHẢ THI</b> (1 file HTML vanilla, canvas vẽ mỗi giây). Preview dưới đây dựng đúng chất liệu từng hướng.</p>
+  <div class="method">
+    <span><b>9 agent</b> · 6 thiết kế + 3 giám khảo</span>
+    <span><b>ràng buộc cứng</b> · tím nét đứt cho dự đoán (RULE 7) · không che trạng thái kết nối (RULE 8)</span>
+    <span><b>token dữ liệu giữ nguyên</b> · up/down/pred/accent theo docs/02</span>
+  </div>
+</header>
+
+<div class="scoreboard"><table>
+  <thead><tr><th>Hướng</th><th>Wow</th><th>Trung thực</th><th>Khả thi</th><th>Tổng /30</th><th>Số phận</th></tr></thead>
+  <tbody>
+    <tr class="win"><td class="name">1 · Thép &amp; Mực</td><td>7</td><td><b>9</b></td><td><b>9</b></td><td class="tot"><span class="tot">25</span></td><td class="medal">Khung sườn V11</td></tr>
+    <tr><td class="name">2 · Flight Deck</td><td>8.5</td><td>8</td><td>6.5</td><td><span class="tot">23</span></td><td class="medal">Cấy nhạc cụ vào V11</td></tr>
+    <tr><td class="name">3 · On Air</td><td>7.5</td><td>6</td><td>8</td><td><span class="tot">21.5</span></td><td class="medal">Mượn nghi thức mất sóng</td></tr>
+    <tr><td class="name">4 · Holo-Deck</td><td>6.5</td><td>5</td><td>7</td><td><span class="tot">18.5</span></td><td class="medal">Mượn kỷ luật glow</td></tr>
+    <tr><td class="name">5 · Private Desk</td><td>5</td><td>7</td><td>6.5</td><td><span class="tot">18.5</span></td><td class="medal">Mượn đèn phòng</td></tr>
+    <tr><td class="name">6 · Đài Thiên Văn</td><td><b>9</b></td><td>6</td><td>3</td><td><span class="tot">18</span></td><td class="medal">Giải WOW — chờ WebGL</td></tr>
+  </tbody>
+</table></div>
+
+<svg width="0" height="0" style="position:absolute"><defs>
+  <symbol id="candles" viewBox="0 0 320 150" preserveAspectRatio="none">
+    <line class="wick" x1="11.5" y1="72" x2="11.5" y2="108"/><rect class="cu" x="8" y="80" width="7" height="22"/>
+    <line class="wick" x1="25.5" y1="66" x2="25.5" y2="98"/><rect class="cu" x="22" y="74" width="7" height="18"/>
+    <line class="wick" x1="39.5" y1="70" x2="39.5" y2="100"/><rect class="cd" x="36" y="78" width="7" height="14"/>
+    <line class="wick" x1="53.5" y1="60" x2="53.5" y2="94"/><rect class="cu" x="50" y="68" width="7" height="20"/>
+    <line class="wick" x1="67.5" y1="52" x2="67.5" y2="82"/><rect class="cu" x="64" y="60" width="7" height="16"/>
+    <line class="wick" x1="81.5" y1="56" x2="81.5" y2="88"/><rect class="cd" x="78" y="64" width="7" height="18"/>
+    <line class="wick" x1="95.5" y1="48" x2="95.5" y2="82"/><rect class="cu" x="92" y="56" width="7" height="20"/>
+    <line class="wick" x1="109.5" y1="42" x2="109.5" y2="70"/><rect class="cu" x="106" y="50" width="7" height="14"/>
+    <line class="wick" x1="123.5" y1="46" x2="123.5" y2="78"/><rect class="cd" x="120" y="54" width="7" height="18"/>
+    <line class="wick" x1="137.5" y1="52" x2="137.5" y2="88"/><rect class="cd" x="134" y="60" width="7" height="22"/>
+    <line class="wick" x1="151.5" y1="44" x2="151.5" y2="74"/><rect class="cu" x="148" y="52" width="7" height="16"/>
+    <line class="wick" x1="165.5" y1="36" x2="165.5" y2="68"/><rect class="cu" x="162" y="44" width="7" height="18"/>
+    <line class="wick" x1="179.5" y1="40" x2="179.5" y2="68"/><rect class="cd" x="176" y="48" width="7" height="14"/>
+    <line class="wick" x1="193.5" y1="32" x2="193.5" y2="66"/><rect class="cu" x="190" y="40" width="7" height="20"/>
+    <line class="nowl" x1="207" y1="6" x2="207" y2="144"/>
+    <polygon class="cone" points="207,50 318,18 318,86"/>
+    <path class="cone-e" d="M207 50 L318 18 M207 50 L318 86"/>
+    <path class="cone-m" d="M207 50 L318 52"/>
+  </symbol>
+</defs></svg>
+
+<!-- ═══════════ 1 · TERMINAL ═══════════ -->
+<article class="dir">
+  <div class="dir-head">
+    <span class="rank">Nº 1</span><h2>THÉP &amp; MỰC</h2>
+    <div class="chips"><span class="chip">WOW <b>7</b></span><span class="chip">TRUNG THỰC <b>9</b></span><span class="chip">KHẢ THI <b>9</b></span><span class="chip tot">25 / 30</span></div>
+  </div>
+  <p class="tagline">Bloomberg cho thế hệ Binance: mười hai panel một màn hình, không cuộn, không trang trí — mật độ chính là sự sang trọng.</p>
+  <div class="mockframe"><div class="mock d-ter">
+    <div class="st"><span class="live">LIVE · 247ms</span><span>TICK 6/s</span><span>NẾN ĐÓNG T-04:12</span><span class="rt">21:34:07 UTC+7 · SERVER +0.3s</span></div>
+    <div class="tabline"></div>
+    <div class="grid">
+      <div class="pn chart"><div class="pb"><span>04 · BTCUSDT · SPOT</span><i>spread 0.8bps</i></div>
+        <div class="cwrap"><div class="ohlc">O 78412.1&nbsp; H 78890.0&nbsp; L 78020.4&nbsp; C 78555.2&nbsp; Δ +0.21%</div>
+        <svg class="mk-svg" viewBox="0 0 320 150" preserveAspectRatio="none"><use href="#candles"/></svg></div></div>
+      <div class="pn"><div class="pb"><span>07 · SỔ LỆNH</span><i>±20</i></div>
+        <div class="ob">
+          <div class="r a"><i style="width:62%"></i>78,556.0<span>1.84</span></div>
+          <div class="r a"><i style="width:38%"></i>78,555.6<span>0.92</span></div>
+          <div class="r b"><i style="width:74%"></i>78,555.2<span>2.31</span></div>
+          <div class="r b"><i style="width:51%"></i>78,554.8<span>1.05</span></div>
+        </div></div>
+      <div class="pn"><div class="pb"><span>11 · NHỊP TIM</span><i>6/s</i></div><div class="num">14 gd/s · 214k USDT/s</div></div>
+      <div class="pn"><div class="pb"><span>09 · DỰ ĐOÁN</span><i>MINH HOẠ</i></div>
+        <div class="pred">78,932 ±1σ<small>khoá 21:00 · nét đứt tím · italic</small></div></div>
+      <div class="pn"><div class="pb"><span>12 · FUNDING</span><i>+0.0068%</i></div><div class="num">Long trả Short</div></div>
+    </div>
+    <div class="tape"><span>BTC <b class="g">+1.2%</b></span><span>ETH <b class="r2">−0.4%</b></span><span>SOL <b class="g">+3.1%</b></span><span>BNB <b class="g">+0.2%</b></span></div>
+  </div></div>
+  <div class="dir-body">
+    <div class="dir-col"><h3>Chi tiết chữ ký</h3><ul class="sig">
+      <li><b>Status bar 24px ghim đỉnh</b> — độ trễ WebSocket đo thật hiển thị bằng ms; mọi panel tham chiếu một nguồn sự thật duy nhất</li>
+      <li><b>Lưới mosaic 1px, không bo góc</b> — cả trang là một tấm thép xẻ rãnh; panel đánh số hiệu kiểu Bloomberg (04 · SỔ LỆNH) kèm micro-stat sống</li>
+      <li><b>Command palette phím «/»</b> thay cột chọn coin 280px — chart rộng thêm ~300px; workspace F1/F2/F3 bằng phím</li>
+      <li><b>Boot sequence gắn vào sự kiện WS thật</b> — «KẾT NỐI BINANCE…» gõ từng ký tự, chốt «LIVE · 247ms» đúng lúc socket mở; WS lỗi là ngắt kịch ngay</li>
+      <li><b>RULE 7 bốn tầng</b> — dự đoán = tím + <i>italic thật</i> của IBM Plex Mono + nền vùng tương lai pha 4% tím + huy hiệu MINH HOẠ trên title bar</li>
+    </ul>
+    <div class="meta"><b>Chữ:</b> IBM Plex Mono (nhân vật chính) + IBM Plex Sans Condensed caps nén · <b>Công dựng:</b> M — thuần CSS + palette ~150 dòng JS, runtime bằng đúng v10</div></div>
+    <div class="dir-col"><h3>Giám khảo nói</h3>
+      <p class="quote pos">«Trang tĩnh tuyệt đối nên một thanh đổi màu là còi báo động không hiệu ứng nào át nổi — hướng duy nhất mà kỷ luật thẩm mỹ và RULE 8 là cùng một thứ.»<span class="who">Trung thực · 9/10</span></p>
+      <p class="quote pos">«Hướng duy nhất chắc chắn không chết vì hiệu năng: không loop, không blur, không glow.»<span class="who">Khả thi · 9/10</span></p>
+      <p class="quote neg">«Wow của dân trong nghề — với người ngoài giới, screenshot trông như bảng tính. Và mật độ 12px cần nhánh mobile riêng.»<span class="who">Wow · 7/10</span></p>
+    </div>
+  </div>
+</article>
+
+<!-- ═══════════ 2 · MISSION ═══════════ -->
+<article class="dir">
+  <div class="dir-head">
+    <span class="rank">Nº 2</span><h2>FLIGHT DECK</h2>
+    <div class="chips"><span class="chip">WOW <b>8.5</b></span><span class="chip">TRUNG THỰC <b>8</b></span><span class="chip">KHẢ THI <b>6.5</b></span><span class="chip tot">23 / 30</span></div>
+  </div>
+  <p class="tagline">Phòng điều khiển phóng tàu: văn hoá GO/NO-GO, đèn LOS và nhãn SIM của NASA làm cho sự trung thực của dự án trở thành chính chất hoành tráng.</p>
+  <div class="mockframe"><div class="mock d-mis">
+    <div class="annun"><span class="on">TELEMETRY-WS</span><span class="on">REST-API</span><span>PRED AGE 00:41</span></div>
+    <div class="clocks"><span><small>UTC</small>14:34:07</span><span><small>GMT+7</small>21:34:07</span><span><small>T-ĐÓNG NẾN</small>T-00:04:12</span></div>
+    <div class="scr main"><div class="sh"><span>ST-01 · TRẠM GIÁ</span><span>BTCUSDT</span></div>
+      <div class="brk tl"></div><div class="brk br"></div>
+      <div class="hero">78,555<small>PHOSPHOR · TABULAR</small></div>
+      <svg class="mk-svg" viewBox="0 0 320 150" preserveAspectRatio="none" style="position:absolute;inset:16px 0 0"><use href="#candles"/></svg></div>
+    <div class="scr gau"><div class="sh"><span>ST-04 · XÁC SUẤT</span><span style="color:var(--pred)">MINH HOẠ</span></div>
+      <div class="ringwrap"><svg class="ring" viewBox="0 0 84 84"><circle class="bgc" cx="42" cy="42" r="34"/><circle class="val" cx="42" cy="42" r="34" transform="rotate(-225 42 42)"/><text x="42" y="47" text-anchor="middle">54%</text></svg>
+      <div class="rlbl">drawRing() dùng chung<b>chưa hiệu chỉnh</b></div></div></div>
+    <div class="lamps"><div class="lamp">GATE-1<span>NO-GO</span></div><div class="lamp">GATE-2<span>NO-GO</span></div><div class="lamp">GATE-3<span>NO-GO</span></div><div class="lamp">GATE-4<span>NO-GO</span></div></div>
+    <div class="sim"><b>SIM</b> PAPER DECK — TIỀN MÔ PHỎNG</div>
+    <div class="tick"><b>[TAPE]</b> MUA 0.42 BTC @78,555 <b>[LIQ]</b> SHORT 1.2M THANH LÝ <b>[FUND]</b> +0.0068% · LONG TRẢ SHORT</div>
+  </div></div>
+  <div class="dir-body">
+    <div class="dir-col"><h3>Chi tiết chữ ký</h3><ul class="sig">
+      <li><b>Hàng đèn GO/NO-GO cho 4 cổng RULE 9</b> — launch poll của NASA: đèn đạt sáng xanh inset-glow, chưa đạt xám; tiền thật chỉ mở khi cả 4 đèn GO</li>
+      <li><b>Đèn annunciator theo TỪNG nguồn dữ liệu</b> (WS · REST · tuổi dự đoán) — RULE 8 mạnh nhất cả sáu, sáng TRƯỚC mọi trình diễn boot</li>
+      <li><b>Vành gauge tròn</b> từ một hàm drawRing() dùng chung: funding, phong vũ biểu, xác suất — vạch tick mỗi 6°, readout mono ở tâm</li>
+      <li><b>SIM DECK</b> — trạm paper trading viền sọc cảnh báo vàng-đen 45°: sự trung thực bắt buộc biến thành chi tiết ngầu nhất trang</li>
+      <li><b>Mission clock</b> T-00:04:12 đến đóng nến + telemetry ticker đáy màn chạy sự kiện THẬT từ WebSocket, mỗi mẩu có nhãn nguồn [TAPE] [LIQ]</li>
+    </ul>
+    <div class="meta"><b>Chữ:</b> Chakra Petch (chữ khắc bảng điều khiển, đủ dấu tiếng Việt) + IBM Plex Mono · <b>Công dựng:</b> L — 3 gauge viết mới, tường 20+ panel xếp lưới 8px</div></div>
+    <div class="dir-col"><h3>Giám khảo nói</h3>
+      <p class="quote pos">«Thế giới trọn vẹn nhất: giá 92px + vành countdown + hàng đèn GO/NO-GO là khung hình "ngồi ghế chỉ huy" đúng nghĩa. Sự trung thực TỰ NÓ hoành tráng.»<span class="who">Wow · 8.5/10</span></p>
+      <p class="quote pos">«Hướng duy nhất không gộp mọi freshness vào một chấm — đèn theo từng nguồn kèm tuổi dữ liệu bằng số.»<span class="who">Trung thực · 8/10</span></p>
+      <p class="quote neg">«Khối lượng bị khai gian: không án tử hiệu năng, nhưng ước lượng thật là gấp rưỡi tự khai.»<span class="who">Khả thi · 6.5/10</span></p>
+    </div>
+  </div>
+</article>
+
+<!-- ═══════════ 3 · BROADCAST ═══════════ -->
+<article class="dir">
+  <div class="dir-head">
+    <span class="rank">Nº 3</span><h2>ON AIR</h2>
+    <div class="chips"><span class="chip">WOW <b>7.5</b></span><span class="chip">TRUNG THỰC <b>6</b></span><span class="chip">KHẢ THI <b>8</b></span><span class="chip tot">21.5 / 30</span></div>
+  </div>
+  <p class="tagline">Đài truyền hình tài chính của riêng bạn, đang phát sóng trực tiếp từ Binance — và bạn ngồi ghế đạo diễn.</p>
+  <div class="mockframe"><div class="mock d-bro">
+    <div class="net"><span class="onair"><i></i>TRỰC TIẾP</span><span style="font:600 9px/26px var(--mono);color:#566179">NGUỒN: BINANCE WS</span><span class="clock">21:34:07 GMT+7</span></div>
+    <div class="slate">GIAO DỊCH <small>PHIÊN BTC/USDT</small></div>
+    <div class="mon"><div class="ct a"></div><div class="ct b"></div>
+      <div class="px">78,555.2<small>▲ +1.21% · 24H</small></div>
+      <svg class="mk-svg" viewBox="0 0 320 150" preserveAspectRatio="none" style="position:absolute;inset:30px 0 0"><use href="#candles"/></svg></div>
+    <div class="lower"><div class="kick">NẾN 1H VỪA ĐÓNG</div><div class="head">Dự đoán khoá lại — đích 22:00, minh hoạ ±1σ</div></div>
+    <div class="tape"><div class="track">
+      <span>BTC 78,555 <b>▲ +1.2%</b></span><i>◆</i><span>ETH 4,120 <s>▼ −0.4%</s></span><i>◆</i><span>SOL 212 <b>▲ +3.1%</b></span><i>◆</i><span>FUNDING +0.0068%</span><i>◆</i><span>THANH LÝ 5M: 2.1M USDT</span><i>◆</i>
+      <span>BTC 78,555 <b>▲ +1.2%</b></span><i>◆</i><span>ETH 4,120 <s>▼ −0.4%</s></span><i>◆</i><span>SOL 212 <b>▲ +3.1%</b></span><i>◆</i><span>FUNDING +0.0068%</span><i>◆</i><span>THANH LÝ 5M: 2.1M USDT</span><i>◆</i>
+    </div></div>
+  </div></div>
+  <div class="dir-body">
+    <div class="dir-col"><h3>Chi tiết chữ ký</h3><ul class="sig">
+      <li><b>Ticker tape đáy màn</b> chạy 60px/s bằng translateX — cách rẻ nhất để cả trang «đang sống»; hover thì dừng</li>
+      <li><b>Lower-third sự kiện</b> — kicker vàng chữ hoa (NẾN 1H ĐÓNG / THANH LÝ LỚN 2.1M) + headline; nến đóng thành nghi thức truyền hình</li>
+      <li><b>Mọi panel tự khai nguồn</b> như đài: slug «NGUỒN: BINANCE WS · 21:34:05» — RULE 8 thành chrome truyền hình</li>
+      <li><b>MẤT SÓNG = nhiễu tĩnh TV</b> + slate chữ to + đồng hồ đếm «ngoại tuyến 00:14» — khoảnh khắc đứt kết nối kịch tính hơn cả lúc chạy</li>
+      <li><b>Nguyên tắc chuyển động = độ tươi</b> — mọi thứ đang động lập tức ĐỨNG HÌNH khi mất kết nối</li>
+    </ul>
+    <div class="meta"><b>Chữ:</b> Archivo (3 giọng truyền hình một font) + IBM Plex Mono · <b>Công dựng:</b> M — tỉ lệ hoành-tráng/chi-phí tốt nhất bảng, ~1.5–2 ngày</div></div>
+    <div class="dir-col"><h3>Giám khảo nói</h3>
+      <p class="quote pos">«Ý tưởng ăn nhất bộ: chuyển động = độ tươi. Hợp văn hoá livestream VN đến mức đáng ngờ.»<span class="who">Wow · 7.5/10</span></p>
+      <p class="quote pos">«Ticker = 1 phần tử translateX, compositor-cheap, chạy mãi không đau.»<span class="who">Khả thi · 8/10</span></p>
+      <p class="quote neg">«Wow VUI, không phải wow ĐẮT. Và ngôn ngữ truyền hình là ngôn ngữ của THẨM QUYỀN — lower-third «DỰ ĐOÁN» đọc như bản tin chính thức, nguy hiểm cho một minh hoạ chưa kiểm định.»<span class="who">Trung thực · 6/10</span></p>
+    </div>
+  </div>
+</article>
+
+<!-- ═══════════ 4 · NEON ═══════════ -->
+<article class="dir">
+  <div class="dir-head">
+    <span class="rank">Nº 4</span><h2>HOLO-DECK</h2>
+    <div class="chips"><span class="chip">WOW <b>6.5</b></span><span class="chip">TRUNG THỰC <b>5</b></span><span class="chip">KHẢ THI <b>7</b></span><span class="chip tot">18.5 / 30</span></div>
+  </div>
+  <p class="tagline">Buồng lái chiến hạm: mọi thứ phát sáng đều đang sống, mọi thứ đứng yên đều là khung máy — khi dữ liệu chết, cả con tàu tắt đèn.</p>
+  <div class="mockframe"><div class="mock d-neo">
+    <div class="floor"></div>
+    <div class="rail"><span>HOLO-DECK · BTCUSDT</span><span style="color:#55688C">F1 GIAO DỊCH</span><div class="cd">42</div></div>
+    <div class="pn main"><h4><i>PN-01 ·</i> BẢNG GIÁ CHÍNH</h4><div class="hook l"></div><div class="hook r"></div>
+      <div class="hero">78,555.2</div>
+      <svg class="mk-svg" viewBox="0 0 320 150" preserveAspectRatio="none" style="position:absolute;inset:34px 0 0"><use href="#candles"/></svg></div>
+    <div class="pn side"><h4><i>PN-02 ·</i> SỔ LỆNH PLASMA</h4><div class="hook l"></div><div class="hook r"></div>
+      <div class="plasma"><div class="a" style="width:82%"></div><div class="a" style="width:55%"></div><div class="b" style="width:90%"></div><div class="b" style="width:64%"></div><div class="b" style="width:40%"></div></div></div>
+    <div class="pn predpn"><h4><i>PN-03 ·</i> DỰ ĐOÁN</h4><div class="hook l"></div><div class="hook r"></div>
+      <div class="v">78,932 ±1σ</div></div>
+    <div class="wm">MINH HOẠ · CHƯA CÓ MODEL</div>
+  </div></div>
+  <div class="dir-body">
+    <div class="dir-col"><h3>Chi tiết chữ ký</h3><ul class="sig">
+      <li><b>Luật glow-budget</b>: đúng 3 nguồn phát sáng toàn trang (giá hero, nét dự đoán tím, hải đăng kết nối) — ghi thành comment CSS như một DS-RULE</li>
+      <li><b>Radar sweep 1s</b>: dải sáng 24px quét từ nến cuối khi canvas vẽ khung mới — báo nhịp mà không chạm dữ liệu</li>
+      <li><b>Panel vát góc + móc HUD</b> bằng clip-path và ::before/::after — chất sci-fi thuần CSS</li>
+      <li><b>Cầu dao hiệu năng</b>: frame &gt;12ms đo bằng performance.now → tự tắt hiệu ứng, chỉ còn dữ liệu trần</li>
+      <li><b>Deck xám khi mất kết nối</b> — html.conn-down đổi --holo thành xám: cả buồng lái tắt đèn</li>
+    </ul>
+    <div class="meta"><b>Chữ:</b> Chakra Petch + JetBrains Mono · <b>Công dựng:</b> M — nhưng «1 ngày thuần tinh chỉnh mắt» giữa ngầu và sến</div></div>
+    <div class="dir-col"><h3>Giám khảo nói</h3>
+      <p class="quote neg">«Đứng sát mép vực nhất: sàn lưới TRON + móc góc HUD là DNA của landing page coin rác — bản đề xuất tự biết nên viết phanh nhiều hơn ga.»<span class="who">Wow · 6.5/10</span></p>
+      <p class="quote neg">«Phép đảo "thật thì lì, đoán mới phát sáng" thoả CHỮ của RULE 7 nhưng phản TINH THẦN: dự đoán thành nguồn sáng lớn thứ hai trên trang = minh hoạ được thắp đèn sân khấu.»<span class="who">Trung thực · 5/10</span></p>
+      <p class="quote pos">«Kỷ luật hiệu năng tốt nhất trên giấy — glow-budget và kill-switch nên thành điều khoản bắt buộc của MỌI hướng.»<span class="who">Khả thi · 7/10</span></p>
+    </div>
+  </div>
+</article>
+
+<!-- ═══════════ 5 · GLASS ═══════════ -->
+<article class="dir">
+  <div class="dir-head">
+    <span class="rank">Nº 5</span><h2>PRIVATE DESK</h2>
+    <div class="chips"><span class="chip">WOW <b>5</b></span><span class="chip">TRUNG THỰC <b>7</b></span><span class="chip">KHẢ THI <b>6.5</b></span><span class="chip tot">18.5 / 30</span></div>
+  </div>
+  <p class="tagline">Bàn giao dịch của một quỹ tư nhân: kính đen nhiều tầng, ánh sáng lạnh — và sự hoành tráng duy nhất trung thực: chỉ sáng khi dữ liệu còn tươi.</p>
+  <div class="mockframe"><div class="mock d-gla">
+    <div class="bar"><b>PRIVATE DESK</b><span>BTC/USDT</span><span style="margin-left:auto">Spot · Live</span></div>
+    <div class="slab">
+      <div class="px">78,555.24<small>BTC/USDT · matte trên obsidian</small></div>
+      <svg class="mk-svg" viewBox="0 0 320 150" preserveAspectRatio="none" style="position:absolute;inset:40px 0 0"><use href="#candles"/></svg></div>
+    <div class="focal"><h4>Dự đoán · Minh hoạ</h4>
+      <div class="v">78,932</div><div class="rng">q10–q90 · 77,777 – 79,333</div>
+      <div class="hr"></div><small>Thật = MATTE (nến đặc, không glow).<br>Đoán = HOLOGRAM (nét đứt + 6px blur tím, khoá cứng).</small></div>
+    <div class="lamp"><i></i>Đèn phòng nối WebSocket — mất kết nối là cả trang tắt ambient</div>
+  </div></div>
+  <div class="dir-body">
+    <div class="dir-col"><h3>Chi tiết chữ ký</h3><ul class="sig">
+      <li><b>Specular edge</b> — mọi tấm kính bắt sáng cạnh trên (inset 0 1px 0 trắng 9%): chi tiết Apple đắt nhất, tốn 1 dòng CSS</li>
+      <li><b>Chất liệu thật/đoán</b> — thật luôn MATTE, dự đoán luôn HOLOGRAM; thông số hologram khoá cứng thành hằng số có tên (shadowBlur 6px / alpha 35%, «không hơn»)</li>
+      <li><b>Đèn phòng buộc dây vào WebSocket</b> — Live sáng ambient lạnh, Trễ chuyển ấm 4%, Mất kết nối TẮT toàn bộ: «đẹp» và «tươi» là cùng một biến</li>
+      <li><b>Hairline gradient</b> thay mọi border đặc giữa hàng dữ liệu; app bar pill kính blur duy nhất của trang</li>
+    </ul>
+    <div class="meta"><b>Chữ:</b> Instrument Sans + Spline Sans Mono · <b>Công dựng:</b> M — nhưng tấm blur sticky nằm đè vùng canvas repaint mỗi giây</div></div>
+    <div class="dir-col"><h3>Giám khảo nói</h3>
+      <p class="quote neg">«Đẹp, đắt, và KHÔNG AI KHOE — glassmorphism cao cấp là đồng phục fintech 2024–2026, mở lên thấy "ồ, tinh tế" rồi quên sau 10 giây.»<span class="who">Wow · 5/10</span></p>
+      <p class="quote pos">«Khoá cứng hiệu ứng lớp pred thành hằng số là cách đúng để RULE 7 sống sót qua các dev tương lai — đáng học cho mọi hướng.»<span class="who">Trung thực · 7/10</span></p>
+      <p class="quote neg">«Tấm blur quan trọng nhất — app bar sticky — nằm đúng chỗ nguy hiểm nhất: đè vùng cuộn cạnh canvas vẽ mỗi giây.»<span class="who">Khả thi · 6.5/10</span></p>
+    </div>
+  </div>
+</article>
+
+<!-- ═══════════ 6 · OBSERVATORY ═══════════ -->
+<article class="dir">
+  <div class="dir-head">
+    <span class="rank">Nº 6</span><h2>ĐÀI THIÊN VĂN</h2>
+    <div class="chips"><span class="chip wow-win">🏆 WOW <b>9</b></span><span class="chip">TRUNG THỰC <b>6</b></span><span class="chip">KHẢ THI <b>3</b></span><span class="chip tot">18 / 30</span></div>
+  </div>
+  <p class="tagline">Trader là nhà thiên văn: bên trái kinh tuyến «Bây giờ» là bầu trời đã xảy ra, bên phải là một chùm sáng tím đang dò tương lai.</p>
+  <div class="mockframe"><div class="mock d-obs">
+    <div class="stars"></div><div class="meteor"></div>
+    <div class="console dome"><h4>VÒM QUAN SÁT · BTCUSDT</h4>
+      <div class="px">78,555.2</div>
+      <div class="meridian"></div><div class="mlbl">BÂY GIỜ · 21:00:00</div>
+      <svg class="mk-svg" viewBox="0 0 320 150" preserveAspectRatio="none" style="position:absolute;inset:30px 0 0"><use href="#candles"/></svg></div>
+    <div class="console orbit"><h4>VÀNH QUỸ ĐẠO · XÁC SUẤT</h4>
+      <svg class="orb" viewBox="0 0 88 88"><circle class="bgc" cx="44" cy="44" r="35"/><circle class="val" cx="44" cy="44" r="35" transform="rotate(-215 44 44)"/><circle class="sat" cx="16" cy="66" r="3.5"/><text x="44" y="49" text-anchor="middle">54%</text></svg></div>
+    <div class="console atm"><h4>KHÍ QUYỂN BIẾN ĐỘNG</h4>
+      <div class="band b1">BÃO</div><div class="band b2">THƯỜNG</div><div class="band b3">THẤP</div></div>
+  </div></div>
+  <div class="dir-body">
+    <div class="dir-col"><h3>Chi tiết chữ ký</h3><ul class="sig">
+      <li><b>Kinh tuyến «Bây giờ»</b> chạy suốt vòm — ranh giới thật/đoán trở thành kiến trúc của cả trang</li>
+      <li><b>Chùm sáng tiên lượng</b>: nón q10–q90 là đèn quét tím của đài; <b>cấm vận hue 225–240</b> cho trang trí để tím 252 độc quyền của dự đoán — ý RULE 7 hay nhất cả sáu</li>
+      <li><b>Bụi sao thị trường</b>: mỗi lệnh khớp là một ngôi sao, thanh lý là SAO BĂNG có đuôi</li>
+      <li><b>Bất biến RULE 8</b>: hỏng chỉ được BỚT ánh sáng, không hiệu ứng nào được THÊM sáng để che — một invariant kiểm thử được</li>
+    </ul>
+    <div class="meta"><b>Chữ:</b> Space Grotesk + IBM Plex Mono · <b>Công dựng:</b> XL — blur(14px) × 8 console đè canvas bụi sao + 10 tick/s</div></div>
+    <div class="dir-col"><h3>Giám khảo nói</h3>
+      <p class="quote pos">«Hướng duy nhất có ảnh chụp màn hình KHÔNG TỒN TẠI ở nơi khác — sự hoành tráng mọc ra từ chính đề bài: dự đoán = ánh sáng, sự thật = vật chất.»<span class="who">Wow · 9/10</span></p>
+      <p class="quote neg">«Nạn nhân được gọi tên: blur chồng lớp trên nền động + starfield + 10 tick/s là công thức jank kinh điển — và phương án cứu (tắt blur, giảm sao) chính là xoá bản sắc của nó.»<span class="who">Khả thi · 3/10 — loại</span></p>
+      <div class="steal"><b>Không bỏ phí</b>Cấm vận hue + bất biến «chỉ được bớt sáng» được cấy thẳng vào đề xuất V11. Cả hướng này để dành cho một bản WebGL tương lai (M11 thật dùng lightweight-charts + shader riêng).</div>
+    </div>
+  </div>
+</article>
+
+<!-- ═══════════ ĐỀ XUẤT ═══════════ -->
+<section class="verdict">
+  <div class="kicker">tổng hợp — khuyến nghị của kiến trúc sư</div>
+  <h2>V11 = khung THÉP &amp; MỰC, cấy nhạc cụ FLIGHT DECK</h2>
+  <p>Thép &amp; Mực thắng vì nó là hướng duy nhất mà <b>sự hoành tráng và sự trung thực là cùng một thứ</b>:
+  trang càng tĩnh và kỷ luật, một thanh đổi màu càng là còi báo động. Nhưng wow 7/10 là có thật —
+  nên V11 lấy nó làm khung xương, rồi cấy sáu bộ phận đắt nhất từ năm hướng còn lại
+  (đúng danh sách «đáng ăn cắp» của ba giám khảo):</p>
+  <ul class="graft">
+    <li><small>từ Flight Deck</small><b>Hàng đèn GO/NO-GO cho 4 cổng</b>+ đèn annunciator theo từng nguồn dữ liệu (WS · REST · tuổi dự đoán)</li>
+    <li><small>từ Flight Deck</small><b>SIM badge sọc vàng-đen</b>trên trạm paper trading — trung thực bắt buộc thành chi tiết ngầu</li>
+    <li><small>từ On Air</small><b>Đồng hồ «ngoại tuyến 00:14»</b>đếm ngược lên khi mất kết nối + số lần reconnect + nguyên tắc «chuyển động = độ tươi»</li>
+    <li><small>từ Holo-Deck</small><b>Glow-budget + cầu dao hiệu năng</b>ghi thành DS-RULE trong CSS; frame &gt;12ms tự tắt hiệu ứng</li>
+    <li><small>từ Private Desk</small><b>Giữ nguyên TÊN token khi thay giá trị</b>— 80% CSS component v10 sống sót; hologram-pred khoá cứng bằng hằng số</li>
+    <li><small>từ Đài Thiên Văn</small><b>Cấm vận hue cho trang trí</b>+ bất biến «hỏng chỉ được bớt ánh sáng» — RULE 7/8 thành luật kiểm thử được</li>
+  </ul>
+  <p><b>Ước lượng:</b> khung Thép &amp; Mực ~2–2.5 ngày (thuần CSS + command palette ~150 dòng JS, giữ nguyên toàn bộ tầng dữ liệu v10) + ~1 ngày cấy ghép. Phương án thay thế nếu muốn wow tối đa và chấp nhận gấp rưỡi công: dựng thẳng <b>Flight Deck</b>.</p>
+  <p class="askrow">Nguồn: workflow 9 agent (6 thiết kế + 3 giám khảo độc lập) · token dữ liệu up/down/pred giữ nguyên theo docs/02 · mọi hướng đều giữ nhãn MINH HOẠ và 4 trạng thái độ tươi.</p>
+</section>
+
+<footer>cryptopred · docs/design/v11-design-directions.html · sinh từ phiên đề xuất 26-08-2026 — prototype là tài liệu sống, chọn hướng xong sẽ dựng thật trên dashboard-standalone.html</footer>
+</div>
