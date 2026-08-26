@@ -357,9 +357,13 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
         <i class="nt-dot"></i>Dự đoán</button>
       <button class="navtab" role="tab" aria-selected="false" data-pane="pane-mkt">Thị trường</button>
     </div>
-    <button class="ghost-btn" id="mode-btn" aria-pressed="false"
-      title="Tách tab: mỗi khu vực một trang. Gộp: toàn bộ panel trên một trang cuộn dọc.">
-      ⊞ Gộp 1 trang</button>
+    <div style="display:flex;gap:var(--sp-2)">
+      <button class="ghost-btn" id="lang-btn" aria-pressed="false"
+        title="Chuyển ngôn ngữ giao diện / Switch interface language">EN</button>
+      <button class="ghost-btn" id="mode-btn" aria-pressed="false"
+        title="Tách tab: mỗi khu vực một trang. Gộp: toàn bộ panel trên một trang cuộn dọc.">
+        ⊞ Gộp 1 trang</button>
+    </div>
   </div>
 
   <div class="tabpane" id="pane-trade">
@@ -642,7 +646,7 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
 
 <footer>
   Dữ liệu thị trường: Binance public REST + WebSocket (không cần API key, chỉ đọc).
-  Trang này không gửi dữ liệu đi đâu; thứ duy nhất được lưu trên máy bạn là lựa chọn bố cục giao diện (tách tab / gộp 1 trang).
+  Trang này không gửi dữ liệu đi đâu; trên máy bạn chỉ lưu hai lựa chọn giao diện: bố cục (tách tab / gộp) và ngôn ngữ (VI / EN).
   · Mã nguồn dự án: <span class="num">cryptopred</span> · docs 00–05.
 </footer>
 
@@ -1100,6 +1104,36 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
      công khai, không cần model. Màu chỉ lấy từ token (DS-RULE 8).
      ══════════════════════════════════════════════════════════════ */
   const P = { fund: null, fundHist: [], oi: [], liq: [], hb: [], spa: null, ctxTick: 0 };
+
+  /* ══ i18n — VI mặc định, EN theo thuật ngữ Binance ══════════════
+     Chuỗi TĨNH: phần tử mang data-i (innerHTML tra từ điển DOM_I18N).
+     Chuỗi ĐỘNG (JS/canvas): gọi T("key") hoặc T("key", {x: ...}).      */
+  S.lang = "vi";
+  try { if (localStorage.getItem("cryptopred-lang") === "en") S.lang = "en"; } catch (e) {}
+
+  const I18N = { vi: {}, en: {} };          // chuỗi động — nạp ở cuối file
+  const DOM_I18N = { vi: {}, en: {} };      // chuỗi tĩnh theo data-i
+
+  function T(key, vars) {
+    let str = (I18N[S.lang] && I18N[S.lang][key]) || I18N.vi[key] || key;
+    if (vars) for (const k in vars) str = str.split("{" + k + "}").join(vars[k]);
+    return str;
+  }
+
+  function applyLang() {
+    document.documentElement.lang = S.lang;
+    const btn = $("lang-btn");
+    // Chưa nạp từ điển EN thì ẩn nút — không chìa ra một nút không làm gì
+    btn.hidden = !Object.keys(I18N.en).length && !Object.keys(DOM_I18N.en).length;
+    btn.textContent = S.lang === "vi" ? "EN" : "VI";
+    btn.setAttribute("aria-pressed", String(S.lang === "en"));
+    document.querySelectorAll("[data-i]").forEach(el => {
+      const k = el.dataset.i;
+      const html = DOM_I18N[S.lang][k] ?? DOM_I18N.vi[k];
+      if (html !== undefined) el.innerHTML = html;
+    });
+    try { localStorage.setItem("cryptopred-lang", S.lang); } catch (e) {}
+  }
 
   const dpr = () => window.devicePixelRatio || 1;
   function fitCanvas(cv) {                      // canvas nét trên màn hình HiDPI
@@ -1810,6 +1844,12 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
     applyLayout();
   });
 
+  $("lang-btn").addEventListener("click", () => {
+    S.lang = S.lang === "vi" ? "en" : "vi";
+    applyLang();
+    if (typeof redrawAll === "function") redrawAll();   // nhãn canvas vẽ qua T()
+  });
+
   // Tab: ở chế độ tách là chuyển trang; ở chế độ gộp là mục lục cuộn tới khu vực
   document.querySelectorAll(".navtab").forEach(b => b.addEventListener("click", () => {
     if (S.layout === "all") {
@@ -1882,7 +1922,7 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
       await loadTickers();
       await reload();
       connectLiqWS(); renderGates();
-      applyLayout();
+      applyLayout(); applyLang();
     } catch (err) {
       setConn("down", "Không nối được Binance");
       $("coin-list").innerHTML = `<div style="padding:var(--sp-3);font-size:13px;color:var(--text-2)">
