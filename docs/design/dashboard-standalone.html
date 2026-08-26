@@ -169,6 +169,48 @@ canvas{display:block;width:100%;height:100%}
 .tape-row{display:flex;justify-content:space-between;gap:var(--sp-2);padding:2px 0;
   font:400 12px/18px var(--font-num);font-variant-numeric:tabular-nums}
 
+/* ── Bàn chỉ báo kỹ thuật & bàn phương pháp ───────────────────── */
+.ind-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:var(--sp-4)}
+.ind-group h4{margin:0 0 var(--sp-2);font:600 10px/14px var(--font-ui);letter-spacing:.07em;
+  text-transform:uppercase;color:var(--text-2)}
+.ind-row{display:grid;grid-template-columns:1fr auto auto;gap:var(--sp-2);align-items:baseline;
+  padding:3px 0;font:400 12px/18px var(--font-ui);color:var(--text-2);
+  border-bottom:1px solid color-mix(in srgb,var(--border) 55%,transparent)}
+.ind-row:last-child{border-bottom:none}
+.ind-row b{font:500 12px/18px var(--font-num);font-variant-numeric:tabular-nums;color:var(--text-1)}
+.st{display:inline-flex;align-items:center;gap:4px;font:600 11px/16px var(--font-ui);
+  padding:1px 7px;border-radius:var(--radius-pill);white-space:nowrap}
+.st-up{color:var(--up);background:var(--up-bg)}
+.st-dn{color:var(--down);background:var(--down-bg)}
+.st-nt{color:var(--text-2);border:1px solid var(--border)}
+.mth-row{display:grid;grid-template-columns:minmax(150px,1.1fr) auto 1fr;gap:var(--sp-3);
+  align-items:baseline;padding:var(--sp-2) 0;border-bottom:1px solid var(--border)}
+.mth-row:last-child{border-bottom:none}
+.mth-row .mn{font:500 13px/19px var(--font-ui);color:var(--text-1)}
+.mth-row .mn small{color:var(--text-3);font-weight:400}
+.mth-row .mnote{font:400 11.5px/17px var(--font-ui);color:var(--text-3)}
+.consensus{display:flex;height:10px;border-radius:var(--radius-pill);overflow:hidden;
+  margin:var(--sp-3) 0 var(--sp-1)}
+.consensus i{height:100%}
+.cons-lbl{display:flex;justify-content:space-between;font:500 12px/18px var(--font-ui);color:var(--text-2)}
+
+/* ── Nowcast nhịp tick ────────────────────────────────────────── */
+.nc-gauge{position:relative;height:14px;border-radius:var(--radius-pill);
+  background:linear-gradient(90deg,
+    color-mix(in srgb,var(--down) 30%,transparent),
+    color-mix(in srgb,var(--text-3) 12%,transparent) 46%,
+    color-mix(in srgb,var(--text-3) 12%,transparent) 54%,
+    color-mix(in srgb,var(--up) 30%,transparent));
+  margin:var(--sp-3) 0 4px}
+.nc-mid{position:absolute;left:50%;top:-3px;bottom:-3px;width:1px;background:var(--text-3)}
+.nc-needle{position:absolute;top:-4px;bottom:-4px;width:3px;border-radius:2px;
+  background:var(--text-1);transition:left var(--dur-base) var(--ease)}
+.nc-ends{display:flex;justify-content:space-between;font:500 10px/14px var(--font-ui);color:var(--text-3)}
+.nc-vs{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-3);margin-top:var(--sp-3)}
+.nc-cell{border:1px solid var(--border);border-radius:var(--radius-md);padding:var(--sp-2) var(--sp-3)}
+.nc-cell .t{font:600 10px/14px var(--font-ui);letter-spacing:.06em;text-transform:uppercase;color:var(--text-2)}
+.nc-cell .v{font:600 16px/24px var(--font-ui);margin-top:2px}
+
 /* ── Hàng điều hướng: tab trái · nút chế độ bố cục phải ───────── */
 .navrow{display:flex;justify-content:space-between;align-items:center;gap:var(--sp-3);
   flex-wrap:wrap;margin-bottom:var(--sp-4)}
@@ -335,13 +377,13 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
 <body>
 
 <!-- ══ Banner bắt buộc: người nhận phải hiểu ngay đây là gì ══ -->
-<div class="top-banner">
+<div class="top-banner" data-i="k001">
   <span class="bb">Prototype thiết kế</span>
   <p><b>Giá, sổ lệnh và khớp lệnh là DỮ LIỆU THẬT</b> từ Binance public API.
     Nhưng <b>chưa có model nào được huấn luyện</b> — phần «dự đoán» chỉ là minh hoạ giao diện,
     dựng từ biến động thực tế và một baseline động lượng thô, <b>chưa qua kiểm định, chưa hiệu chỉnh
     xác suất</b>. Nút Mua/Bán là <b>giao dịch giấy</b> trong trang, không nối tài khoản nào.
-    Đây không phải khuyến nghị đầu tư.</p>
+    Đây không phải lời khuyên đầu tư.</p>
 </div>
 
 <div class="shell">
@@ -352,10 +394,10 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
 
   <div class="navrow">
     <div class="navtabs" role="tablist" aria-label="Khu vực dashboard">
-      <button class="navtab" role="tab" aria-selected="true" data-pane="pane-trade">Giao dịch</button>
-      <button class="navtab" role="tab" aria-selected="false" data-pane="pane-pred">
+      <button class="navtab" role="tab" aria-selected="true" data-pane="pane-trade" data-i="m01">Giao dịch</button>
+      <button class="navtab" role="tab" aria-selected="false" data-pane="pane-pred" data-i="m02">
         <i class="nt-dot"></i>Dự đoán</button>
-      <button class="navtab" role="tab" aria-selected="false" data-pane="pane-mkt">Thị trường</button>
+      <button class="navtab" role="tab" aria-selected="false" data-pane="pane-mkt" data-i="m03">Thị trường</button>
     </div>
     <div style="display:flex;gap:var(--sp-2)">
       <button class="ghost-btn" id="lang-btn" aria-pressed="false"
@@ -372,28 +414,28 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
     <!-- ── Cột trái ─────────────────────────────────────────── -->
     <aside class="selector">
       <div class="card">
-        <h2>Cặp giao dịch</h2>
+        <h2 data-i="k002">Cặp giao dịch</h2>
         <input class="search" id="sym-search" type="search"
                placeholder="Gõ mã rồi Enter (vd: SOLUSDT)" aria-label="Tìm cặp giao dịch">
         <div class="coin-list" id="coin-list" role="listbox" aria-label="Danh sách cặp USDT">
-          <div style="padding:var(--sp-3);color:var(--text-3);font-size:13px">Đang tải…</div>
+          <div style="padding:var(--sp-3);color:var(--text-3);font-size:13px" data-i="k003">Đang tải…</div>
         </div>
       </div>
 
       <section class="sec card" aria-label="Sổ lệnh">
-        <div class="pc-head"><h2>Sổ lệnh</h2><span class="chip" id="ob-chip">—</span></div>
+        <div class="pc-head"><h2 data-i="m04">Sổ lệnh</h2><span class="chip" id="ob-chip">—</span></div>
         <div class="ob" id="ob-asks"></div>
         <div class="ob-mid"><span class="num" id="ob-mid">—</span><span class="num" id="ob-dir"></span></div>
         <div class="ob" id="ob-bids"></div>
-        <div class="flow-bar" role="img" aria-label="Tỷ lệ khối lượng mua bán 100 lệnh gần nhất">
+        <div class="flow-bar" role="img" aria-label="Tỷ lệ mua/bán chủ động (taker) — 12 giao dịch gần nhất">
           <div class="fb-buy" id="fb-buy" style="width:50%"></div><div class="fb-sell"></div>
         </div>
         <div class="fb-lbl"><span class="pos" id="fb-buy-l">Mua —</span>
           <span class="neg" id="fb-sell-l">— Bán</span></div>
       </section>
 
-      <section class="sec card" aria-label="Khớp lệnh gần đây">
-        <h2>Khớp lệnh gần đây</h2>
+      <section class="sec card" aria-label="Giao dịch thị trường">
+        <h2 data-i="k004">Giao dịch thị trường</h2>
         <div id="tape"></div>
       </section>
     </aside>
@@ -408,7 +450,7 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
         </div>
         <div class="ph-right">
           <span class="status status--slow" id="conn-status">Đang kết nối…</span>
-          <span class="status" style="color:var(--text-2)">Nến đóng sau
+          <span class="status" style="color:var(--text-2)"><span data-i="m05">Nến đóng sau</span>
             <b class="num" id="cd" style="color:var(--text-1)">—</b></span>
         </div>
       </div>
@@ -422,11 +464,11 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
           <canvas id="chart" role="img" aria-label="Biểu đồ nến thời gian thực từ Binance"></canvas>
           <div class="tooltip" id="tt"></div>
         </div>
-        <div class="chart-note">
+        <div class="chart-note" data-i="k005">
           <span class="legend-chip"><i></i> Đường minh hoạ (chưa phải model)</span>
           <span class="legend-chip"><b></b> Nón phân vị q10–q90 (đậm dần vào giữa)</span>
           <span class="legend-chip"><b style="background:transparent;border-style:dashed;
-            border-color:var(--text-3)"></b> Nón khí hậu học (baseline)</span>
+            border-color:var(--text-3)"></b> Nón baseline lịch sử (climatology)</span>
           <span>Trái ranh giới «Bây giờ» là dữ liệu thật từ Binance · phải là phần minh hoạ</span>
         </div>
       </section>
@@ -437,20 +479,20 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
       <section class="card" aria-label="Dự đoán minh hoạ">
         <div class="pc-head">
           <h2 id="pred-title">Dự đoán · minh hoạ</h2>
-          <span class="chip demo">chưa có model</span>
+          <span class="chip demo" data-i="m06">chưa có model</span>
         </div>
-        <div class="warn-banner">⚠<span>Đây <b>không phải</b> đầu ra của model. Hướng lấy từ
+        <div class="warn-banner" data-i="k006">⚠<span>Đây <b>không phải</b> đầu ra của model. Hướng lấy từ
           baseline động lượng thô; dải giá là ±1σ biến động thực tế. Model thật (LightGBM + hiệu
           chỉnh isotonic) là M5–M7, chưa xây.</span></div>
         <span class="badge badge--unclear" id="dir-badge">● KHÔNG RÕ</span>
         <div class="meter"><div class="meter-fill" id="meter-fill" style="width:50%"></div>
           <div class="meter-notch"></div></div>
-        <div class="meter-label"><span>50% = tung đồng xu</span>
+        <div class="meter-label"><span data-i="m07">50% = tung đồng xu</span>
           <span id="meter-num"><b class="num">—</b> · chưa hiệu chỉnh</span></div>
-        <p class="meter-verbal">Model thật sẽ phải hiệu chỉnh xác suất và kèm cỡ mẫu (n=…)
+        <p class="meter-verbal" data-i="k007">Model thật sẽ phải hiệu chỉnh xác suất và kèm cỡ mẫu (n=…)
           trước khi con số này đáng tin.</p>
         <table class="steps" aria-label="Kịch bản theo mốc thời gian">
-          <thead><tr><th>Mốc UTC</th><th>Giữa</th><th>Chênh lệch</th></tr></thead>
+          <thead><tr><th data-i="k008">Mốc UTC</th><th data-i="k009">Trung vị</th><th data-i="k010">Thay đổi</th></tr></thead>
           <tbody id="steps-body"></tbody>
         </table>
         <div class="qrange">
@@ -462,7 +504,7 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
       <section class="card" style="margin-top:var(--sp-4)" aria-label="Bám sát dự đoán"
                aria-live="polite">
         <div class="pc-head">
-          <h2 style="margin:0">Bám sát</h2>
+          <h2 style="margin:0" data-i="m08">Bám sát</h2>
           <span class="chip" id="trk-countdown">—</span>
         </div>
         <div class="trk-head">
@@ -472,10 +514,10 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
         <p class="trk-sub" id="trk-sub">Đang chờ dự đoán đầu tiên…</p>
 
         <div class="trk-bars">
-          <div class="trk-bar"><span>Quãng đường</span>
+          <div class="trk-bar"><span data-i="m09">Quãng đường</span>
             <span class="trk-track"><i class="trk-fill" id="trk-fill-move" style="width:0%"></i></span>
             <span class="trk-val" id="trk-move-v">—</span></div>
-          <div class="trk-bar"><span>Thời gian</span>
+          <div class="trk-bar"><span data-i="m10">Thời gian</span>
             <span class="trk-track"><i class="trk-fill time" id="trk-fill-time" style="width:0%"></i></span>
             <span class="trk-val" id="trk-time-v">—</span></div>
         </div>
@@ -489,30 +531,30 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
 
         <div class="trk-rows">
           <div class="bal-row"><span id="trk-need-lbl">Còn phải đi tới q50</span><span class="sv" id="trk-need">—</span></div>
-          <div class="bal-row"><span>Nếu vào lệnh lúc chốt</span><span class="sv" id="trk-pnl">—</span></div>
+          <div class="bal-row"><span data-i="m11">Nếu vào lệnh lúc khoá</span><span class="sv" id="trk-pnl">—</span></div>
         </div>
         <p class="lock-note" id="trk-lock">—</p>
-        <p class="meter-verbal">Dự đoán <b>khoá lại khi nến đóng</b> và không đổi cho tới nến kế —
+        <p class="meter-verbal" data-i="k011">Dự đoán <b>khoá lại khi nến đóng</b> và không đổi cho tới nến kế —
           model không có gì mới để nói trong lúc nến đang chạy. Phần cập nhật từng giây ở trên là
           <b>số học trên dự đoán đã khoá</b>, không phải model đoán lại.</p>
       </section>
 
       <section class="card" style="margin-top:var(--sp-4)" aria-label="Thiết lập lệnh gợi ý">
-        <div class="pc-head"><h2>Thiết lập lệnh · gợi ý</h2><span class="chip">auto-trade TẮT</span></div>
+        <div class="pc-head" data-i="k012"><h2>Thiết lập lệnh · gợi ý</h2><span class="chip">auto-trade TẮT</span></div>
         <div class="setup-inputs">
-          <label>Vốn (USDT)<input type="number" id="cap-input" class="sinput num" value="1000" min="10" step="100"></label>
-          <label>Rủi ro / lệnh (%)<input type="number" id="risk-input" class="sinput num" value="1.0" min="0.1" max="5" step="0.1"></label>
+          <label><span data-i="m12">Vốn (USDT)</span><input type="number" id="cap-input" class="sinput num" value="1000" min="10" step="100"></label>
+          <label><span data-i="m13">Rủi ro / lệnh (%)</span><input type="number" id="risk-input" class="sinput num" value="1.0" min="0.1" max="5" step="0.1"></label>
         </div>
         <div id="setup-body"></div>
-        <p class="meter-verbal">Stop-loss 1.5×ATR14 tính từ <b>nến thật</b> của khung đang xem.
+        <p class="meter-verbal" data-i="k013">Cắt lỗ (SL) 1.5×ATR14 tính từ <b>nến thật</b> của khung đang xem.
           Hệ thống không tự đặt lệnh — giao dịch thật là M14, chỉ mở sau RiskEngine M13 và 4 cổng kiểm soát.</p>
       </section>
 
       <section class="card" style="margin-top:var(--sp-4)" aria-label="Giao dịch giấy">
-        <div class="pc-head"><h2>Đặt lệnh · PAPER</h2><span class="chip">giá thật · tiền ảo</span></div>
-        <div class="bal-row"><span>Số dư paper</span><span class="sv" id="paper-cash">10,000.00 USDT</span></div>
-        <div class="bal-row"><span id="asset-lbl">Đang giữ</span><span class="sv" id="paper-asset">0.000000</span></div>
-        <label class="amt-lbl">Giá trị lệnh (USDT)
+        <div class="pc-head" data-i="k014"><h2>Đặt lệnh · PAPER</h2><span class="chip">giá thật · tiền mô phỏng</span></div>
+        <div class="bal-row"><span data-i="m14">Khả dụng (USDT)</span><span class="sv" id="paper-cash">10,000.00 USDT</span></div>
+        <div class="bal-row"><span id="asset-lbl">Khả dụng (—)</span><span class="sv" id="paper-asset">0.000000</span></div>
+        <label class="amt-lbl"><span data-i="m15">Tổng (USDT)</span>
           <input type="number" id="ord-amt" class="sinput num" value="500" min="10" step="50"></label>
         <div class="pct-row">
           <button class="pct-btn num" data-p="25">25%</button>
@@ -521,16 +563,16 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
           <button class="pct-btn num" data-p="100">100%</button>
         </div>
         <div class="ord-btns">
-          <button class="ord-buy" id="btn-buy">Mua <span id="buy-sym"></span></button>
-          <button class="ord-sell" id="btn-sell">Bán <span id="sell-sym"></span></button>
+          <button class="ord-buy" id="btn-buy"><span data-i="m16">Mua</span> <span id="buy-sym"></span></button>
+          <button class="ord-sell" id="btn-sell"><span data-i="m17">Bán</span> <span id="sell-sym"></span></button>
         </div>
         <div id="pos-box" hidden>
-          <div class="bal-row"><span>Vị thế</span><span class="sv" id="pos-qty"></span></div>
-          <div class="bal-row"><span>Giá vào trung bình</span><span class="sv" id="pos-entry"></span></div>
-          <div class="bal-row"><span>uPnL (đang mở)</span><span class="sv" id="pos-pnl"></span></div>
+          <div class="bal-row"><span data-i="m18">Vị thế</span><span class="sv" id="pos-qty"></span></div>
+          <div class="bal-row"><span data-i="m19">Giá vào lệnh</span><span class="sv" id="pos-entry"></span></div>
+          <div class="bal-row"><span data-i="m20">PNL chưa thực hiện</span><span class="sv" id="pos-pnl"></span></div>
         </div>
         <p class="ord-log" id="ord-log">Chưa có lệnh nào trong phiên.</p>
-        <p class="meter-verbal">Khớp tại giá thật đang chạy, phí taker 0.10%/chiều, cơ chế spot
+        <p class="meter-verbal" data-i="k015">Khớp tại giá thật đang chạy, phí taker 0.10%/chiều, cơ chế spot
           (bán cần có coin). Tiền là ảo, không nối tài khoản nào, không lưu ra ngoài trang.</p>
       </section>
     </aside>
@@ -539,42 +581,93 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
 
   <!-- ══ TAB 2 · DỰ ĐOÁN ══════════════════════════════════════ -->
   <div class="tabpane" id="pane-pred" hidden>
-    <h2 class="pane-cap">Dự đoán · minh hoạ — chưa có model</h2>
+    <h2 class="pane-cap" data-i="k016">Dự đoán · minh hoạ — chưa có model</h2>
+
     <div class="pcard" style="margin-bottom:var(--sp-4)">
-      <h3>Hộ chiếu model &amp; bốn cổng kiểm soát</h3>
-      <p class="psub">Ngưỡng lấy nguyên văn từ <code>docs/00_MASTER_PLAN §7</code>. Cổng nào chưa chấm
+      <div class="phead"><div data-i="k017">
+        <h3>Nowcast · nhịp tick — realtime liên tục</h3>
+        <p class="psub">Điểm tổng hợp kỹ thuật tính lại <b>mỗi tick</b>, dùng cả nến ĐANG CHẠY —
+          nhiễu là bản chất của nó. Đây là <b>đọc số tức thời</b>, không phải model:
+          dự đoán chính thức vẫn khoá theo nến (phương án C).</p>
+      </div><div style="text-align:right">
+        <div class="pbig num" id="nc-score">—</div>
+        <div style="font:600 13px/18px var(--font-ui)" id="nc-label">—</div>
+      </div></div>
+      <div class="nc-gauge"><span class="nc-mid"></span>
+        <span class="nc-needle" id="nc-needle" style="left:50%"></span></div>
+      <div class="nc-ends" data-i="k018"><span>−100 · nghiêng giảm</span><span>0 · cân bằng</span>
+        <span>+100 · nghiêng tăng</span></div>
+      <canvas id="cv-nc" height="56" style="margin-top:var(--sp-3)"></canvas>
+      <div class="nc-vs">
+        <div class="nc-cell"><div class="t">Nowcast · tick</div>
+          <div class="v" id="nc-vs-now">—</div></div>
+        <div class="nc-cell"><div class="t" data-i="k019">Dự đoán khoá · nến</div>
+          <div class="v" id="nc-vs-locked">—</div></div>
+      </div>
+      <p class="pfoot" data-i="k020">Điểm = trung bình 5 thành phần (xu hướng EMA20 · MACD/ATR · RSI · ROC ·
+        taker nến đang chạy), chặn ±100. Chưa hiệu chỉnh xác suất — <b>không đọc thành xác suất</b>
+        (RULE 6). Khi hai ô lệch nhau: nowcast bắt nhịp trong-nến, dự đoán khoá giữ kỷ luật.</p>
+    </div>
+
+    <div class="pcard" style="margin-bottom:var(--sp-4)">
+      <div class="phead"><div data-i="k021">
+        <h3>Bàn phương pháp dự đoán</h3>
+        <p class="psub">Mỗi họ phương pháp (docs 07/09) đang nói gì ngay lúc này, kèm nhãn
+          bằng chứng — 🟢 vững · 🟡 hỗn hợp. Tính từ dữ liệu Binance thật của khung đang xem.</p>
+      </div></div>
+      <div id="mth-body"></div>
+      <div class="consensus" id="cons-bar"></div>
+      <div class="cons-lbl" id="cons-lbl"></div>
+      <p class="pfoot" data-i="k022">Đây là <b>đếm phiếu</b>, không phải xác suất — các phương pháp không độc lập
+        và chưa hiệu chỉnh (RULE 6). Model thật (M5–M7) sẽ học cách TỔ HỢP chúng thay vì đếm.</p>
+    </div>
+
+    <div class="pcard" style="margin-bottom:var(--sp-4)">
+      <div class="phead"><div data-i="k023">
+        <h3>Thông số kỹ thuật chuyên nghiệp</h3>
+        <p class="psub">Bốn nhóm chỉ báo tính live từ nến đã đóng của khung đang xem — đúng bộ
+          feature model sẽ dùng (00 §4.3). Đọc số theo quy ước kinh điển (TradingView-style).</p>
+      </div><span class="chip" id="ind-tf">—</span></div>
+      <div class="ind-grid" id="ind-body"></div>
+      <p class="pfoot" data-i="k024">⚠ Theo chính kiểm định của dự án (07 §A1): chỉ báo TA <b>đơn lẻ gần như
+        vô dụng</b> — giá trị thật nằm ở tổ hợp phi tuyến. Bảng này để đọc bối cảnh, không phải
+        để vào lệnh theo một dòng.</p>
+    </div>
+    <div class="pcard" style="margin-bottom:var(--sp-4)">
+      <h3 data-i="k025">Hộ chiếu model &amp; bốn cổng kiểm soát</h3>
+      <p class="psub" data-i="k026">Ngưỡng lấy nguyên văn từ <code>docs/00_MASTER_PLAN §7</code>. Cổng nào chưa chấm
         thì ghi «—», không để trống.</p>
       <div class="gates" id="gates"></div>
     </div>
 
     <div class="pgrid">
       <div class="pcard span2">
-        <div class="phead"><div>
+        <div class="phead"><div data-i="k027">
           <h3>Chùm kịch bản · 24 đường rút ngẫu nhiên</h3>
           <p class="psub">Block bootstrap từ log-return lịch sử (khối 4 nến — giữ được biến động cụm).
             Mỗi đường là <b>một lần rút</b>, không phải một dự báo đường đi.</p>
-        </div><button class="ghost-btn" id="btn-resample">Rút lại 24 đường</button></div>
+        </div><button class="ghost-btn" id="btn-resample" data-i="m21">Rút lại 24 đường</button></div>
         <canvas id="cv-spa" height="200"></canvas>
         <div class="plegend">
-          <span><i style="background:var(--pred);opacity:.5"></i>24 đường rút</span>
-          <span><i style="border-top:2px dashed var(--pred);height:0"></i>3 đường gần q10 / q50 / q90</span>
+          <span data-i="m22"><i style="background:var(--pred);opacity:.5"></i>24 đường rút</span>
+          <span data-i="m23"><i style="border-top:2px dashed var(--pred);height:0"></i>3 đường gần q10 / q50 / q90</span>
           <span id="spa-note"></span>
         </div>
-        <p class="pfoot">Vùng đậm ở giữa hình thành do các đường chồng nhau — đó chính là mật độ xác suất.
+        <p class="pfoot" data-i="k028">Vùng đậm ở giữa hình thành do các đường chồng nhau — đó chính là mật độ xác suất.
           Bấm rút lại vài lần để thấy bản chất ngẫu nhiên.</p>
       </div>
 
       <div class="pcard span2">
-        <div class="phead"><div>
+        <div class="phead"><div data-i="k029">
           <h3>Phong vũ biểu biến động</h3>
           <p class="psub">Thứ hệ thống dự báo <b>chính xác nhất</b> — chính xác hơn dự báo hướng
             khoảng 100 lần (<code>09 §3.1</code>). Một trục y duy nhất, đơn vị %/nến.</p>
         </div><div style="text-align:right">
           <div class="pbig" id="vol-now" style="color:var(--pred)">—</div>
-          <div style="font:400 11px/16px var(--font-ui);color:var(--text-2)">EWMA · chưa phải HAR/GARCH</div>
+          <div style="font:400 11px/16px var(--font-ui);color:var(--text-2)" data-i="k030">EWMA · chưa phải HAR/GARCH</div>
         </div></div>
         <canvas id="cv-vol" height="190"></canvas>
-        <div class="plegend">
+        <div class="plegend" data-i="k031">
           <span><i style="background:var(--text-1)"></i>biến động đo được (14 nến)</span>
           <span><i style="border-top:2px dashed var(--pred);height:0"></i>dự báo EWMA</span>
           <span><i class="dot" style="background:var(--surface-2)"></i>dải chế độ: thấp · thường · bão</span>
@@ -582,22 +675,22 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
       </div>
 
       <div class="pcard span2">
-        <h3>Model có sắc nét hơn baseline không?</h3>
-        <p class="psub">Nón <b>khí hậu học</b> = phân phối log-return lịch sử, không cần model nào.
+        <h3 data-i="k032">Model có sắc nét hơn baseline không?</h3>
+        <p class="psub" data-i="k033">Nón <b>baseline lịch sử</b> (climatology) = phân phối log-return quá khứ, không cần model nào.
           Nếu model không hẹp hơn nó, model chưa có giá trị.</p>
         <div id="sharp-body"></div>
-        <p class="pfoot">Đây là bài kiểm tra rẻ nhất và tàn nhẫn nhất cho mọi hệ dự báo phân vị.</p>
+        <p class="pfoot" data-i="k034">Đây là bài kiểm tra rẻ nhất và tàn nhẫn nhất cho mọi hệ dự báo phân vị.</p>
       </div>
     </div>
   </div>
 
   <!-- ══ TAB 3 · THỊ TRƯỜNG ═══════════════════════════════════ -->
   <div class="tabpane" id="pane-mkt" hidden>
-    <h2 class="pane-cap">Thị trường · dữ liệu phái sinh trực tiếp</h2>
+    <h2 class="pane-cap" data-i="k035">Thị trường · dữ liệu phái sinh trực tiếp</h2>
     <div class="pgrid">
       <div class="pcard">
-        <div class="phead"><div><h3>Đồng hồ funding</h3>
-          <p class="psub">Phe đông trả phe ít — thước đo đòn bẩy chen chúc.</p></div></div>
+        <div class="phead"><div data-i="k036"><h3>Đồng hồ funding</h3>
+          <p class="psub">Funding dương: Long trả Short — thước đo đòn bẩy lệch phía.</p></div></div>
         <canvas id="cv-fund" height="150"></canvas>
         <div style="text-align:center;margin-top:-6px">
           <div class="pbig num" id="fund-val">—</div>
@@ -608,35 +701,35 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
       </div>
 
       <div class="pcard">
-        <h3>OI vs giá · bốn góc phần tư</h3>
-        <p class="psub">Giá↑ &amp; OI↑ = tiền mới vào. Giá↑ &amp; OI↓ = short đóng vị thế.
+        <h3 data-i="m24">OI vs giá · bốn góc phần tư</h3>
+        <p class="psub" data-i="m25">Giá↑ &amp; OI↑ = tiền mới vào. Giá↑ &amp; OI↓ = short đóng vị thế.
           Đây là thứ giá một mình không cho biết.</p>
         <canvas id="cv-oi" height="290"></canvas>
         <p class="pfoot" id="oi-now">—</p>
       </div>
 
       <div class="pcard">
-        <h3>Nhịp tim thị trường</h3>
-        <p class="psub">Khớp lệnh mỗi giây, tách chủ động mua / chủ động bán.</p>
+        <h3 data-i="k037">Nhịp tim thị trường</h3>
+        <p class="psub" data-i="k038">Giao dịch khớp mỗi giây, tách chủ động mua / bán (taker).</p>
         <div style="display:flex;gap:var(--sp-5);margin-bottom:var(--sp-2)">
           <div><div class="pbig num" id="hb-tps">—</div>
-            <div style="font:400 11px/14px var(--font-ui);color:var(--text-2)">lệnh/giây</div></div>
+            <div style="font:400 11px/14px var(--font-ui);color:var(--text-2)" data-i="k039">giao dịch/giây</div></div>
           <div><div class="pbig num" id="hb-vps">—</div>
-            <div style="font:400 11px/14px var(--font-ui);color:var(--text-2)">USDT/giây</div></div>
+            <div style="font:400 11px/14px var(--font-ui);color:var(--text-2)" data-i="k040">USDT/giây</div></div>
         </div>
         <canvas id="cv-hb" height="60"></canvas>
-        <p class="pfoot">Cột lên = chủ động mua · cột xuống = chủ động bán · ô sọc = giây không có lệnh nào.</p>
+        <p class="pfoot" data-i="k041">Cột lên = chủ động mua · cột xuống = chủ động bán · ô sọc = giây không có lệnh nào.</p>
       </div>
 
       <div class="pcard span2">
-        <div class="phead"><div><h3>Dòng thanh lý realtime</h3>
+        <div class="phead"><div data-i="k042"><h3>Dòng thanh lý trực tiếp</h3>
           <p class="psub">Lệnh bị đóng cưỡng bức — nhiên liệu của cascade. Bong bóng càng lớn,
             giá trị càng lớn.</p></div>
           <div style="text-align:right"><div class="pbig num" id="liq-tot">0</div>
-            <div style="font:400 11px/16px var(--font-ui);color:var(--text-2)">USDT · 5 phút</div></div>
+            <div style="font:400 11px/16px var(--font-ui);color:var(--text-2)" data-i="k043">USDT · 5 phút</div></div>
         </div>
         <canvas id="cv-liq" height="180"></canvas>
-        <p class="pfoot">⚠️ Binance chỉ phát tối đa <b>1 lệnh thanh lý/giây/cặp</b> qua WebSocket từ 2021 —
+        <p class="pfoot" data-i="k044">⚠️ Binance chỉ phát tối đa <b>1 lệnh thanh lý/giây/cặp</b> qua WebSocket từ 2021 —
           dữ liệu công khai này <b>đếm thiếu</b> so với thực tế (<code>09 §7</code>). Panel bắt đầu rỗng
           mỗi lần mở trang vì không có REST lịch sử miễn phí.</p>
       </div>
@@ -644,7 +737,7 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
   </div>
 </div>
 
-<footer>
+<footer data-i="m26">
   Dữ liệu thị trường: Binance public REST + WebSocket (không cần API key, chỉ đọc).
   Trang này không gửi dữ liệu đi đâu; trên máy bạn chỉ lưu hai lựa chọn giao diện: bố cục (tách tab / gộp) và ngôn ngữ (VI / EN).
   · Mã nguồn dự án: <span class="num">cryptopred</span> · docs 00–05.
@@ -655,7 +748,7 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
    Nối THẲNG Binance từ file HTML — không cần server, không cần key.
      REST  https://api.binance.com/api/v3/…   (CORS: allow-origin *)
      WS    wss://stream.binance.com:9443/stream?streams=…
-   Nếu mạng chặn hoặc offline → chuyển sang trạng thái "Mất kết nối"
+   Nếu mạng chặn hoặc offline → chuyển sang trạng thái T("Mất kết nối")
    và NÓI THẬT (RULE 8), không bịa dữ liệu.
    ══════════════════════════════════════════════════════════════════ */
 (() => {
@@ -703,14 +796,14 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
   function setConn(state, detail) {
     S.conn = state;
     const el = $("conn-status");
-    const map = { live: ["live", "Live · Binance"], slow: ["slow", "Chậm · chưa có tick"],
-                  down: ["down", "Mất kết nối"], connecting: ["slow", "Đang kết nối…"] };
+    const map = { live: ["live", "Live · Binance"], slow: ["slow", T("Trễ · chưa có tick mới")],
+                  down: ["down", T("Mất kết nối")], connecting: ["slow", T("Đang kết nối…")] };
     const [cls, txt] = map[state] || map.connecting;
     el.className = "status status--" + cls;
     el.textContent = detail || txt;
     $("conn-note").textContent = state === "live"
-      ? "Dữ liệu thật từ Binance · dự đoán là minh hoạ"
-      : state === "down" ? "Không nối được Binance — số trên màn hình có thể đã cũ" : "Đang kết nối Binance…";
+      ? T("Dữ liệu thật từ Binance · dự đoán là minh hoạ")
+      : state === "down" ? T("Không nối được Binance — số trên màn hình có thể đã cũ") : T("Đang kết nối Binance…");
     $("hero").classList.toggle("stale", state === "down");
   }
 
@@ -798,8 +891,9 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
     const row = document.querySelector(`.coin-row[data-sym="${S.sym}"] .coin-px`);
     if (row) row.textContent = fmt(c.close);
     // ★ PHƯƠNG ÁN C: model chỉ "nói lại" khi nến đóng
-    if (c.closed) { relock(); renderPrediction(); }
+    if (c.closed) { relock(); renderPrediction(); renderIndicators(); renderMethods(); }
     updHeader(); updWallet(); renderTracking(); draw();
+    updateNowcast();                                  // nowcast: MỖI tick, cố ý
   }
 
   function onTrade(t) {
@@ -823,7 +917,7 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
     const t = S.tickers[S.sym];
     $("ph-symbol").textContent = S.sym + " · Binance Spot";
     $("buy-sym").textContent = base(); $("sell-sym").textContent = base();
-    $("asset-lbl").textContent = base() + " đang giữ";
+    $("asset-lbl").textContent = T("Khả dụng") + " (" + base() + ")";
     if (t && isFinite(t.chg)) {
       const abs = t.price * t.chg / 100 / (1 + t.chg / 100);
       $("ph-change").innerHTML = `<span class="${t.chg >= 0 ? "pos" : "neg"}">`
@@ -849,7 +943,7 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
     const d = $("ob-dir");
     d.textContent = px >= prev ? "▲" : "▼";
     d.style.color = px >= prev ? "var(--up)" : "var(--down)";
-    $("ob-chip").textContent = "trực tiếp";
+    $("ob-chip").textContent = T("trực tiếp");
   }
 
   function renderTape() {
@@ -864,11 +958,11 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
     const vt = S.tape.reduce((a, x) => a + x.qty, 0) || 1;
     const bs = Math.round(vb / vt * 100);
     $("fb-buy").style.width = bs + "%";
-    $("fb-buy-l").textContent = `Mua ${bs}%`;
-    $("fb-sell-l").textContent = `${100 - bs}% Bán`;
+    $("fb-buy-l").textContent = `${T("Mua")} ${bs}%`;
+    $("fb-sell-l").textContent = `${100 - bs}% ${T("Bán")}`;
   }
 
-  /* ── Minh hoạ "dự đoán" — KHÔNG phải model ────────────────── */
+  /* ── Minh hoạ T("dự đoán") — KHÔNG phải model ────────────────── */
   // Hướng: dấu của động lượng 12 nến (baseline thô, chưa hiệu chỉnh).
   // Dải: ±1σ log-return thực tế nhân √horizon. Chỉ để trình bày giao diện.
   // PHƯƠNG ÁN C — dự đoán tính từ nến ĐÃ ĐÓNG và KHOÁ LẠI cho tới nến kế.
@@ -919,20 +1013,20 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
 
     const st = $("trk-status"), pr = $("trk-progress"), sub = $("trk-sub");
     let label, cls, note;
-    if (px > o.hi)      { label = "Vượt dải trên"; cls = "pos";
-                          note = "Giá đã ra ngoài kịch bản lạc quan nhất (q90)."; }
-    else if (px < o.lo) { label = "Thủng dải dưới"; cls = "neg";
-                          note = "Giá đã ra ngoài kịch bản bi quan nhất (q10)."; }
-    else if (move >= 1) { label = "Đã chạm đích"; cls = "pos";
-                          note = "Giá đã tới mức q50 trước hạn — dự đoán này coi như xong."; }
-    else if (move <= 0) { label = "Đi ngược"; cls = "neg";
-                          note = "Giá đang đi ngược hướng dự đoán."; }
-    else if (move > elapsed + 0.15) { label = "Nhanh hơn dự đoán"; cls = "pos";
-                          note = "Quãng đường đi nhanh hơn nhịp thời gian."; }
-    else if (move < elapsed - 0.15) { label = "Chậm hơn dự đoán"; cls = "";
-                          note = "Thời gian trôi nhanh hơn quãng đường — dự đoán đang trễ nhịp."; }
-    else                { label = "Đang bám"; cls = "";
-                          note = "Giá đi đúng nhịp so với dự đoán."; }
+    if (px > o.hi)      { label = T("Vượt dải trên"); cls = "pos";
+                          note = T("Giá đã ra ngoài kịch bản lạc quan nhất (q90)."); }
+    else if (px < o.lo) { label = T("Thủng dải dưới"); cls = "neg";
+                          note = T("Giá đã ra ngoài kịch bản bi quan nhất (q10)."); }
+    else if (move >= 1) { label = T("Đã chạm đích"); cls = "pos";
+                          note = T("Giá đã tới mức q50 trước hạn — dự đoán này coi như xong."); }
+    else if (move <= 0) { label = T("Đi ngược"); cls = "neg";
+                          note = T("Giá đang đi ngược hướng dự đoán."); }
+    else if (move > elapsed + 0.15) { label = T("Nhanh hơn dự đoán"); cls = "pos";
+                          note = T("Quãng đường đi nhanh hơn nhịp thời gian."); }
+    else if (move < elapsed - 0.15) { label = T("Chậm hơn dự đoán"); cls = "";
+                          note = T("Thời gian trôi nhanh hơn quãng đường — dự đoán đang trễ nhịp."); }
+    else                { label = T("Đang bám"); cls = "";
+                          note = T("Giá đi đúng nhịp so với dự đoán."); }
     st.textContent = label;
     st.className = "trk-status " + cls;
     pr.textContent = pctStr(move * 100);
@@ -961,12 +1055,12 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
     // Đã vượt đích thì đổi hẳn nhãn — nếu không sẽ mâu thuẫn với trạng thái phía trên
     const need = (o.mid / px - 1) * 100;
     if (move >= 1) {
-      $("trk-need-lbl").textContent = "Đã vượt q50";
+      $("trk-need-lbl").textContent = T("Đã vượt q50");
       $("trk-need").innerHTML = `<b class="pos">${Math.abs(need).toFixed(2)}%</b>`
-        + ` <small style="color:var(--text-3)">quá đích</small>`;
+        + ` <small style="color:var(--text-3)">${T("quá đích")}</small>`;
     } else {
-      $("trk-need-lbl").textContent = "Còn phải đi tới q50";
-      $("trk-need").innerHTML = Math.abs(need) < 0.005 ? "đã tới"
+      $("trk-need-lbl").textContent = T("Còn phải đi tới q50");
+      $("trk-need").innerHTML = Math.abs(need) < 0.005 ? T("đã tới")
         : `<b class="${need >= 0 ? "pos" : "neg"}">${pctStr(need)}</b>`;
     }
 
@@ -974,11 +1068,11 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
     // KHÔNG RÕ thì không có lệnh nào để tính (luật M13: không tín hiệu → không lệnh).
     if (o.score <= 58 && o.score >= 42) {
       $("trk-pnl").innerHTML = `<span style="color:var(--text-3)">—</span>`
-        + ` <small style="color:var(--text-3)">KHÔNG RÕ · không vào lệnh</small>`;
+        + ` <small style="color:var(--text-3)">${T("KHÔNG RÕ · không vào lệnh")}</small>`;
     } else {
       const net = (px / o.px - 1) * 100 * (long ? 1 : -1) - FEE_RT;
       $("trk-pnl").innerHTML = `<b class="${net >= 0 ? "pos" : "neg"}">${pctStr(net)}</b>`
-        + ` <small style="color:var(--text-3)">đã trừ phí</small>`;
+        + ` <small style="color:var(--text-3)">${T("đã trừ phí")}</small>`;
     }
 
   }
@@ -988,19 +1082,19 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
     const dir = o.score > 58 ? "up" : o.score < 42 ? "down" : "unclear";
     const b = $("dir-badge");
     b.className = "badge badge--" + dir;
-    b.innerHTML = dir === "up" ? `▲ NGHIÊNG TĂNG <span class="num">${o.score}%</span>`
-      : dir === "down" ? `▼ NGHIÊNG GIẢM <span class="num">${100 - o.score}%</span>`
-      : `● KHÔNG RÕ <span class="num">${o.score}%</span>`;
+    b.innerHTML = dir === "up" ? `▲ ${T("NGHIÊNG TĂNG")} <span class="num">${o.score}%</span>`
+      : dir === "down" ? `▼ ${T("NGHIÊNG GIẢM")} <span class="num">${100 - o.score}%</span>`
+      : `● ${T("KHÔNG RÕ")} <span class="num">${o.score}%</span>`;
     const f = $("meter-fill");
     f.style.width = o.score + "%";
     f.style.background = dir === "up" ? "var(--up)" : dir === "down" ? "var(--down)" : "var(--text-3)";
-    $("meter-num").innerHTML = `<b class="num">${o.score}%</b> · chưa hiệu chỉnh`;
-    $("pred-title").textContent = `Minh hoạ · ${HORIZON_BARS} nến ${S.tf} tới`;
-    $("model-chip").textContent = `khoá lúc ${fmtT(o.lockedAt, o.step)} · chưa có model`;
+    $("meter-num").innerHTML = `<b class="num">${o.score}%</b> · ${T("chưa hiệu chỉnh")}`;
+    $("pred-title").textContent = T("Minh hoạ · {n} nến {tf} tới", { n: HORIZON_BARS, tf: S.tf });
+    $("model-chip").textContent = T("khoá lúc {t} · chưa có model", { t: fmtT(o.lockedAt, o.step) });
     // Hai dòng này CHỈ đổi khi khoá lại — thuộc về đây, không phải lớp bám sát
-    $("trk-countdown").textContent = "đích " + fmtT(o.target, o.step);
-    $("trk-lock").textContent = `Khoá lúc ${fmtFull(o.lockedAt)} UTC · giá neo ${fmt(o.px)}`
-      + ` · đích ${fmtFull(o.target)}`;
+    $("trk-countdown").textContent = T("đích") + " " + fmtT(o.target, o.step);
+    $("trk-lock").textContent = T("Khoá lúc {a} UTC · giá neo {b} · đích {c}",
+      { a: fmtFull(o.lockedAt), b: fmt(o.px), c: fmtFull(o.target) });
 
     let rows = "";
     for (let k = 1; k <= HORIZON_BARS; k++) {
@@ -1010,7 +1104,7 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
         + `<td class="num">${fmt(v)}</td><td class="num ${p >= 0 ? "pos" : "neg"}">${pctStr(p)}</td></tr>`;
     }
     $("steps-body").innerHTML = rows;
-    $("q-range-lbl").textContent = "Dải ±1σ tại " + fmtFull(o.target);
+    $("q-range-lbl").textContent = T("Dải ±1σ tại") + " " + fmtFull(o.target);
     $("q-range-vals").textContent = `${fmt(o.lo)} – ${fmt(o.hi)}`;
     renderSetup(o);
   }
@@ -1021,8 +1115,7 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
     o = o || outlook(); if (!o) return;
     const dir = o.score > 58 ? "up" : o.score < 42 ? "down" : "unclear";
     if (dir === "unclear") {
-      body.innerHTML = `<div class="setup-flat">● KHÔNG RÕ — đứng ngoài
-        (${o.score}% nằm trong vùng chết 42–58%).<br>Luật M13: không tín hiệu → không lệnh.</div>`;
+      body.innerHTML = `<div class="setup-flat">${T("● KHÔNG RÕ — đứng ngoài ({s}% nằm trong vùng không vào lệnh 42–58%). Luật M13: không tín hiệu → không lệnh.", { s: o.score })}</div>`;
       return;
     }
     const cap = Math.max(10, parseFloat($("cap-input").value) || 1000);
@@ -1035,16 +1128,16 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
     const size = Math.min(cap, cap * riskPct / slPct);
     const row = (l, v) => `<div class="srow"><span>${l}</span><span class="sv">${v}</span></div>`;
     body.innerHTML =
-      row("Hướng", long ? `<span class="pos">▲ LONG</span>`
-        : `<span class="neg">▼ SHORT</span> <small>cần futures — spot: đứng ngoài</small>`)
-      + row("Vào lệnh · thị trường", fmt(o.px))
-      + row("Stop-loss · 1.5×ATR14", `${fmt(slPrice)} <small>${pctStr(long ? -slPct : slPct)}</small>`)
-      + row("Take-profit · biên ±1σ", `${fmt(tpPrice)} <small>${pctStr(long ? tpPct : -tpPct)}</small>`)
-      + row("RR (TP/SL)", (tpPct / slPct).toFixed(1) + " : 1")
-      + row("Khối lượng đề xuất", `${fmtUsd(size)} USDT <small>rủi ro ${(size * slPct / cap).toFixed(2)}% vốn</small>`)
-      + row("Nếu chạm TP", `<b class="pos">+${fmtUsd(size * (tpPct - FEE_RT) / 100)} USDT</b> <small>đã trừ phí</small>`)
-      + row("Nếu chạm SL", `<b class="neg">−${fmtUsd(size * (slPct + FEE_RT) / 100)} USDT</b> <small>đã trừ phí</small>`)
-      + row("Thoát hạn", `${fmtFull(o.target)} <small>hết horizon → thoát</small>`);
+      row(T("Hướng"), long ? `<span class="pos">▲ LONG</span>`
+        : `<span class="neg">▼ SHORT</span> <small>${T("cần futures — spot: đứng ngoài")}</small>`)
+      + row(T("Vào lệnh · Thị trường"), fmt(o.px))
+      + row(T("Cắt lỗ (SL) · 1.5×ATR14"), `${fmt(slPrice)} <small>${pctStr(long ? -slPct : slPct)}</small>`)
+      + row(T("Chốt lời (TP) · biên ±1σ"), `${fmt(tpPrice)} <small>${pctStr(long ? tpPct : -tpPct)}</small>`)
+      + row(T("Tỷ lệ R:R"), (tpPct / slPct).toFixed(1) + " : 1")
+      + row(T("Khối lượng đề xuất"), `${fmtUsd(size)} USDT <small>${T("rủi ro {x}% vốn", { x: (size * slPct / cap).toFixed(2) })}</small>`)
+      + row(T("Nếu chạm TP"), `<b class="pos">+${fmtUsd(size * (tpPct - FEE_RT) / 100)} USDT</b> <small>${T("đã trừ phí")}</small>`)
+      + row(T("Nếu chạm SL"), `<b class="neg">−${fmtUsd(size * (slPct + FEE_RT) / 100)} USDT</b> <small>${T("đã trừ phí")}</small>`)
+      + row(T("Thoát theo thời gian"), `${fmtFull(o.target)} <small>${T("hết horizon → thoát")}</small>`);
   }
   $("cap-input").addEventListener("input", () => renderSetup());
   $("risk-input").addEventListener("input", () => renderSetup());
@@ -1072,20 +1165,20 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
     const usdIn = Math.max(0, parseFloat($("ord-amt").value) || 0);
     if (side === "buy") {
       const usd = Math.min(paper.cash, usdIn);
-      if (usd < 10) { log.textContent = "Lệnh tối thiểu 10 USDT (hoặc số dư không đủ)."; return; }
+      if (usd < 10) { log.textContent = T("Lệnh tối thiểu 10 USDT (hoặc số dư không đủ)."); return; }
       const qty = usd * (1 - FEE_SIDE) / price;
       const h = paper.assets[S.sym] || { qty: 0, entry: price };
       h.entry = (h.entry * h.qty + price * qty) / (h.qty + qty);
       h.qty += qty; paper.assets[S.sym] = h; paper.cash -= usd;
-      log.innerHTML = `✓ Khớp PAPER: mua <b class="num">${qty.toFixed(6)} ${base()}</b> @ <span class="num">${fmt(price)}</span>`;
+      log.innerHTML = `${T("✓ Đã khớp · PAPER: mua")} <b class="num">${qty.toFixed(6)} ${base()}</b> @ <span class="num">${fmt(price)}</span>`;
     } else {
       const h = paper.assets[S.sym];
-      if (!h || h.qty <= 0) { log.textContent = `Không có ${base()} để bán — PAPER theo cơ chế spot.`; return; }
+      if (!h || h.qty <= 0) { log.textContent = T("Không có {c} để bán — PAPER theo cơ chế spot.", { c: base() }); return; }
       const qty = usdIn > 0 ? Math.min(h.qty, usdIn / price) : h.qty;
       paper.cash += qty * price * (1 - FEE_SIDE);
       const pnl = (price - h.entry) * qty;
       h.qty -= qty; if (h.qty < 1e-9) delete paper.assets[S.sym];
-      log.innerHTML = `✓ Khớp PAPER: bán <b class="num">${qty.toFixed(6)} ${base()}</b> @ <span class="num">${fmt(price)}</span>`
+      log.innerHTML = `${T("✓ Đã khớp · PAPER: bán")} <b class="num">${qty.toFixed(6)} ${base()}</b> @ <span class="num">${fmt(price)}</span>`
         + ` · PnL <b class="${pnl >= 0 ? "pos" : "neg"}">${pnl >= 0 ? "+" : "−"}${fmtUsd(Math.abs(pnl))} USDT</b>`;
     }
     updWallet(); draw();
@@ -1129,8 +1222,18 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
     btn.setAttribute("aria-pressed", String(S.lang === "en"));
     document.querySelectorAll("[data-i]").forEach(el => {
       const k = el.dataset.i;
+      if (!(k in DOM_I18N.vi)) DOM_I18N.vi[k] = el.innerHTML;   // chụp bản gốc VI từ DOM
       const html = DOM_I18N[S.lang][k] ?? DOM_I18N.vi[k];
       if (html !== undefined) el.innerHTML = html;
+    });
+    // Thuộc tính (aria-label / placeholder / title): chụp gốc VI, tra ATTR_I18N khi EN
+    document.querySelectorAll("[aria-label],[placeholder],[title]").forEach(el => {
+      [["aria-label", "i18nA"], ["placeholder", "i18nP"], ["title", "i18nT"]].forEach(([at, ds]) => {
+        if (!el.hasAttribute(at)) return;
+        if (!el.dataset[ds]) el.dataset[ds] = el.getAttribute(at);
+        const vi = el.dataset[ds];
+        el.setAttribute(at, S.lang === "en" ? (ATTR_I18N[vi] || vi) : vi);
+      });
     });
     try { localStorage.setItem("cryptopred-lang", S.lang); } catch (e) {}
   }
@@ -1220,7 +1323,7 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
     c.strokeStyle = V("--border"); c.globalAlpha = .25; c.lineWidth = 1;
     c.beginPath(); c.moveTo(8, Y(px)); c.lineTo(w - 88, Y(px)); c.stroke(); c.globalAlpha = 1;
     c.fillStyle = V("--text-3"); c.font = "500 10px 'Inter',sans-serif";
-    c.fillText("giá neo " + fmt(px), 10, Y(px) - 5);
+    c.fillText(T("giá neo") + " " + fmt(px), 10, Y(px) - 5);
 
     c.strokeStyle = V("--pred"); c.lineWidth = 1; c.globalAlpha = .16;
     paths.forEach((p, i) => {
@@ -1228,7 +1331,7 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
       c.beginPath(); p.forEach((v, k) => k ? c.lineTo(X(k), Y(v)) : c.moveTo(X(k), Y(v))); c.stroke();
     });
     c.globalAlpha = .9; c.lineWidth = 1.5; c.setLineDash([5, 4]);
-    const tags = [[mark.lo, "bi quan · q10"], [mark.mid, "giữa · q50"], [mark.hi, "lạc quan · q90"]];
+    const tags = [[mark.lo, T("bi quan · q10")], [mark.mid, T("trung vị · q50")], [mark.hi, T("lạc quan · q90")]];
     tags.forEach(([i, label]) => {
       const p = paths[i];
       c.beginPath(); p.forEach((v, k) => k ? c.lineTo(X(k), Y(v)) : c.moveTo(X(k), Y(v))); c.stroke();
@@ -1241,7 +1344,7 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
     });
     c.setLineDash([]); c.globalAlpha = 1;
     const spread = ((Math.max(...paths.map(p => p[p.length - 1])) / Math.min(...paths.map(p => p[p.length - 1])) - 1) * 100);
-    $("spa-note").textContent = `biên độ 24 kịch bản: ${spread.toFixed(2)}%`;
+    $("spa-note").textContent = `${T("biên độ 24 kịch bản:")} ${spread.toFixed(2)}%`;
   }
 
   /* ── Phong vũ biểu biến động ──────────────────────────────────── */
@@ -1264,7 +1367,7 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
     const Y = v => 8 + (1 - (v - lo) / (hi - lo)) * (h - padB - 8);
 
     // dải chế độ ở đáy: thấp · thường · bão (chữ trực tiếp, không cần chú giải màu)
-    const bands = [[0, p33, "thấp", .10], [p33, p67, "thường", .18], [p67, hi, "bão", .28]];
+    const bands = [[0, p33, T("thấp"), .10], [p33, p67, T("thường"), .18], [p67, hi, T("bão"), .28]];
     bands.forEach(([a, b, lb, al]) => {
       c.globalAlpha = al; c.fillStyle = V("--text-3");
       c.fillRect(padL, Y(b), w - padL - padR, Y(a) - Y(b)); c.globalAlpha = 1;
@@ -1279,7 +1382,7 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
     c.strokeStyle = V("--border"); c.lineWidth = 1;
     c.beginPath(); c.moveTo(xb, 4); c.lineTo(xb, h - padB); c.stroke();
     c.fillStyle = V("--text-3"); c.font = "500 9px 'Inter',sans-serif";
-    c.fillText("Bây giờ", xb + 3, 12);
+    c.fillText(T("Bây giờ"), xb + 3, 12);
     // dự báo tím nét đứt + dải
     const xe = X(show.length + HORIZON_BARS - 1);
     c.fillStyle = V("--pred-band");
@@ -1316,17 +1419,275 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
         <b class="num" style="color:var(--text-1);text-align:right">${val}</b></div>`;
     const mx = Math.max(wModel, wBase);
     el.innerHTML =
-      bar(`Khí hậu học · q10–q90 <small style="color:var(--text-3)">n=${cl.n}</small>`,
+      bar(`${T("Baseline lịch sử · q10–q90")} <small style="color:var(--text-3)">n=${cl.n}</small>`,
           wBase / mx * 100, "color-mix(in srgb,var(--text-3) 55%,transparent)", wBase.toFixed(2) + "%")
-      + bar(`Minh hoạ hiện tại · q10–q90 <small style="color:var(--text-3)">n=${fq.n}</small>`,
+      + bar(`${T("Minh hoạ hiện tại · q10–q90")} <small style="color:var(--text-3)">n=${fq.n}</small>`,
             wModel / mx * 100, "var(--pred)", wModel.toFixed(2) + "%")
       + `<p style="margin:var(--sp-2) 0 0;font:500 13px/20px var(--font-ui);color:${
            sharper ? "var(--up)" : "var(--status-slow)"}">${
-           sharper ? `✓ hẹp hơn baseline ${Math.abs(rel).toFixed(0)}%`
-                   : `⚠ chưa sắc nét hơn baseline (${rel >= 0 ? "rộng hơn " + rel.toFixed(0) : "chỉ hẹp " + Math.abs(rel).toFixed(0)}%)`
+           sharper ? T("✓ hẹp hơn baseline {x}%", { x: Math.abs(rel).toFixed(0) })
+                   : T("⚠ chưa sắc nét hơn baseline ({d}%)", { d: rel >= 0 ? T("rộng hơn") + " " + rel.toFixed(0) : T("chỉ hẹp") + " " + Math.abs(rel).toFixed(0) })
          }</p>`;
   }
 
+
+
+  /* ══ THÔNG SỐ KỸ THUẬT + BÀN PHƯƠNG PHÁP + NOWCAST ═══════════════
+     Toàn bộ công thức chuẩn ngành (Wilder RSI, MACD 12-26-9, Bollinger
+     20×2σ, Donchian 20, Parkinson...). Bảng chỉ báo dùng nến ĐÃ ĐÓNG;
+     riêng nowcast cố ý dùng cả nến đang chạy — và nói rõ điều đó.     */
+
+  const ema = (a, n) => { const k = 2 / (n + 1); let e = a[0];
+    const out = [e]; for (let i = 1; i < a.length; i++) { e = a[i] * k + e * (1 - k); out.push(e); }
+    return out; };
+  const sma = (a, n, i) => { let s = 0; for (let j = i - n + 1; j <= i; j++) s += a[j]; return s / n; };
+  const std = (a, n, i, m) => { let s = 0; for (let j = i - n + 1; j <= i; j++) s += (a[j] - m) ** 2;
+    return Math.sqrt(s / n); };
+  const clamp1 = v => Math.max(-1, Math.min(1, v));
+
+  function computeIndicators(useForming) {
+    const all = S.candles;
+    const c = (all.length && all[all.length - 1].closed) || useForming ? all : all.slice(0, -1);
+    const n = c.length; if (n < 60) return null;
+    const C = c.map(x => x.close), H = c.map(x => x.high), L = c.map(x => x.low), Vv = c.map(x => x.vol);
+    const i = n - 1;
+
+    // ── Wilder RSI(14) ──
+    let g = 0, l = 0;
+    for (let j = i - 13; j <= i; j++) { const d = C[j] - C[j - 1]; d >= 0 ? g += d : l -= d; }
+    let ag = g / 14, al = l / 14;
+    const rsi = al === 0 ? 100 : 100 - 100 / (1 + ag / al);
+
+    // ── Stochastic(14,3) ──
+    const kv = [];
+    for (let j = i - 2; j <= i; j++) {
+      let hh = -1e18, ll = 1e18;
+      for (let m = j - 13; m <= j; m++) { hh = Math.max(hh, H[m]); ll = Math.min(ll, L[m]); }
+      kv.push(hh === ll ? 50 : (C[j] - ll) / (hh - ll) * 100);
+    }
+    const stochK = kv[2], stochD = (kv[0] + kv[1] + kv[2]) / 3;
+
+    // ── ATR(14) Wilder → % giá ──
+    let atr = H[1] - L[1];
+    for (let j = 2; j <= i; j++) {
+      const tr = Math.max(H[j] - L[j], Math.abs(H[j] - C[j - 1]), Math.abs(L[j] - C[j - 1]));
+      atr = (atr * 13 + tr) / 14;
+    }
+    const atrPct = atr / C[i] * 100;
+
+    // ── MACD(12,26,9) — histogram chia ATR (chuẩn hoá scale-free, features.yaml) ──
+    const e12 = ema(C, 12), e26 = ema(C, 26);
+    const macd = C.map((_, j) => e12[j] - e26[j]);
+    const sig = ema(macd.slice(26), 9);
+    const hist = macd[i] - sig[sig.length - 1];
+    const macdH = atr > 0 ? hist / atr : 0;
+
+    // ── ROC ──
+    const roc6 = (C[i] / C[i - 6] - 1) * 100, roc24 = (C[i] / C[i - 24] - 1) * 100;
+
+    // ── EMA trend (tỉ lệ, không phải hiệu — RULE 1) ──
+    const e20 = ema(C, 20)[i], e50 = ema(C, 50)[i];
+    const e200 = n >= 200 ? ema(C, 200)[i] : null;
+    const pEma20 = (C[i] / e20 - 1) * 100, p2050 = (e20 / e50 - 1) * 100;
+    const p50200 = e200 ? (e50 / e200 - 1) * 100 : null;
+
+    // ── Bollinger(20, 2σ) ──
+    const bbM = sma(C, 20, i), bbS = std(C, 20, i, bbM);
+    const bbW = bbM > 0 ? 4 * bbS / bbM * 100 : 0;
+    const pctB = bbS > 0 ? (C[i] - (bbM - 2 * bbS)) / (4 * bbS) : 0.5;
+
+    // ── Donchian(20) ──
+    let dh = -1e18, dl = 1e18;
+    for (let j = i - 19; j <= i; j++) { dh = Math.max(dh, H[j]); dl = Math.min(dl, L[j]); }
+    const don = dh === dl ? 0.5 : (C[i] - dl) / (dh - dl);
+
+    // ── Biến động thực hiện & Parkinson (24) — %/nến ──
+    let s2 = 0, pk = 0;
+    for (let j = i - 23; j <= i; j++) {
+      const r = Math.log(C[j] / C[j - 1]); s2 += r * r;
+      pk += Math.log(H[j] / L[j]) ** 2;
+    }
+    const rv24 = Math.sqrt(s2 / 24) * 100;
+    const park24 = Math.sqrt(pk / (24 * 4 * Math.LN2)) * 100;
+
+    // ── Khối lượng: z-score (tối đa 96 nến có sẵn) + OBV slope + taker ──
+    const zn = Math.min(96, n - 1);
+    const vm = sma(Vv, zn, i), vs = std(Vv, zn, i, vm);
+    const volZ = vs > 0 ? (Vv[i] - vm) / vs : 0;
+    let obv = 0, obv24 = 0;
+    for (let j = 1; j <= i; j++) { obv += Math.sign(C[j] - C[j - 1]) * Vv[j]; if (j === i - 24) obv24 = obv; }
+    const obvSlope = vm > 0 ? (obv - obv24) / (24 * vm) : 0;
+    const last = c[i];
+    const taker = last.vol > 0 ? last.takerBuy / last.vol : 0.5;
+
+    return { rsi, stochK, stochD, atrPct, macdH, roc6, roc24, pEma20, p2050, p50200,
+             bbW, pctB, don, rv24, park24, volZ, obvSlope, taker, n, e200ok: !!e200 };
+  }
+
+  // Chip trạng thái: hướng luôn có KÝ HIỆU + CHỮ, không chỉ màu (DS-RULE 3)
+  const stChip = (dir, label) => {
+    const cls = dir > 0 ? "st-up" : dir < 0 ? "st-dn" : "st-nt";
+    const sym = dir > 0 ? "▲" : dir < 0 ? "▼" : "■";
+    return `<span class="st ${cls}">${sym} ${label}</span>`;
+  };
+
+  function renderIndicators() {
+    const el = $("ind-body"); if (!el) return;
+    const x = computeIndicators(false);
+    if (!x) { el.innerHTML = `<p class="pfoot">${T("Chưa đủ nến (cần ≥60).")}</p>`; return; }
+    $("ind-tf").textContent = T("khung {tf} · nến đã đóng · n={n}", { tf: S.tf, n: x.n });
+    const f2 = v => v.toFixed(2), f1 = v => v.toFixed(1);
+    const row = (name, val, chip) =>
+      `<div class="ind-row"><span>${name}</span><b>${val}</b>${chip}</div>`;
+    const groups = [
+      [T("Động lượng"), [
+        row("RSI (14)", f1(x.rsi), x.rsi > 70 ? stChip(-1, T("quá mua")) : x.rsi < 30 ? stChip(1, T("quá bán")) : stChip(0, T("trung tính"))),
+        row("Stoch %K/%D (14,3)", `${f1(x.stochK)} / ${f1(x.stochD)}`, x.stochK > 80 ? stChip(-1, T("quá mua")) : x.stochK < 20 ? stChip(1, T("quá bán")) : stChip(0, T("trung tính"))),
+        row("MACD hist / ATR (12,26,9)", f2(x.macdH), x.macdH > 0.05 ? stChip(1, T("tăng")) : x.macdH < -0.05 ? stChip(-1, T("giảm")) : stChip(0, T("phẳng"))),
+        row(T("ROC 6 nến"), pctStr(x.roc6), Math.abs(x.roc6) > x.atrPct ? stChip(Math.sign(x.roc6), x.roc6 > 0 ? T("tăng") : T("giảm")) : stChip(0, T("yếu"))),
+        row(T("ROC 24 nến"), pctStr(x.roc24), Math.abs(x.roc24) > 2 * x.atrPct ? stChip(Math.sign(x.roc24), x.roc24 > 0 ? T("tăng") : T("giảm")) : stChip(0, T("yếu"))),
+      ]],
+      [T("Xu hướng"), [
+        row("Close / EMA20", pctStr(x.pEma20), stChip(Math.sign(x.pEma20), x.pEma20 >= 0 ? T("trên") : T("dưới"))),
+        row("EMA20 / EMA50", pctStr(x.p2050), stChip(Math.sign(x.p2050), x.p2050 >= 0 ? T("tăng") : T("giảm"))),
+        row("EMA50 / EMA200", x.p50200 === null ? "—" : pctStr(x.p50200),
+            x.p50200 === null ? stChip(0, T("chưa đủ nến")) : stChip(Math.sign(x.p50200), x.p50200 >= 0 ? "bull" : "bear")),
+        row(T("Vị trí Donchian 20"), f2(x.don), x.don > 0.8 ? stChip(1, T("vùng đỉnh")) : x.don < 0.2 ? stChip(-1, T("vùng đáy")) : stChip(0, T("giữa biên"))),
+      ]],
+      [T("Biến động"), [
+        row(T("ATR14 / giá"), f2(x.atrPct) + "%", stChip(0, T("định cỡ lệnh"))),
+        row("Realized vol 24", f2(x.rv24) + T("%/nến"), stChip(0, T("đo được"))),
+        row("Parkinson 24", f2(x.park24) + T("%/nến"), stChip(0, T("đo được"))),
+        row("Bollinger width (20,2σ)", f2(x.bbW) + "%", stChip(0, x.bbW < 4 ? T("siết — dễ bung") : T("bình thường"))),
+        row("%B Bollinger", f2(x.pctB), x.pctB > 1 ? stChip(-1, T("ngoài dải trên")) : x.pctB < 0 ? stChip(1, T("ngoài dải dưới")) : stChip(0, T("trong dải"))),
+      ]],
+      [T("Khối lượng & dòng lệnh"), [
+        row("Volume z-score", f2(x.volZ), x.volZ > 2 ? stChip(0, T("đột biến")) : stChip(0, T("bình thường"))),
+        row("OBV slope 24", f2(x.obvSlope), stChip(Math.sign(x.obvSlope), x.obvSlope >= 0 ? T("tích luỹ") : T("phân phối"))),
+        row(T("Taker mua (nến cuối)"), (x.taker * 100).toFixed(0) + "%", x.taker > 0.55 ? stChip(1, T("mua trội")) : x.taker < 0.45 ? stChip(-1, T("bán trội")) : stChip(0, T("cân bằng"))),
+      ]],
+    ];
+    el.innerHTML = groups.map(([t, rows]) =>
+      `<div class="ind-group"><h4>${t}</h4>${rows.join("")}</div>`).join("");
+  }
+
+  /* ── Bàn phương pháp: mỗi họ nói gì, kèm nhãn bằng chứng 07/09 ── */
+  function renderMethods() {
+    const el = $("mth-body"); if (!el) return;
+    const x = computeIndicators(false); if (!x) return;
+    const c = S.candles.filter(k => k.closed), n = c.length, C = c.map(k => k.close);
+    const i = n - 1;
+    const ma50 = n >= 50 ? sma(C, 50, i) : null;
+    const ma20 = sma(C, 20, i), sd20 = std(C, 20, i, ma20);
+    const z20 = sd20 > 0 ? (C[i] - ma20) / sd20 : 0;
+    const fz = (() => { if (!P.fundHist.length || !P.fund) return null;
+      const m = P.fundHist.reduce((a, b) => a + b, 0) / P.fundHist.length;
+      const sd = Math.sqrt(P.fundHist.reduce((a, b) => a + (b - m) ** 2, 0) / P.fundHist.length) || 1e-9;
+      return (P.fund.rate - m) / sd; })();
+    const oiQ = (() => { if (P.oi.length < 8) return null;
+      const a = P.oi[P.oi.length - 7], b = P.oi[P.oi.length - 1];
+      return { dOi: (b.oi / a.oi - 1) * 100, dPx: (b.px / a.px - 1) * 100 }; })();
+    let cvd = 0; S.candles.slice(-60).forEach(k => cvd += 2 * k.takerBuy - k.vol);
+    const volPct = (() => { const atrArr = c.slice(-Math.min(300, n)).map(k => (k.high - k.low) / k.close);
+      const cur = atrArr[atrArr.length - 1], srt = [...atrArr].sort((a, b) => a - b);
+      return srt.findIndex(v => v >= cur) / srt.length * 100; })();
+
+    const M = [
+      { name: "Trend following · TSMOM", ev: "🟢",
+        dir: ma50 === null ? 0 : Math.sign(C[i] - ma50),
+        lbl: ma50 === null ? T("chưa đủ nến") : (C[i] > ma50 ? T("trên MA50 — thiên LONG") : T("dưới MA50 — thiên SHORT/flat")),
+        note: T("Sharpe net 1.07–1.32 đã kiểm trên BTC 2014–26 (09 §4). Thắng bằng lãi/lỗ 3:1, không phải tỉ lệ đúng.") },
+      { name: "Breakout · Donchian 20", ev: "🟡",
+        dir: x.don > 0.95 ? 1 : x.don < 0.05 ? -1 : 0,
+        lbl: x.don > 0.95 ? T("phá biên trên") : x.don < 0.05 ? T("thủng biên dưới") : T("trong biên — chờ"),
+        note: T("Nhiều tín hiệu giả; cần lọc khối lượng (07 §A1).") },
+      { name: "Mean reversion · z(MA20)", ev: "🟡",
+        dir: z20 > 2 ? -1 : z20 < -2 ? 1 : 0,
+        lbl: `z = ${z20.toFixed(1)}` + (Math.abs(z20) > 2 ? T(" — căng, dễ hồi") : T(" — trong vùng thường")),
+        note: T("Chỉ sống với phí maker; với taker cá nhân là vùng chết khung ngắn (08 §B6).") },
+      { name: T("Chế độ biến động"), ev: "🟢",
+        dir: 0, lbl: `${T("phân vị")} ${volPct.toFixed(0)}% — ${volPct > 67 ? T("bão") : volPct > 33 ? T("thường") : T("thấp")}`,
+        note: T("Thứ dự báo chính xác nhất (09 §3.1) — dùng để ĐỊNH CỠ LỆNH, không phải đoán hướng.") },
+      { name: "Funding crowding", ev: "🟡",
+        dir: fz === null ? 0 : (Math.abs(fz) >= 2 ? Math.sign(P.fund.rate) : 0),
+        lbl: fz === null ? T("chưa tải") : `z = ${fz.toFixed(1)}` + (Math.abs(fz) >= 2 ? T(" — crowding cao") : T(" — nền")),
+        note: T("⚠ Kiểm toán 09 §2: sau cực trị funding, lịch sử nghiêng TIẾP DIỄN chứ không đảo chiều — đừng đánh ngược một mình.") },
+      { name: T("Dòng OI"), ev: "🟢",
+        dir: oiQ === null ? 0 : (oiQ.dOi > 0 ? Math.sign(oiQ.dPx) : 0),
+        lbl: oiQ === null ? T("chưa tải") :
+          (oiQ.dPx >= 0 ? (oiQ.dOi >= 0 ? T("tiền mới vào long") : T("short đóng vị thế"))
+                        : (oiQ.dOi >= 0 ? T("tiền mới vào short") : T("long đóng vị thế"))),
+        note: T("OI ghép với giá mới có nghĩa — OI đơn lẻ thì không (07 §A3).") },
+      { name: T("Taker flow · CVD 60 nến"), ev: "🟢",
+        dir: Math.sign(cvd), lbl: cvd >= 0 ? T("mua chủ động trội") : T("bán chủ động trội"),
+        note: T("Tiền thân của feature taker_buy_ratio — nhóm vi cấu trúc tổng hợp theo nến (07 §A2).") },
+      { name: T("Baseline lịch sử (climatology)"), ev: "🟢",
+        dir: 0, lbl: T("phân phối lịch sử — không có hướng"),
+        note: T("Baseline câm mọi dự báo phân vị phải thắng (xem panel so sánh độ sắc nét).") },
+    ];
+    el.innerHTML = M.map(m =>
+      `<div class="mth-row"><span class="mn">${m.ev} ${m.name}</span>` +
+      stChip(m.dir, m.lbl) + `<span class="mnote">${m.note}</span></div>`).join("");
+
+    const up = M.filter(m => m.dir > 0).length, dn = M.filter(m => m.dir < 0).length;
+    const nt = M.length - up - dn;
+    $("cons-bar").innerHTML =
+      `<i style="width:${up / M.length * 100}%;background:var(--up)"></i>` +
+      `<i style="width:${nt / M.length * 100}%;background:var(--surface-2)"></i>` +
+      `<i style="width:${dn / M.length * 100}%;background:var(--down)"></i>`;
+    $("cons-lbl").innerHTML =
+      `<span class="pos">▲ ${up} ${T("tăng")}</span><span>■ ${nt} ${T("trung tính")}</span><span class="neg">▼ ${dn} ${T("giảm")}</span>`;
+  }
+
+  /* ── NOWCAST: điểm tổng hợp mỗi tick, CỐ Ý dùng cả nến đang chạy ── */
+  P.nc = [];
+  function updateNowcast() {
+    const x = computeIndicators(true); if (!x) return;
+    const parts = [
+      clamp1(x.pEma20 / (x.atrPct * 2)),          // xu hướng so EMA20, chuẩn hoá ATR
+      clamp1(x.macdH * 2),                          // động lượng MACD
+      clamp1((x.rsi - 50) / 25),                    // RSI quanh 50
+      clamp1(x.roc6 / (x.atrPct * 2.45)),           // ROC 6 chuẩn hoá √6·ATR
+      clamp1((x.taker - 0.5) * 4),                  // taker nến ĐANG CHẠY — phần tick nhất
+    ];
+    const score = Math.round(parts.reduce((a, b) => a + b, 0) / parts.length * 100);
+    P.nc.push({ t: now(), s: score });
+    if (P.nc.length > 300) P.nc.shift();
+    renderNowcast(score);
+  }
+
+  function renderNowcast(score) {
+    const el = $("nc-score"); if (!el) return;
+    el.textContent = (score > 0 ? "+" : "") + score;
+    const lbl = $("nc-label");
+    const dir = score > 20 ? 1 : score < -20 ? -1 : 0;
+    lbl.textContent = dir > 0 ? T("▲ nghiêng tăng") : dir < 0 ? T("▼ nghiêng giảm") : T("■ cân bằng");
+    lbl.style.color = dir > 0 ? "var(--up)" : dir < 0 ? "var(--down)" : "var(--text-2)";
+    $("nc-needle").style.left = (50 + score / 2) + "%";
+    $("nc-vs-now").innerHTML = lbl.textContent + ` <small style="color:var(--text-3)">${(score > 0 ? "+" : "") + score}</small>`;
+    const o = S.locked;
+    if (o) {
+      const d = o.score > 58 ? 1 : o.score < 42 ? -1 : 0;
+      const vl = $("nc-vs-locked");
+      vl.textContent = (d > 0 ? T("▲ nghiêng tăng") : d < 0 ? T("▼ nghiêng giảm") : T("● không rõ"))
+        + ` · ${T("khoá")} ${fmtT(o.lockedAt, o.step)}`;
+      vl.style.color = d > 0 ? "var(--up)" : d < 0 ? "var(--down)" : "var(--text-2)";
+    }
+    // sparkline 300 điểm gần nhất
+    const cv = $("cv-nc"); if (!cv || P.nc.length < 3) return;
+    const { c, w, h } = fitCanvas(cv);
+    c.strokeStyle = V("--text-3"); c.globalAlpha = .4; c.lineWidth = 1;
+    c.beginPath(); c.moveTo(0, h / 2); c.lineTo(w, h / 2); c.stroke(); c.globalAlpha = 1;
+    c.beginPath();
+    P.nc.forEach((p, i) => {
+      const X = i / (P.nc.length - 1) * w, Y = h / 2 - p.s / 100 * (h / 2 - 3);
+      i ? c.lineTo(X, Y) : c.moveTo(X, Y);
+    });
+    c.strokeStyle = V("--text-1"); c.lineWidth = 1.5; c.stroke();
+    const lastP = P.nc[P.nc.length - 1];
+    c.beginPath(); c.arc(w - 2, h / 2 - lastP.s / 100 * (h / 2 - 3), 2.5, 0, 7);
+    c.fillStyle = lastP.s > 20 ? V("--up") : lastP.s < -20 ? V("--down") : V("--text-2"); c.fill();
+  }
 
   /* ══ PANEL THỊ TRƯỜNG — dữ liệu phái sinh Binance, miễn phí ══ */
   const FAPI = "https://fapi.binance.com";
@@ -1389,10 +1750,10 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
     const el = $("fund-val");
     el.textContent = (pct >= 0 ? "+" : "−") + Math.abs(pct).toFixed(4) + "%";
     el.className = "pbig num " + (Math.abs(z) >= 2 ? (pct >= 0 ? "pos" : "neg") : "");
-    $("fund-z").innerHTML = `${pct >= 0 ? "Long trả Short" : "Short trả Long"}`
+    $("fund-z").innerHTML = `${pct >= 0 ? T("Long trả Short") : T("Short trả Long")}`
       + ` · z = ${z >= 0 ? "+" : "−"}${Math.abs(z).toFixed(1)}`
       + ` <span style="color:var(--text-3)">(n=${P.fundHist.length})</span>`
-      + ` · ${(pct * 3 * 365).toFixed(1)}%/năm`;
+      + ` · ~${(pct * 3 * 365).toFixed(1)}% APR`;
     // histogram 96 kỳ
     const cv2 = $("cv-fundhist"); if (cv2) {
       const g = fitCanvas(cv2), mx = Math.max(...P.fundHist.map(Math.abs), 1e-9);
@@ -1407,8 +1768,8 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
       g.c.beginPath(); g.c.moveTo(0, g.h / 2); g.c.lineTo(g.w, g.h / 2); g.c.stroke();
     }
     const rem = P.fund.next - now();
-    $("fund-next").textContent = `Kỳ tới sau ${fmtCd(rem)} · lịch sử ${P.fundHist.length} kỳ (~${
-      Math.round(P.fundHist.length / 3)} ngày). Mức 0,0100%/8h là giá trị NỀN mặc định khi premium ≈ 0.`;
+    $("fund-next").textContent = T("Funding tiếp theo sau {t} · lịch sử {k} kỳ (~{d} ngày). Mức 0.0100%/8h là giá trị NỀN mặc định khi premium ≈ 0.",
+      { t: fmtCd(rem), k: P.fundHist.length, d: Math.round(P.fundHist.length / 3) });
   }
 
   function drawOI() {
@@ -1430,10 +1791,10 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
     c.strokeStyle = V("--text-2"); c.lineWidth = 1;
     c.beginPath(); c.moveTo(0, h / 2); c.lineTo(w, h / 2); c.moveTo(w / 2, 0); c.lineTo(w / 2, h); c.stroke();
     c.fillStyle = V("--text-3"); c.font = "500 9.5px 'Inter',sans-serif";
-    c.fillText("Giá↑ OI↑ · tiền mới vào long", w / 2 + 6, 14);
-    c.fillText("Giá↑ OI↓ · short đóng", 6, 14);
-    c.fillText("Giá↓ OI↓ · long đóng", 6, h - 6);
-    c.fillText("Giá↓ OI↑ · tiền mới vào short", w / 2 + 6, h - 6);
+    c.fillText(T("Giá↑ OI↑ · tiền mới vào long"), w / 2 + 6, 14);
+    c.fillText(T("Giá↑ OI↓ · short đóng"), 6, 14);
+    c.fillText(T("Giá↓ OI↓ · long đóng"), 6, h - 6);
+    c.fillText(T("Giá↓ OI↑ · tiền mới vào short"), w / 2 + 6, h - 6);
 
     c.strokeStyle = V("--text-3"); c.lineWidth = 1; c.beginPath();
     pts.forEach((p, i) => i ? c.lineTo(X(p.x), Y(p.y)) : c.moveTo(X(p.x), Y(p.y))); c.stroke();
@@ -1446,10 +1807,10 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
     });
     c.globalAlpha = 1;
     const p = pts[pts.length - 1];
-    const quad = p.y >= 0 ? (p.x >= 0 ? "▲ tiền mới vào long" : "▲ short đóng vị thế")
-                          : (p.x >= 0 ? "▼ tiền mới vào short" : "▼ long đóng vị thế");
-    $("oi-now").innerHTML = `<b>${quad}</b> · 30 phút: giá ${pctStr(p.y)} · OI ${pctStr(p.x)}`
-      + ` · OI hiện tại ${fmtQty(P.oi[P.oi.length - 1].oi)} ${base()}`;
+    const quad = p.y >= 0 ? (p.x >= 0 ? T("▲ tiền mới vào long") : T("▲ short đóng vị thế"))
+                          : (p.x >= 0 ? T("▼ tiền mới vào short") : T("▼ long đóng vị thế"));
+    $("oi-now").innerHTML = `<b>${quad}</b> · ${T("30 phút: giá")} ${pctStr(p.y)} · OI ${pctStr(p.x)}`
+      + ` · ${T("OI hiện tại")} ${fmtQty(P.oi[P.oi.length - 1].oi)} ${base()}`;
   }
 
   /* ── Nhịp tim + thanh lý: nuôi từ WebSocket đang chạy ────────── */
@@ -1518,10 +1879,11 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
     c.fillStyle = V("--up"); c.fillRect(w - 62, h / 2 - sumUp / mxs * (h / 2 - 16), 22, sumUp / mxs * (h / 2 - 16));
     c.fillStyle = V("--down"); c.fillRect(w - 62, h / 2, 22, sumDn / mxs * (h / 2 - 16));
     c.fillStyle = V("--text-2"); c.font = "500 10px 'Inter',sans-serif";
-    c.fillText("short bị TL", w - 36, h / 2 - 6); c.fillText("long bị TL", w - 36, h / 2 + 14);
+    c.textAlign = "right"; c.fillText(T("short bị thanh lý"), w - 66, h / 2 - 6);
+    c.fillText(T("long bị thanh lý"), w - 66, h / 2 + 14); c.textAlign = "left";
     $("liq-tot").textContent = tot >= 1000 ? (tot / 1000).toFixed(0) + "k" : tot.toFixed(0);
     if (!P.liq.length) { c.fillStyle = V("--text-3"); c.font = "400 12px 'Inter',sans-serif";
-      c.fillText("chưa có lệnh thanh lý nào kể từ khi mở trang", 14, h / 2); }
+      c.fillText(T("chưa có lệnh thanh lý nào kể từ khi mở trang"), 14, h / 2); }
   }
 
   /* ── Băng bối cảnh 6 ô ────────────────────────────────────────── */
@@ -1557,17 +1919,17 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
 
     const cells = [
       { k: "Funding", v: fr === null ? "—" : (fr >= 0 ? "+" : "−") + Math.abs(fr).toFixed(4) + "%",
-        s: fr === null ? "" : (Math.abs(fr) > 0.02 ? "cao" : "nền"), up: (fr || 0) >= 0,
+        s: fr === null ? "" : (Math.abs(fr) > 0.02 ? T("cao") : T("nền")), up: (fr || 0) >= 0,
         spark: P.fundHist.slice(-40), live: fr !== null },
-      { k: "OI 1h", v: oiChg === null ? "—" : pctStr(oiChg), s: oiChg === null ? "" : (oiChg >= 0 ? "tăng" : "giảm"),
+      { k: "OI 1h", v: oiChg === null ? "—" : pctStr(oiChg), s: oiChg === null ? "" : (oiChg >= 0 ? T("tăng") : T("giảm")),
         up: (oiChg || 0) >= 0, spark: P.oi.slice(-40).map(x => x.oi), live: oiChg !== null },
-      { k: "CVD 60 nến", v: cvd.length ? (Math.abs(acc) >= 1e6 ? (acc / 1e6).toFixed(1) + "M" : (acc / 1e3).toFixed(0) + "k") : "—",
-        s: acc >= 0 ? "mua trội" : "bán trội", up: acc >= 0, spark: cvd, live: !!cvd.length },
-      { k: "Sổ lệnh ±", v: depth === null ? "—" : fmtQty(depth), s: "top 20", up: true,
+      { k: T("CVD 60 nến"), v: cvd.length ? (Math.abs(acc) >= 1e6 ? (acc / 1e6).toFixed(1) + "M" : (acc / 1e3).toFixed(0) + "k") : "—",
+        s: acc >= 0 ? T("mua trội") : T("bán trội"), up: acc >= 0, spark: cvd, live: !!cvd.length },
+      { k: T("Độ sâu ±20"), v: depth === null ? "—" : fmtQty(depth), s: "bid+ask", up: true,
         spark: [], live: depth !== null },
-      { k: "Biến động", v: sd.toFixed(2) + "%", s: pct > 67 ? "bão" : pct > 33 ? "thường" : "thấp",
+      { k: T("Biến động"), v: sd.toFixed(2) + "%", s: pct > 67 ? T("bão") : pct > 33 ? T("thường") : T("thấp"),
         up: pct > 50, spark: atrArr, live: true },
-      { k: "Thanh lý 5′", v: liq5 >= 1000 ? (liq5 / 1000).toFixed(0) + "k" : liq5.toFixed(0), s: "USDT",
+      { k: T("Thanh lý 5m"), v: liq5 >= 1000 ? (liq5 / 1000).toFixed(0) + "k" : liq5.toFixed(0), s: "USDT",
         up: false, spark: [], live: true },
     ];
     if (!wrap.dataset.built) {
@@ -1587,30 +1949,30 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
 
   /* ── Hộ chiếu model & 4 cổng (ngưỡng chép từ docs/00 §7) ─────── */
   const GATES = [
-    { t: "GATE 1 · Thống kê", rows: [["Số fold walk-forward", "≥ 8"], ["Sharpe sau phí", "≥ 1,0"],
-        ["Max drawdown", "≤ 25%"], ["Profit factor", "≥ 1,2"], ["Fold có lãi", "≥ 6/8"],
+    { t: "GATE 1 · Thống kê", rows: [["Số fold walk-forward", "≥ 8"], ["Tỷ lệ Sharpe sau phí", "≥ 1.0"],
+        ["Max drawdown", "≤ 25%"], ["Profit factor", "≥ 1.2"], ["Fold có lãi", "≥ 6/8"],
         ["Thắng buy-and-hold", "có"]] },
     { t: "GATE 2 · Hiệu chỉnh", rows: [["Brier vs baseline", "tốt hơn"],
         ["Reliability mọi bin", "±10%"], ["Cỡ mẫu mỗi bin", "≥ 50"]] },
-    { t: "GATE 3 · Tiền ảo", rows: [["Thời gian liên tục", "≥ 60 ngày"], ["Số lệnh", "≥ 100"],
+    { t: "GATE 3 · Giao dịch mô phỏng", rows: [["Thời gian liên tục", "≥ 60 ngày"], ["Số lệnh", "≥ 100"],
         ["Lệch so backtest", "±30%"], ["Sự cố kỹ thuật", "0"]] },
-    { t: "GATE 4 · An toàn", rows: [["Kill switch", "có"], ["Lỗ ngày tự tắt", "2%"],
+    { t: "GATE 4 · An toàn", rows: [["Kill switch", "có"], ["Giới hạn lỗ ngày (tự ngắt)", "2%"],
         ["Vốn mỗi lệnh", "≤ 1%"], ["clientOrderId", "duy nhất"], ["Đối soát", "5 phút"],
         ["Khởi động = TẮT", "có"]] },
   ];
   function renderGates() {
-    const el = $("gates"); if (!el || el.dataset.built) return;
+    const el = $("gates"); if (!el) return;
     el.innerHTML =
-      `<div class="gid"><b>quy-tac-minh-hoa v0</b>CHƯA CÓ MODEL — M5–M7 chưa xây
-         <div style="margin-top:6px">huấn luyện: —<br>hiệu chỉnh: —<br>kiểm định: chưa qua walk-forward</div></div>`
-      + GATES.map(g => `<div class="gcol"><h4><i></i>${g.t}</h4>`
-          + g.rows.map(([n, v]) => `<div class="grow"><span>${n}</span><b>${v}</b><s>—</s></div>`).join("")
+      `<div class="gid"><b>quy-tac-minh-hoa v0</b>${T("CHƯA CÓ MODEL — M5–M7 chưa xây")}
+         <div style="margin-top:6px">${T("huấn luyện")}: —<br>${T("hiệu chỉnh")}: —<br>${T("kiểm định: chưa qua walk-forward")}</div></div>`
+      + GATES.map(g => `<div class="gcol"><h4><i></i>${T(g.t)}</h4>`
+          + g.rows.map(([n, v]) => `<div class="grow"><span>${T(n)}</span><b>${T(v)}</b><s>—</s></div>`).join("")
           + `<div class="gbar"><i style="width:0%"></i></div>
              <div style="font:400 10px/14px var(--font-ui);color:var(--text-3);margin-top:4px">
-               0/${g.rows.length} tiêu chí</div></div>`).join("")
-      + `<div class="glock"><b>TIỀN THẬT: ĐANG KHOÁ</b>
-           <small>auto-trade TẮT · khởi động lại luôn về TẮT (RULE 9)</small>
-           <small style="margin-top:6px">Không cổng nào được chấm vì chưa có model để chấm.</small></div>`;
+               0/${g.rows.length} ${T("tiêu chí")}</div></div>`).join("")
+      + `<div class="glock"><b>${T("GIAO DỊCH THẬT: ĐANG KHOÁ")}</b>
+           <small>${T("auto-trade TẮT · khởi động lại luôn về TẮT (RULE 9)")}</small>
+           <small style="margin-top:6px">${T("Không cổng nào được chấm vì chưa có model để chấm.")}</small></div>`;
     el.dataset.built = "1";
   }
 
@@ -1674,7 +2036,7 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
     ctx.strokeStyle = C.border; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(xB, padT - 6); ctx.lineTo(xB, H - padB); ctx.stroke();
     ctx.fillStyle = C.t3; ctx.font = "500 10px 'Inter', sans-serif";
-    ctx.fillText("Bây giờ", xB + 4, padT + 2);
+    ctx.fillText(T("Bây giờ"), xB + 4, padT + 2);
 
     if (o) {   // Minh hoạ: tím nét đứt + nón phân vị — không bao giờ xanh/đỏ (RULE 7)
       const x0 = x(N - 1), y0 = yNow, xE = x(N + FB - 1);
@@ -1691,7 +2053,7 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
         ctx.moveTo(x0, y0); ctx.lineTo(xE, y(cl.lo)); ctx.stroke();
         ctx.setLineDash([]); ctx.globalAlpha = 1;
         ctx.fillStyle = C.t3; ctx.font = "500 9px 'Inter',sans-serif";
-        ctx.fillText("khí hậu học · n=" + cl.n, Math.max(x0 + 4, xE - 92), y(cl.hi) - 4);
+        ctx.fillText(T("baseline lịch sử") + " · n=" + cl.n, Math.max(x0 + 4, xE - 92), y(cl.hi) - 4);
         ctx.font = "500 11px 'JetBrains Mono',monospace";
       }
 
@@ -1734,7 +2096,7 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
       ctx.setLineDash([]);
       ctx.fillStyle = C.s2; ctx.fillRect(padL + 4, yP - 17, 132, 14);
       ctx.fillStyle = C.t1; ctx.font = "500 10px 'JetBrains Mono', monospace";
-      ctx.fillText("VỊ THẾ " + fmt(h.entry), padL + 8, yP - 6);
+      ctx.fillText(T("VỊ THẾ") + " " + fmt(h.entry), padL + 8, yP - 6);
     }
 
     if (S.hover !== null) {
@@ -1762,16 +2124,16 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
     if (i < N) {
       const c = cs[i];
       const tk = c.vol > 0 ? (c.takerBuy / c.vol * 100).toFixed(0) : "—";
-      tt.innerHTML = `<div class="tt-title">${fmtFull(c.ts)} UTC · nến ${S.tf}${c.closed ? "" : " (đang chạy)"}</div>`
+      tt.innerHTML = `<div class="tt-title">${fmtFull(c.ts)} UTC · ${T("nến")} ${S.tf}${c.closed ? "" : " " + T("(đang chạy)")}</div>`
         + `O ${fmt(c.open)} · H ${fmt(c.high)}<br>L ${fmt(c.low)} · C ${fmt(c.close)}`
-        + `<div class="tt-pred">Khối lượng ${fmtQty(c.vol)} · taker mua ${tk}%</div>`;
+        + `<div class="tt-pred">${T("Khối lượng")} ${fmtQty(c.vol)} · ${T("taker mua")} ${tk}%</div>`;
     } else if (o) {
       const k = i - N + 1, f = k / FB;
       const v = lerp(o.px, o.mid, f), p = (v / o.px - 1) * 100;
-      tt.innerHTML = `<div class="tt-title"><span class="dot"></span>Minh hoạ · ${fmtFull(o.anchor + (k - 1) * o.step)} UTC</div>`
-        + `Giữa: ${fmt(v)} <b class="${p >= 0 ? "pos" : "neg"}">${pctStr(p)}</b>`
-        + `<br>Dải ±1σ: ${fmt(o.lo)} – ${fmt(o.hi)}`
-        + `<div class="tt-pred">Chưa phải model — xem ghi chú đầu trang</div>`;
+      tt.innerHTML = `<div class="tt-title"><span class="dot"></span>${T("Minh hoạ")} · ${fmtFull(o.anchor + (k - 1) * o.step)} UTC</div>`
+        + `${T("Trung vị")}: ${fmt(v)} <b class="${p >= 0 ? "pos" : "neg"}">${pctStr(p)}</b>`
+        + `<br>${T("Dải ±1σ")}: ${fmt(o.lo)} – ${fmt(o.hi)}`
+        + `<div class="tt-pred">${T("Chưa phải model — xem ghi chú đầu trang")}</div>`;
     }
     tt.style.display = "block";
     const flip = mx > wrap.clientWidth - 220;
@@ -1816,6 +2178,7 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
     if (id === "pane-pred") {
       if (!P.spa) resample();
       drawSpaghetti(); drawVol(); renderSharpness(); renderGates();
+      renderIndicators(); renderMethods(); updateNowcast();
     }
     if (id === "pane-mkt") { drawFunding(); drawOI(); drawHeartbeat(); drawLiq(); }
   }
@@ -1824,7 +2187,7 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
     const all = S.layout === "all";
     document.body.classList.toggle("mode-all", all);
     const btn = $("mode-btn");
-    btn.textContent = all ? "⊟ Tách tab" : "⊞ Gộp 1 trang";
+    btn.textContent = all ? T("⊟ Tách tab") : T("⊞ Gộp 1 trang");
     btn.setAttribute("aria-pressed", String(all));
     if (all) {
       document.querySelectorAll(".tabpane").forEach(pn => pn.hidden = false);
@@ -1847,6 +2210,10 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
   $("lang-btn").addEventListener("click", () => {
     S.lang = S.lang === "vi" ? "en" : "vi";
     applyLang();
+    // Chuỗi động: render lại toàn bộ phần có chữ (gates + băng bối cảnh build lại từ đầu)
+    const ctxWrap = $("ctxstrip"); if (ctxWrap) { ctxWrap.dataset.built = ""; ctxWrap.innerHTML = ""; }
+    renderGates(); applyLayout(); updHeader(); updWallet();
+    renderPrediction(); renderTracking(); setConn(S.conn);
     if (typeof redrawAll === "function") redrawAll();   // nhãn canvas vẽ qua T()
   });
 
@@ -1879,17 +2246,17 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
       const t = await api("/ticker/24hr?symbol=" + sym);
       S.tickers[sym] = { price: +t.lastPrice, chg: +t.priceChangePercent, dec: decOf(t.lastPrice) };
       e.target.value = ""; await switchSymbol(sym);
-    } catch (err) { e.target.value = ""; e.target.placeholder = `Không thấy ${sym} — thử mã khác`; }
+    } catch (err) { e.target.value = ""; e.target.placeholder = T("Không thấy {s} — thử mã khác", { s: sym }); }
   });
 
   async function reload() {
     try {
       await loadKlines();
-      relock(); resample();
+      relock(); resample(); P.nc = [];
       updHeader(); renderPrediction(); renderTracking(); updWallet(); draw();
-      renderCtx(); renderSharpness();
+      renderCtx(); renderSharpness(); renderIndicators(); renderMethods();
       connectWS(); loadDerivs();
-    } catch (err) { setConn("down", "Không tải được dữ liệu"); }
+    } catch (err) { setConn("down", T("Không tải được dữ liệu")); }
   }
 
   /* ── Đồng hồ: đếm ngược nến + phát hiện im lặng (RULE 8) ──── */
@@ -1909,10 +2276,318 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
 
   new ResizeObserver(draw).observe(wrap);
   const redrawAll = () => { draw(); drawSpaghetti(); drawVol(); drawFunding(); drawOI();
-                            drawHeartbeat(); drawLiq(); renderCtx(); renderSharpness(); };
+                            drawHeartbeat(); drawLiq(); renderCtx(); renderSharpness();
+                            renderIndicators(); renderMethods();
+                            if (P.nc.length) renderNowcast(P.nc[P.nc.length - 1].s); };
   new MutationObserver(redrawAll).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
   window.addEventListener("resize", () => requestAnimationFrame(redrawAll));
   matchMedia("(prefers-color-scheme:light)").addEventListener("change", draw);
+
+  /* ══ TỪ ĐIỂN EN — thuật ngữ đối chiếu Binance VI/EN (kiểm toán 3 agent) ══
+     Key = chuỗi VI gốc; thiếu key thì T() trả về VI (không bao giờ trống). */
+  Object.assign(I18N.en, {
+  "Mất kết nối": "Disconnected",
+  "Trễ · chưa có tick mới": "Delayed · no fresh ticks",
+  "Đang kết nối…": "Connecting…",
+  "Dữ liệu thật từ Binance · dự đoán là minh hoạ": "Real data from Binance · predictions are illustrative",
+  "Không nối được Binance — số trên màn hình có thể đã cũ": "Can't reach Binance — figures on screen may be stale",
+  "Đang kết nối Binance…": "Connecting to Binance…",
+  "Khả dụng": "Available",
+  "trực tiếp": "live",
+  "Mua": "Buy",
+  "Bán": "Sell",
+  "Vượt dải trên": "Above upper band",
+  "Giá đã ra ngoài kịch bản lạc quan nhất (q90).": "Price has left even the most optimistic scenario (q90).",
+  "Thủng dải dưới": "Below lower band",
+  "Giá đã ra ngoài kịch bản bi quan nhất (q10).": "Price has left even the most pessimistic scenario (q10).",
+  "Đã chạm đích": "Target hit",
+  "Giá đã tới mức q50 trước hạn — dự đoán này coi như xong.": "Price reached q50 early — this prediction is effectively done.",
+  "Đi ngược": "Moving against",
+  "Giá đang đi ngược hướng dự đoán.": "Price is moving against the predicted direction.",
+  "Nhanh hơn dự đoán": "Ahead of pace",
+  "Quãng đường đi nhanh hơn nhịp thời gian.": "Distance is running ahead of the clock.",
+  "Chậm hơn dự đoán": "Behind pace",
+  "Thời gian trôi nhanh hơn quãng đường — dự đoán đang trễ nhịp.": "The clock is running ahead of distance — the prediction is behind pace.",
+  "Đang bám": "On track",
+  "Giá đi đúng nhịp so với dự đoán.": "Price is tracking the prediction's pace.",
+  "Đã vượt q50": "Past q50",
+  "quá đích": "past target",
+  "Còn phải đi tới q50": "Left to q50",
+  "đã tới": "reached",
+  "KHÔNG RÕ · không vào lệnh": "UNCLEAR · no trade",
+  "đã trừ phí": "fees included",
+  "NGHIÊNG TĂNG": "LEANS BULLISH",
+  "NGHIÊNG GIẢM": "LEANS BEARISH",
+  "KHÔNG RÕ": "UNCLEAR",
+  "chưa hiệu chỉnh": "uncalibrated",
+  "Minh hoạ · {n} nến {tf} tới": "Illustrative · next {n} {tf} candles",
+  "khoá lúc {t} · chưa có model": "locked at {t} · no model yet",
+  "đích": "target",
+  "Khoá lúc {a} UTC · giá neo {b} · đích {c}": "Locked at {a} UTC · anchor {b} · target {c}",
+  "Dải ±1σ tại": "±1σ range at",
+  "● KHÔNG RÕ — đứng ngoài ({s}% nằm trong vùng không vào lệnh 42–58%). Luật M13: không tín hiệu → không lệnh.": "● UNCLEAR — stay flat ({s}% is inside the no-trade zone 42–58%). Rule M13: no signal → no trade.",
+  "Hướng": "Direction",
+  "cần futures — spot: đứng ngoài": "requires Futures — on Spot: stay flat",
+  "Vào lệnh · Thị trường": "Entry (Market)",
+  "Cắt lỗ (SL) · 1.5×ATR14": "Stop Loss (SL) · 1.5×ATR14",
+  "Chốt lời (TP) · biên ±1σ": "Take Profit (TP) · ±1σ edge",
+  "Tỷ lệ R:R": "R:R",
+  "Khối lượng đề xuất": "Suggested Size",
+  "rủi ro {x}% vốn": "risking {x}% of capital",
+  "Nếu chạm TP": "If TP hits",
+  "Nếu chạm SL": "If SL hits",
+  "Thoát theo thời gian": "Time Exit",
+  "hết horizon → thoát": "horizon ends → exit",
+  "Lệnh tối thiểu 10 USDT (hoặc số dư không đủ).": "Minimum order 10 USDT (or insufficient balance).",
+  "✓ Đã khớp · PAPER: mua": "✓ Filled · PAPER: bought",
+  "✓ Đã khớp · PAPER: bán": "✓ Filled · PAPER: sold",
+  "Không có {c} để bán — PAPER theo cơ chế spot.": "No {c} to sell — PAPER follows spot mechanics.",
+  "giá neo": "anchor",
+  "bi quan · q10": "pessimistic · q10",
+  "trung vị · q50": "median · q50",
+  "lạc quan · q90": "optimistic · q90",
+  "biên độ 24 kịch bản:": "24-scenario spread:",
+  "thấp": "low",
+  "thường": "normal",
+  "bão": "high",
+  "Bây giờ": "Now",
+  "Baseline lịch sử · q10–q90": "Historical baseline · q10–q90",
+  "Minh hoạ hiện tại · q10–q90": "Current illustration · q10–q90",
+  "✓ hẹp hơn baseline {x}%": "✓ {x}% narrower than baseline",
+  "⚠ chưa sắc nét hơn baseline ({d}%)": "⚠ not sharper than baseline ({d}%)",
+  "rộng hơn": "wider by",
+  "chỉ hẹp": "only narrower by",
+  "Chưa đủ nến (cần ≥60).": "Not enough candles (need ≥60).",
+  "khung {tf} · nến đã đóng · n={n}": "{tf} interval · closed candles · n={n}",
+  "Động lượng": "Momentum",
+  "Xu hướng": "Trend",
+  "Biến động": "Volatility",
+  "Khối lượng & dòng lệnh": "Volume & Order Flow",
+  "quá mua": "overbought",
+  "quá bán": "oversold",
+  "trung tính": "neutral",
+  "tăng": "up",
+  "giảm": "down",
+  "phẳng": "flat",
+  "yếu": "weak",
+  "trên": "above",
+  "dưới": "below",
+  "chưa đủ nến": "not enough candles",
+  "ROC 6 nến": "ROC 6 candles",
+  "ROC 24 nến": "ROC 24 candles",
+  "Vị trí Donchian 20": "Donchian 20 position",
+  "vùng đỉnh": "top zone",
+  "vùng đáy": "bottom zone",
+  "giữa biên": "mid-range",
+  "ATR14 / giá": "ATR14 / price",
+  "định cỡ lệnh": "position sizing",
+  "%/nến": "%/candle",
+  "đo được": "measured",
+  "siết — dễ bung": "squeeze — breakout risk",
+  "bình thường": "normal",
+  "ngoài dải trên": "above upper band",
+  "ngoài dải dưới": "below lower band",
+  "trong dải": "inside bands",
+  "đột biến": "spike",
+  "tích luỹ": "accumulation",
+  "phân phối": "distribution",
+  "Taker mua (nến cuối)": "Taker buy (last candle)",
+  "mua trội": "net buying",
+  "bán trội": "net selling",
+  "cân bằng": "balanced",
+  "trên MA50 — thiên LONG": "above MA50 — LONG bias",
+  "dưới MA50 — thiên SHORT/flat": "below MA50 — SHORT/flat bias",
+  "Sharpe net 1.07–1.32 đã kiểm trên BTC 2014–26 (09 §4). Thắng bằng lãi/lỗ 3:1, không phải tỉ lệ đúng.": "Net Sharpe 1.07–1.32 verified on BTC 2014–26 (09 §4). Wins via 3:1 win/loss size, not hit rate.",
+  "phá biên trên": "upper breakout",
+  "thủng biên dưới": "lower breakdown",
+  "trong biên — chờ": "inside channel — wait",
+  "Nhiều tín hiệu giả; cần lọc khối lượng (07 §A1).": "Many false signals; needs a volume filter (07 §A1).",
+  " — căng, dễ hồi": " — stretched, snap-back risk",
+  " — trong vùng thường": " — in normal range",
+  "Chỉ sống với phí maker; với taker cá nhân là vùng chết khung ngắn (08 §B6).": "Only viable on maker fees; for retail takers, short timeframes are an economic dead zone (08 §B6).",
+  "Chế độ biến động": "Volatility regime",
+  "phân vị": "percentile",
+  "Thứ dự báo chính xác nhất (09 §3.1) — dùng để ĐỊNH CỠ LỆNH, không phải đoán hướng.": "The most accurately forecast quantity (09 §3.1) — use for POSITION SIZING, not direction.",
+  "chưa tải": "not loaded",
+  " — nền": " — baseline",
+  " — crowding cao": " — high crowding",
+  "⚠ Kiểm toán 09 §2: sau cực trị funding, lịch sử nghiêng TIẾP DIỄN chứ không đảo chiều — đừng đánh ngược một mình.": "⚠ Audit 09 §2: after funding extremes, history leans CONTINUATION, not reversal — don't fade it alone.",
+  "Dòng OI": "OI flow",
+  "tiền mới vào long": "new longs",
+  "short đóng vị thế": "short covering",
+  "tiền mới vào short": "new shorts",
+  "long đóng vị thế": "longs closing",
+  "OI ghép với giá mới có nghĩa — OI đơn lẻ thì không (07 §A3).": "OI only means something paired with price — never alone (07 §A3).",
+  "Taker flow · CVD 60 nến": "Taker flow · CVD 60 candles",
+  "mua chủ động trội": "taker buys dominate",
+  "bán chủ động trội": "taker sells dominate",
+  "Tiền thân của feature taker_buy_ratio — nhóm vi cấu trúc tổng hợp theo nến (07 §A2).": "Precursor of the taker_buy_ratio feature — microstructure aggregated per candle (07 §A2).",
+  "Baseline lịch sử (climatology)": "Historical baseline (climatology)",
+  "phân phối lịch sử — không có hướng": "historical distribution — no direction",
+  "Baseline câm mọi dự báo phân vị phải thắng (xem panel so sánh độ sắc nét).": "The dumb baseline every quantile forecast must beat (see the sharpness panel).",
+  "▲ nghiêng tăng": "▲ leans bullish",
+  "▼ nghiêng giảm": "▼ leans bearish",
+  "■ cân bằng": "■ balanced",
+  "● không rõ": "● unclear",
+  "khoá": "locked",
+  "Long trả Short": "Longs pay Shorts",
+  "Short trả Long": "Shorts pay Longs",
+  "Funding tiếp theo sau {t} · lịch sử {k} kỳ (~{d} ngày). Mức 0.0100%/8h là giá trị NỀN mặc định khi premium ≈ 0.": "Next funding in {t} · history {k} periods (~{d} days). 0.0100%/8h is the default BASELINE rate when premium ≈ 0.",
+  "Giá↑ OI↑ · tiền mới vào long": "Price↑ OI↑ · new longs",
+  "Giá↑ OI↓ · short đóng": "Price↑ OI↓ · short covering",
+  "Giá↓ OI↓ · long đóng": "Price↓ OI↓ · longs closing",
+  "Giá↓ OI↑ · tiền mới vào short": "Price↓ OI↑ · new shorts",
+  "▲ tiền mới vào long": "▲ new longs",
+  "▲ short đóng vị thế": "▲ short covering",
+  "▼ tiền mới vào short": "▼ new shorts",
+  "▼ long đóng vị thế": "▼ longs closing",
+  "30 phút: giá": "30 min: price",
+  "OI hiện tại": "current OI",
+  "short bị thanh lý": "shorts liquidated",
+  "long bị thanh lý": "longs liquidated",
+  "chưa có lệnh thanh lý nào kể từ khi mở trang": "no liquidations since this page opened",
+  "nền": "baseline",
+  "cao": "elevated",
+  "CVD 60 nến": "CVD 60 candles",
+  "Độ sâu ±20": "Depth ±20",
+  "Thanh lý 5m": "Liq. 5m",
+  "CHƯA CÓ MODEL — M5–M7 chưa xây": "NO MODEL YET — M5–M7 not built",
+  "huấn luyện": "trained",
+  "hiệu chỉnh": "calibrated",
+  "kiểm định: chưa qua walk-forward": "validation: no walk-forward yet",
+  "tiêu chí": "criteria",
+  "GIAO DỊCH THẬT: ĐANG KHOÁ": "LIVE TRADING: LOCKED",
+  "auto-trade TẮT · khởi động lại luôn về TẮT (RULE 9)": "auto-trade OFF · every restart returns to OFF (RULE 9)",
+  "Không cổng nào được chấm vì chưa có model để chấm.": "No gate can be graded — there is no model to grade.",
+  "GATE 1 · Thống kê": "GATE 1 · Statistics",
+  "Số fold walk-forward": "Walk-forward folds",
+  "Tỷ lệ Sharpe sau phí": "Sharpe after fees",
+  "Fold có lãi": "Profitable folds",
+  "Thắng buy-and-hold": "Beats buy & hold",
+  "có": "yes",
+  "GATE 2 · Hiệu chỉnh": "GATE 2 · Calibration",
+  "tốt hơn": "better",
+  "Reliability mọi bin": "Reliability every bin",
+  "Cỡ mẫu mỗi bin": "Samples per bin",
+  "GATE 3 · Giao dịch mô phỏng": "GATE 3 · Paper Trading",
+  "Thời gian liên tục": "Continuous runtime",
+  "≥ 60 ngày": "≥ 60 days",
+  "Số lệnh": "Order count",
+  "Lệch so backtest": "Deviation vs backtest",
+  "Sự cố kỹ thuật": "Technical incidents",
+  "GATE 4 · An toàn": "GATE 4 · Safety",
+  "Giới hạn lỗ ngày (tự ngắt)": "Daily loss limit (auto-halt)",
+  "Vốn mỗi lệnh": "Capital per trade",
+  "duy nhất": "unique",
+  "Đối soát": "Reconciliation",
+  "5 phút": "5 min",
+  "Khởi động = TẮT": "Startup = OFF",
+  "baseline lịch sử": "historical baseline",
+  "VỊ THẾ": "POSITION",
+  "nến": "candle",
+  "(đang chạy)": "(forming)",
+  "Khối lượng": "Volume",
+  "taker mua": "taker buy",
+  "Minh hoạ": "Illustrative",
+  "Trung vị": "Median",
+  "Dải ±1σ": "±1σ range",
+  "Chưa phải model — xem ghi chú đầu trang": "Not a model — see the note at the top",
+  "⊟ Tách tab": "⊟ Split tabs",
+  "⊞ Gộp 1 trang": "⊞ All-in-one",
+  "Không thấy {s} — thử mã khác": "{s} not found — try another symbol",
+  "Không tải được dữ liệu": "Failed to load data",
+  "Không nối được Binance": "Can't reach Binance",
+  "Không gọi được api.binance.com.<br><br>Có thể do: không có mạng, mạng/ISP chặn Binance, hoặc bạn đang ở vùng bị chặn (Mỹ → dùng api.binance.us).<br><br><b>Trang không bịa dữ liệu thay thế</b> — thà trống còn hơn hiển thị số giả.": "Can't call api.binance.com.<br><br>Possible causes: no network, your network/ISP blocks Binance, or you're in a blocked region (US → use api.binance.us).<br><br><b>This page does not fabricate fallback data</b> — better empty than fake numbers."
+});
+  Object.assign(DOM_I18N.en, {
+  "k001": "<span class=\"bb\">Design prototype</span> <p><b>Prices, order book and trades are REAL DATA</b> from the Binance public API. But <b>no model has been trained yet</b> — the “prediction” part is a UI illustration built from realized volatility and a crude momentum baseline, <b>unvalidated and uncalibrated</b>. The Buy/Sell buttons are in-page <b>paper trading</b> — no account is connected. This is not investment advice.</p>",
+  "k002": "Trading Pairs",
+  "k003": "Loading…",
+  "k004": "Market Trades",
+  "k005": "<span class=\"legend-chip\"><i></i> Illustrative line (not a model)</span> <span class=\"legend-chip\"><b></b> Quantile cone q10–q90 (darker toward the middle)</span> <span class=\"legend-chip\"><b style=\"background:transparent;border-style:dashed; border-color:var(--text-3)\"></b> Historical-baseline cone (climatology)</span> <span>Left of the “Now” divider is real Binance data · the right side is illustration</span>",
+  "k006": "⚠<span>This is <b>not</b> model output. Direction comes from a crude momentum baseline; the price band is ±1σ of realized volatility. The real model (LightGBM + isotonic calibration) is M5–M7 — not built yet.</span>",
+  "k007": "A real model must calibrate its probabilities and report sample size (n=…) before this number can be trusted.",
+  "k008": "UTC time",
+  "k009": "Median",
+  "k010": "Change",
+  "k011": "The prediction <b>locks at candle close</b> and stays fixed until the next candle — the model has nothing new to say while a candle is forming. The per-second updates above are <b>arithmetic on the locked prediction</b>, not the model re-predicting.",
+  "k012": "<h2>Order Setup · suggestion</h2><span class=\"chip\">auto-trade OFF</span>",
+  "k013": "Stop Loss (SL) 1.5×ATR14 computed from <b>real candles</b> of the current interval. The system never places orders by itself — live trading is M14, gated behind RiskEngine M13 and the 4 control gates.",
+  "k014": "<h2>Place Order · PAPER</h2><span class=\"chip\">real prices · simulated funds</span>",
+  "k015": "Fills at the live price, taker fee 0.10% per side, spot mechanics (selling requires the coin). Funds are simulated — no account connected, nothing leaves this page.",
+  "k016": "Forecast · illustrative — no model yet",
+  "k017": "<h3>Nowcast · tick pulse — continuous realtime</h3> <p class=\"psub\">A composite technical score recomputed <b>every tick</b>, deliberately including the FORMING candle — noise is inherent. This is an <b>instant readout</b>, not a model: the official prediction stays locked per candle (option C).</p>",
+  "k018": "<span>−100 · leans bearish</span><span>0 · balanced</span> <span>+100 · leans bullish</span>",
+  "k019": "Locked prediction · candle",
+  "k020": "Score = mean of 5 components (EMA20 trend · MACD/ATR · RSI · ROC · forming-candle taker), clamped to ±100. Uncalibrated — <b>do not read as probability</b> (RULE 6). When the two boxes disagree: the nowcast rides the intra-candle pulse, the locked prediction keeps discipline.",
+  "k021": "<h3>Prediction Method Board</h3> <p class=\"psub\">What each method family (docs 07/09) says right now, with an evidence badge — 🟢 solid · 🟡 mixed. Computed from real Binance data of the current interval.</p>",
+  "k022": "This is a <b>vote count</b>, not a probability — the methods are neither independent nor calibrated (RULE 6). The real model (M5–M7) will learn to COMBINE them instead of counting.",
+  "k023": "<h3>Professional Technical Indicators</h3> <p class=\"psub\">Four indicator groups computed live from closed candles of the current interval — the same feature set the model will use (00 §4.3). Readings follow classic conventions (TradingView-style).</p>",
+  "k024": "⚠ Per this project's own audit (07 §A1): single TA indicators are <b>nearly useless alone</b> — the real value lies in non-linear combinations. This board is for reading context, not for entering trades off one row.",
+  "k025": "Model passport &amp; four control gates",
+  "k026": "Thresholds quoted verbatim from <code>docs/00_MASTER_PLAN §7</code>. Ungraded gates show «—», never blank.",
+  "k027": "<h3>Scenario Fan · 24 random draws</h3> <p class=\"psub\">Block bootstrap from historical log-returns (4-candle blocks — preserves volatility clustering). Each path is <b>one draw</b>, not a forecast of the path.</p>",
+  "k028": "The dense middle emerges from overlapping paths — that is the probability density. Redraw a few times to feel the randomness.",
+  "k029": "<h3>Volatility Barometer</h3> <p class=\"psub\">The thing this system forecasts <b>most accurately</b> — about 100× more accurately than direction (<code>09 §3.1</code>). One y-axis, unit %/candle.</p>",
+  "k030": "EWMA · not HAR/GARCH yet",
+  "k031": "<span><i style=\"background:var(--text-1)\"></i>measured volatility (14 candles)</span> <span><i style=\"border-top:2px dashed var(--pred);height:0\"></i>EWMA forecast</span> <span><i class=\"dot\" style=\"background:var(--surface-2)\"></i>regime bands: low · normal · high</span>",
+  "k032": "Is the model sharper than baseline?",
+  "k033": "The <b>historical-baseline</b> cone (climatology) = the past log-return distribution, no model needed. If the model isn't narrower than it, the model adds no value yet.",
+  "k034": "This is the cheapest, most brutal test for any quantile forecaster.",
+  "k035": "Market · live derivatives data",
+  "k036": "<h3>Funding gauge</h3> <p class=\"psub\">Positive funding: Longs pay Shorts — a gauge of one-sided leverage.</p>",
+  "k037": "Market heartbeat",
+  "k038": "Trades filled per second, split into taker buys / sells.",
+  "k039": "trades/s",
+  "k040": "USDT/s",
+  "k041": "Up bars = taker buys · down bars = taker sells · hatched = seconds with no trades.",
+  "k042": "<h3>Live Liquidations</h3> <p class=\"psub\">Force-closed positions — cascade fuel. Bigger bubble, bigger notional.</p>",
+  "k043": "USDT · 5 min",
+  "k044": "⚠️ Binance broadcasts at most <b>1 liquidation/second/pair</b> over WebSocket since 2021 — this public feed <b>undercounts</b> reality (<code>09 §7</code>). The panel starts empty on every page load: there is no free REST history.",
+  "m01": "Trading",
+  "m02": "<i class=\"nt-dot\"></i>Prediction",
+  "m03": "Market",
+  "m04": "Order Book",
+  "m05": "Candle closes in",
+  "m06": "no model yet",
+  "m07": "50% = coin flip",
+  "m08": "Tracking",
+  "m09": "Distance",
+  "m10": "Time",
+  "m11": "If entered at lock",
+  "m12": "Capital (USDT)",
+  "m13": "Risk per Trade (%)",
+  "m14": "Available (USDT)",
+  "m15": "Total (USDT)",
+  "m16": "Buy",
+  "m17": "Sell",
+  "m18": "Position",
+  "m19": "Entry Price",
+  "m20": "Unrealized PNL",
+  "m21": "Redraw 24 paths",
+  "m22": "<i style=\"background:var(--pred);opacity:.5\"></i>24 draws",
+  "m23": "<i style=\"border-top:2px dashed var(--pred);height:0\"></i>3 paths nearest q10 / q50 / q90",
+  "m24": "OI vs Price · four quadrants",
+  "m25": "Price↑ &amp; OI↑ = new money in. Price↑ &amp; OI↓ = short covering. This is what price alone cannot tell you.",
+  "m26": "Market data: Binance public REST + WebSocket (no API key, read-only). This page sends nothing anywhere; it stores only two UI choices on your device: layout (tabs / all-in-one) and language (VI / EN). · Project source: <span class=\"num\">cryptopred</span> · docs 00–05."
+});
+  const ATTR_I18N = {
+  "Khu vực dashboard": "Dashboard sections",
+  "Tách tab: mỗi khu vực một trang. Gộp: toàn bộ panel trên một trang cuộn dọc.": "Split: one page per section. All-in-one: every panel on one scrolling page.",
+  "Gõ mã rồi Enter (vd: SOLUSDT)": "Type symbol + Enter (e.g. SOLUSDT)",
+  "Tìm cặp giao dịch": "Search trading pair",
+  "Danh sách cặp USDT": "USDT pairs",
+  "Sổ lệnh": "Order Book",
+  "Tỷ lệ mua/bán chủ động (taker) — 12 giao dịch gần nhất": "Taker buy/sell ratio — last 12 trades",
+  "Giao dịch thị trường": "Market Trades",
+  "Khung thời gian": "Interval",
+  "Biểu đồ nến thời gian thực từ Binance": "Real-time candlestick chart from Binance",
+  "Dự đoán minh hoạ": "Illustrative forecast",
+  "Kịch bản theo mốc thời gian": "Scenario by timestamp",
+  "Bám sát dự đoán": "Prediction tracking",
+  "Thiết lập lệnh gợi ý": "Suggested order setup",
+  "Giao dịch giấy": "Paper trading"
+};
 
   /* ── Khởi động ────────────────────────────────────────────── */
   (async () => {
@@ -1924,11 +2599,8 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
       connectLiqWS(); renderGates();
       applyLayout(); applyLang();
     } catch (err) {
-      setConn("down", "Không nối được Binance");
-      $("coin-list").innerHTML = `<div style="padding:var(--sp-3);font-size:13px;color:var(--text-2)">
-        Không gọi được api.binance.com.<br><br>Có thể do: không có mạng, mạng/ISP chặn Binance,
-        hoặc bạn đang ở vùng bị chặn (Mỹ → dùng api.binance.us).<br><br>
-        <b>Trang không bịa dữ liệu thay thế</b> — thà trống còn hơn hiển thị số giả.</div>`;
+      setConn("down", T("Không nối được Binance"));
+      $("coin-list").innerHTML = `<div style="padding:var(--sp-3);font-size:13px;color:var(--text-2)">${T("Không gọi được api.binance.com.<br><br>Có thể do: không có mạng, mạng/ISP chặn Binance, hoặc bạn đang ở vùng bị chặn (Mỹ → dùng api.binance.us).<br><br><b>Trang không bịa dữ liệu thay thế</b> — thà trống còn hơn hiển thị số giả.")}</div>`;
     }
   })();
 })();
