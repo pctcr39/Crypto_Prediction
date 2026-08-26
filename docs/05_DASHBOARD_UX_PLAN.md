@@ -119,6 +119,16 @@ Prototype luôn mô phỏng cả hai tầng vì artifact chặn mạng ngoài (C
 | UX-16 | **BUY/SELL chế độ PAPER (v6):** nút Mua/Bán kiểu Binance, ví ảo 10.000 USDT, %-nhanh 25–100, khớp mô phỏng phí taker 0.10%/chiều, giá vào trung bình, uPnL sống theo tick, **vạch VỊ THẾ trên chart**; bán khi ví trống → thông điệp spot; chip «chưa kết nối Binance» | ★★★ | M | W15b → nối M13 paper thật | ✅ v6 |
 | UX-17 | **Sổ lệnh + khớp lệnh kiểu Binance (v6):** 6 asks/6 bids kèm thanh depth, mid + mũi hướng, tape chảy ~0.9s/lệnh, thanh tỷ lệ Mua/Bán (tiền thân trực quan của feature `taker_buy_ratio` G3). Bản thật W15a nối WS công khai @depth · @aggTrade, không cần API key — artifact CSP chặn mạng ngoài nên prototype mô phỏng | ★★ | M | W15a | ✅ v6 (mô phỏng) |
 | UX-18 | **Lớp bám sát — phương án C (v7):** dự đoán **khoá lại khi nến đóng** (tính từ nến ĐÃ ĐÓNG, đóng băng cho tới nến kế); lớp bám sát cập nhật **từng giây** bằng số học trên dự đoán đã khoá: quãng đường đã đi vs thời gian đã trôi (2 thanh so kè), vị trí giá trong dải q10–q90, còn phải đi bao nhiêu tới q50 (đổi nhãn khi đã vượt), uPnL nếu vào lệnh lúc chốt (KHÔNG RÕ → không tính), trạng thái 6 mức: đang bám · nhanh hơn · chậm hơn · đi ngược · đã chạm đích · ra ngoài dải | ★★★ | M | W15b | ✅ v7 |
+| UX-19 | **Cấu trúc 3 tab (v8):** Giao dịch · Dự đoán · Thị trường — canvas của pane ẩn được vẽ lại khi hiện (clientWidth=0 khi hidden) | ★★ | S | W15a | ✅ v8 |
+| UX-20 | **Nón phân vị thay dải ±1σ phẳng:** 3 lớp lồng nhau q10–q90 / q25–q75 / q40–q60, CÙNG màu `--pred` chỉ đổi alpha, loe theo √k, dùng phân vị THỰC NGHIỆM (không giả định chuẩn) | ★★★ | M | W15a | ✅ v8 |
+| UX-21 | **Nón khí hậu học (baseline câm)** vẽ dưới nón model + panel so sánh độ sắc nét q10–q90 vs q10–q90 — bài kiểm tra rẻ nhất và tàn nhẫn nhất cho mọi hệ dự báo phân vị | ★★★ | S | W15a | ✅ v8 |
+| UX-22 | **Chùm 24 kịch bản (block bootstrap khối 4 nến)** — giữ được biến động cụm; 3 đường gần q10/q50/q90 gắn nhãn CHỮ; nút rút lại để thấy bản chất ngẫu nhiên | ★★★ | M | W15b | ✅ v8 |
+| UX-23 | **Phong vũ biểu biến động** — RV đo được vs dự báo EWMA, dải chế độ thấp/thường/bão, một trục y duy nhất (`09 §3.1`: thứ dự báo chính xác nhất) | ★★ | M | W15b | ✅ v8 |
+| UX-24 | **Hộ chiếu model & 4 cổng** — 19 tiêu chí chép nguyên văn `00 §7`, mọi ô ghi «—» vì chưa có model để chấm; chip «TIỀN THẬT: ĐANG KHOÁ» | ★★★ | S | — | ✅ v8 |
+| UX-25 | **Băng bối cảnh 6 ô** (funding · OI · CVD · sổ lệnh · biến động · thanh lý) kèm sparkline + chấm độ tươi riêng từng ô | ★★ | S | W15a | ✅ v8 |
+| UX-26 | **Đồng hồ funding** thang phi tuyến asinh (vừa thấy vùng ±0,01% vừa chứa cực trị) + z-score n=96 + histogram 96 kỳ + đếm ngược | ★★★ | M | W15a | ✅ v8 |
+| UX-27 | **OI × giá — 4 góc phần tư** với vệt 12 điểm gần nhất; chỉ điểm hiện tại có nhãn chữ | ★★★ | M | W15a | ✅ v8 |
+| UX-28 | **Nhịp tim thị trường** (lệnh/giây, USDT/giây, cột mua-trên/bán-dưới, ô sọc cho giây im lặng) + **dòng thanh lý realtime** từ `!forceOrder@arr`, ghi rõ Binance throttle 1 lệnh/giây nên dữ liệu ĐẾM THIẾU | ★★ | M | W15a | ✅ v8 |
 
 ### 4.1 Tham chiếu trình bày — VishvaAlgoAI (bài Medium v36.2)
 
