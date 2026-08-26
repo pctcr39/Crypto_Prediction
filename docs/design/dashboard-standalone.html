@@ -169,6 +169,20 @@ canvas{display:block;width:100%;height:100%}
 .tape-row{display:flex;justify-content:space-between;gap:var(--sp-2);padding:2px 0;
   font:400 12px/18px var(--font-num);font-variant-numeric:tabular-nums}
 
+/* ── Hàng điều hướng: tab trái · nút chế độ bố cục phải ───────── */
+.navrow{display:flex;justify-content:space-between;align-items:center;gap:var(--sp-3);
+  flex-wrap:wrap;margin-bottom:var(--sp-4)}
+.navrow .navtabs{margin-bottom:0}
+.pane-cap{display:none;margin:var(--sp-5) 0 var(--sp-3);padding-top:var(--sp-4);
+  border-top:1px solid var(--border);
+  font:600 12px/16px var(--font-ui);letter-spacing:.1em;text-transform:uppercase;
+  color:var(--text-2)}
+/* Chế độ GỘP: mọi pane hiện, tiêu đề khu vực hiện, tab thành mục lục cuộn */
+body.mode-all .tabpane{display:block !important}
+body.mode-all .pane-cap{display:block}
+body.mode-all .navtab[aria-selected="true"]{box-shadow:none;background:transparent;color:var(--text-2)}
+body.mode-all .navtab:hover{color:var(--text-1)}
+
 /* ── Tab điều hướng ───────────────────────────────────────────── */
 .navtabs{display:flex;gap:2px;background:var(--surface-1);border:1px solid var(--border);
   border-radius:var(--radius-md);padding:3px;margin-bottom:var(--sp-4);width:fit-content}
@@ -336,11 +350,16 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
     <div class="topbar-note" id="conn-note">Đang kết nối Binance…</div>
   </header>
 
-  <div class="navtabs" role="tablist" aria-label="Khu vực dashboard">
-    <button class="navtab" role="tab" aria-selected="true" data-pane="pane-trade">Giao dịch</button>
-    <button class="navtab" role="tab" aria-selected="false" data-pane="pane-pred">
-      <i class="nt-dot"></i>Dự đoán</button>
-    <button class="navtab" role="tab" aria-selected="false" data-pane="pane-mkt">Thị trường</button>
+  <div class="navrow">
+    <div class="navtabs" role="tablist" aria-label="Khu vực dashboard">
+      <button class="navtab" role="tab" aria-selected="true" data-pane="pane-trade">Giao dịch</button>
+      <button class="navtab" role="tab" aria-selected="false" data-pane="pane-pred">
+        <i class="nt-dot"></i>Dự đoán</button>
+      <button class="navtab" role="tab" aria-selected="false" data-pane="pane-mkt">Thị trường</button>
+    </div>
+    <button class="ghost-btn" id="mode-btn" aria-pressed="false"
+      title="Tách tab: mỗi khu vực một trang. Gộp: toàn bộ panel trên một trang cuộn dọc.">
+      ⊞ Gộp 1 trang</button>
   </div>
 
   <div class="tabpane" id="pane-trade">
@@ -516,6 +535,7 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
 
   <!-- ══ TAB 2 · DỰ ĐOÁN ══════════════════════════════════════ -->
   <div class="tabpane" id="pane-pred" hidden>
+    <h2 class="pane-cap">Dự đoán · minh hoạ — chưa có model</h2>
     <div class="pcard" style="margin-bottom:var(--sp-4)">
       <h3>Hộ chiếu model &amp; bốn cổng kiểm soát</h3>
       <p class="psub">Ngưỡng lấy nguyên văn từ <code>docs/00_MASTER_PLAN §7</code>. Cổng nào chưa chấm
@@ -569,6 +589,7 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
 
   <!-- ══ TAB 3 · THỊ TRƯỜNG ═══════════════════════════════════ -->
   <div class="tabpane" id="pane-mkt" hidden>
+    <h2 class="pane-cap">Thị trường · dữ liệu phái sinh trực tiếp</h2>
     <div class="pgrid">
       <div class="pcard">
         <div class="phead"><div><h3>Đồng hồ funding</h3>
@@ -621,7 +642,7 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
 
 <footer>
   Dữ liệu thị trường: Binance public REST + WebSocket (không cần API key, chỉ đọc).
-  Trang này không gửi dữ liệu đi đâu và không lưu gì ngoài bộ nhớ tạm của tab.
+  Trang này không gửi dữ liệu đi đâu; thứ duy nhất được lưu trên máy bạn là lựa chọn bố cục giao diện (tách tab / gộp 1 trang).
   · Mã nguồn dự án: <span class="num">cryptopred</span> · docs 00–05.
 </footer>
 
@@ -1751,19 +1772,54 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
     await reload();
   }));
 
-  // Chuyển tab — vẽ lại canvas của pane vừa hiện (canvas ẩn có clientWidth = 0)
+  /* ── Chế độ bố cục: 'tabs' (tách) hoặc 'all' (gộp 1 trang cuộn dọc) ──
+     Lựa chọn được nhớ trên máy — khoản lưu duy nhất của trang (đã ghi ở footer). */
+  S.layout = "tabs";
+  try { if (localStorage.getItem("cryptopred-layout") === "all") S.layout = "all"; } catch (e) {}
+
+  function drawPane(id) {
+    if (id === "pane-trade") { draw(); renderCtx(); }
+    if (id === "pane-pred") {
+      if (!P.spa) resample();
+      drawSpaghetti(); drawVol(); renderSharpness(); renderGates();
+    }
+    if (id === "pane-mkt") { drawFunding(); drawOI(); drawHeartbeat(); drawLiq(); }
+  }
+
+  function applyLayout() {
+    const all = S.layout === "all";
+    document.body.classList.toggle("mode-all", all);
+    const btn = $("mode-btn");
+    btn.textContent = all ? "⊟ Tách tab" : "⊞ Gộp 1 trang";
+    btn.setAttribute("aria-pressed", String(all));
+    if (all) {
+      document.querySelectorAll(".tabpane").forEach(pn => pn.hidden = false);
+      // canvas vừa từ ẩn sang hiện có clientWidth=0 lúc vẽ lần trước → vẽ lại hết
+      requestAnimationFrame(() => ["pane-trade", "pane-pred", "pane-mkt"].forEach(drawPane));
+    } else {
+      const sel = document.querySelector('.navtab[aria-selected="true"]');
+      const id = sel ? sel.dataset.pane : "pane-trade";
+      document.querySelectorAll(".tabpane").forEach(pn => pn.hidden = pn.id !== id);
+      requestAnimationFrame(() => drawPane(id));
+    }
+    try { localStorage.setItem("cryptopred-layout", S.layout); } catch (e) {}
+  }
+
+  $("mode-btn").addEventListener("click", () => {
+    S.layout = S.layout === "all" ? "tabs" : "all";
+    applyLayout();
+  });
+
+  // Tab: ở chế độ tách là chuyển trang; ở chế độ gộp là mục lục cuộn tới khu vực
   document.querySelectorAll(".navtab").forEach(b => b.addEventListener("click", () => {
+    if (S.layout === "all") {
+      $(b.dataset.pane).scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
     document.querySelectorAll(".navtab").forEach(t => t.setAttribute("aria-selected", "false"));
     b.setAttribute("aria-selected", "true");
     document.querySelectorAll(".tabpane").forEach(pn => pn.hidden = pn.id !== b.dataset.pane);
-    requestAnimationFrame(() => {
-      if (b.dataset.pane === "pane-trade") { draw(); renderCtx(); }   // canvas trong pane ẩn có clientWidth=0
-      if (b.dataset.pane === "pane-pred") {
-        if (!P.spa) resample();
-        drawSpaghetti(); drawVol(); renderSharpness(); renderGates();
-      }
-      if (b.dataset.pane === "pane-mkt") { drawFunding(); drawOI(); drawHeartbeat(); drawLiq(); }
-    });
+    requestAnimationFrame(() => drawPane(b.dataset.pane));
   }));
   $("btn-resample").addEventListener("click", () => { resample(); drawSpaghetti(); });
 
@@ -1805,7 +1861,7 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
     }
     renderTracking();   // thời gian vẫn trôi kể cả khi giá đứng im
     const pane = document.querySelector('.navtab[aria-selected="true"]');
-    if (pane && pane.dataset.pane === "pane-mkt") { drawHeartbeat(); drawLiq(); }
+    if (S.layout === "all" || (pane && pane.dataset.pane === "pane-mkt")) { drawHeartbeat(); drawLiq(); }
     if (++P.ctxTick % 10 === 0) renderCtx();          // băng bối cảnh: 10 giây/lần
     if (P.ctxTick % 60 === 0) loadDerivs();           // funding/OI: 60 giây/lần
     if (S.conn === "live" && Date.now() - S.lastTick > 5000) setConn("slow");
@@ -1826,6 +1882,7 @@ footer{max-width:1440px;margin:var(--sp-6) auto 0;padding:var(--sp-4);
       await loadTickers();
       await reload();
       connectLiqWS(); renderGates();
+      applyLayout();
     } catch (err) {
       setConn("down", "Không nối được Binance");
       $("coin-list").innerHTML = `<div style="padding:var(--sp-3);font-size:13px;color:var(--text-2)">

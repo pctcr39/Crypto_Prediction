@@ -129,6 +129,7 @@ Prototype luôn mô phỏng cả hai tầng vì artifact chặn mạng ngoài (C
 | UX-26 | **Đồng hồ funding** thang phi tuyến asinh (vừa thấy vùng ±0,01% vừa chứa cực trị) + z-score n=96 + histogram 96 kỳ + đếm ngược | ★★★ | M | W15a | ✅ v8 |
 | UX-27 | **OI × giá — 4 góc phần tư** với vệt 12 điểm gần nhất; chỉ điểm hiện tại có nhãn chữ | ★★★ | M | W15a | ✅ v8 |
 | UX-28 | **Nhịp tim thị trường** (lệnh/giây, USDT/giây, cột mua-trên/bán-dưới, ô sọc cho giây im lặng) + **dòng thanh lý realtime** từ `!forceOrder@arr`, ghi rõ Binance throttle 1 lệnh/giây nên dữ liệu ĐẾM THIẾU | ★★ | M | W15a | ✅ v8 |
+| UX-29 | **Nút chế độ bố cục (v9):** «⊞ Gộp 1 trang» ⇄ «⊟ Tách tab». Chế độ gộp: 3 pane xếp dọc với vạch tiêu đề khu vực, navtab thành mục lục cuộn (scrollIntoView), panel thị trường sống mọi lúc; canvas vẽ lại khi từ ẩn sang hiện. Lựa chọn nhớ bằng localStorage — khoản lưu duy nhất của trang, đã cập nhật câu chân trang cho khớp | ★★ | S | W15a | ✅ v9 |
 
 ### 4.1 Tham chiếu trình bày — VishvaAlgoAI (bài Medium v36.2)
 
