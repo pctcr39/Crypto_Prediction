@@ -126,75 +126,125 @@ Cả **tử số** (chi phí, qua f̂) lẫn **mẫu số** (biên độ, qua σ
 ```python
 from __future__ import annotations
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Literal, Optional
+import pandas as pd
 
-Freshness = Literal["live", "delayed", "disconnected", "stale"]
+# ══ ĐỘ TƯƠI — HAI KHÁI NIỆM KHÁC NHAU, trước đây bị gộp làm một (B10 · B15) ══
+DataFreshness = Literal["live", "delayed", "disconnected"]   # thuộc tính của DỮ LIỆU VÀO
+#   «stale» KHÔNG nằm ở đây: nó là thuộc tính của DỰ ĐOÁN so với thời điểm HIỆN TẠI,
+#   nên tầng phục vụ tính:  stale ⟺ now > prediction.valid_until   (RULE 8)
+
 TrancheStatus = Literal["active", "hit_target", "hit_stop", "expired", "superseded"]
+CloseReason   = Literal["hit_target", "hit_stop", "expired", "superseded"]
+
+@dataclass(frozen=True)
+class Bar:
+    """Nến đã đóng. index của chuỗi = open_time (UTC)."""
+    open_time: datetime
+    open: float; high: float; low: float; close: float
+
+@dataclass(frozen=True)
+class PredictCtx:
+    """Mọi thứ định danh một lần suy luận — để constructor duy nhất dựng được Prediction."""
+    symbol: str
+    tf: Literal["1h", "4h", "1d"]
+    open_time: datetime          # nến ĐÓNG sinh ra dự đoán này
+    model_sha: str
+    last_close: float
+    next_open: Optional[float]   # OPEN nến t+1 nếu đã có; None ⇒ không mở tranche được
+    in_training_universe: bool
+
+@dataclass(frozen=True)
+class PendingEvent:
+    """Sự kiện mở CHƯA có cỡ. `with_size` biến nó thành Tranche."""
+    level: float                 # 0,25 | 0,50 | 0,75 | 1,00
+    entry_ref_price: float       # = OPEN nến t+1 (B6)
+    sigma_entry: float           # σ̂ NGÀY tại lúc phát
+    entry_time: datetime
+
+@dataclass(frozen=True)
+class PortfolioSnapshot:
+    """Trạng thái TOÀN DANH MỤC — do NGƯỜI GỌI dựng từ sổ của mọi symbol.
+    predict() vẫn THUẦN: đây là tham số vào, không phải trạng thái toàn cục (B18)."""
+    symbols_with_open_tranches: int
+    consecutive_stops: int       # chuỗi tranche đóng bằng stop liên tiếp, toàn danh mục
 
 @dataclass(frozen=True)
 class Tranche:
-    """MỘT KHUYẾN NGHỊ vào lệnh. Bất biến sau khi phát — mọi thay đổi trạng thái
-    tạo bản ghi MỚI trong sổ, không sửa bản ghi cũ."""
-    tranche_id: str                    # symbol|open_time|level|model_sha
+    """MỘT KHUYẾN NGHỊ. Bất biến sau khi phát — đổi trạng thái tạo bản ghi MỚI."""
+    tranche_id: str              # symbol|open_time|level|model_sha
     symbol: str
-    level: float                       # 0,25 | 0,50 | 0,75 | 1,00
-    entry_ref_price: float             # = OPEN nến t+1 (B6). KHÔNG BAO GIỜ close[t]
-    entry_time: datetime               # UTC
-    sigma_entry: float                 # σ̂ tại lúc phát — đóng băng cùng khuyến nghị
-    stop_price: float                  # MỨC KHUYẾN NGHỊ — người dùng tự đặt lệnh
-    target_price: float
-    deadline: datetime                 # entry_time + 60 ngày
-    suggested_size_pct: float          # % NAV — GỢI Ý, không phải chỉ thị
-    instrument: Literal["spot"]        # không có giá trị khác ở tầng kiểu
+    level: float
+    entry_ref_price: float       # = OPEN nến t+1 (B6). KHÔNG BAO GIỜ close[t]
+    entry_time: datetime
+    sigma_entry: float           # σ̂ NGÀY, đóng băng cùng khuyến nghị
+    stop_price: float            # entry × (1 − 1,2·σ̂) — KHUYẾN NGHỊ đặt lệnh treo
+    target_price: float          # entry × (1 + 4,0·σ̂)
+    deadline: datetime           # entry_time + 60 ngày
+    suggested_size_pct: float    # % NAV — GỢI Ý
+    instrument: Literal["spot"]
     status: TrancheStatus
-    p_star_at_entry: float             # ngưỡng hoà vốn lúc phát — để chấm lại sau
-    # ── KẾT CỤC · None khi status == "active" (B3) ──
+    p_star_at_entry: float
+    # ── kết cục · None khi status == "active" (B3) ──
     exit_time: Optional[datetime] = None
     exit_price: Optional[float] = None
-    close_reason: Optional[Literal["hit_target","hit_stop","expired","superseded"]] = None
-    realized_r: Optional[float] = None      # (exit − entry) / (entry · 1,2·σ̂_entry)
+    close_reason: Optional[CloseReason] = None
+    realized_r: Optional[float] = None       # (exit − entry)/(entry · 1,2·σ̂_entry)
     unverified_since: Optional[datetime] = None   # mất kết nối ⇒ sổ chưa tiến (B1)
 
 @dataclass(frozen=True)
+class TrancheBook:
+    active: tuple[Tranche, ...]
+    closed: tuple[Tranche, ...]
+    last_bar_processed: Optional[datetime]   # để advance_book biết bắt kịp từ đâu
+
+@dataclass(frozen=True)
 class Prediction:
-    """Một lần suy luận. HÀM THUẦN sinh ra nó: không đồng hồ, không I/O, không global."""
     # ── định danh · khoá idempotent từ bản ghi ĐẦU TIÊN ──
     symbol: str
     timeframe: Literal["1h", "4h", "1d"]
-    open_time: datetime                # nến ĐÓNG sinh ra dự đoán này, UTC
-    model_sha: str                     # git hash + hash config
+    open_time: datetime
+    model_sha: str
+    last_close: float
+    valid_until: datetime        # sau mốc này tầng phục vụ hiện «Dự đoán cũ» (RULE 8, B10)
 
-    # ── ba đầu ra: BA CÁCH ĐỌC CỦA MỘT PHÂN PHỐI ──
-    expected_vol_pct: float            # σ̂ — nguồn duy nhất
-    q10: float
-    q50: float
-    q90: float
-    p_up: float                        # = 1 − F(0). SUY RA, không mô hình riêng
+    # ── ba đầu ra: BA CÁCH ĐỌC CỦA MỘT PHÂN PHỐI · LUÔN có giá trị ──
+    expected_vol_pct: float      # = σ̂_ngày · √(H_DAYS[tf]) · 100
+    q10: float; q50: float; q90: float
+    p_up: float                  # = 1 − F(0). SUY RA, không mô hình riêng
 
     # ── kinh tế học quyết định · LUÔN hiện diện, kể cả khi im lặng ──
-    p_required: float                  # tính TRONG MÃ, không đọc từ config
+    p_required: float            # tính TRONG MÃ
     e_move_pct: float
     cost_assumed_pct: float
-    instrument: Literal["spot", "perp"]  # ĐẦU RA của bảng chi phí (hiển thị)
+    instrument: Literal["spot", "perp"]   # HIỂN THỊ — choose_instrument_display()
 
-    # ── khuyến nghị · None và () là giá trị HỢP LỆ và THƯỜNG GẶP ──
-    trend_weight: Optional[float]      # w — đồng hồ xu hướng, hiển thị cả khi im lặng
-    new_tranches: tuple[Tranche, ...]     # khuyến nghị VÀO mới phát lần này
-    closed_tranches: tuple[Tranche, ...]  # ★ KHUYẾN NGHỊ THOÁT — hiển thị NGANG HÀNG
-    active_tranches: tuple[Tranche, ...]  # khuyến nghị còn hiệu lực
-    warnings: tuple[str, ...]          # cảnh báo rủi ro từ L7
+    # ── khuyến nghị · () là giá trị HỢP LỆ và THƯỜNG GẶP ──
+    trend_weight: Optional[float]
+    new_tranches: tuple[Tranche, ...]
+    closed_tranches: tuple[Tranche, ...]   # ★ KHUYẾN NGHỊ THOÁT
+    active_tranches: tuple[Tranche, ...]
+    warnings: tuple[str, ...]
 
     # ── trung thực · bắt buộc ──
-    data_freshness: Freshness
-    silence_reason: Optional[str]      # BẮT BUỘC khi new_tranches rỗng
-
-@dataclass(frozen=True)
-class TrancheBook:
-    """Trạng thái giữa hai lần suy luận. Vào-ra qua tham số để predict() thuần."""
-    active: tuple[Tranche, ...]
-    closed: tuple[Tranche, ...]
+    data_freshness: DataFreshness
+    in_training_universe: bool   # false ⇒ dashboard gắn nhãn «ngoài tập huấn luyện»
+    silence_reason: Optional[str]   # BẮT BUỘC khi new_tranches rỗng
 ```
+
+> ### ★ Vì sao `stale` rời khỏi `DataFreshness` (B10 + B15 giải nhau)
+>
+> Bản rc1 gộp hai khái niệm vào một enum, sinh ra hai lỗi cùng lúc: `freshness()` chỉ trả ba giá trị trong khi enum có bốn (không ai sinh ra `stale`), và nhánh dữ liệu-không-tươi phải trả một `Prediction` mà **chín trường bắt buộc chưa tính được**.
+>
+> | Khái niệm | Thuộc về | Ai tính | Khi nào |
+> |---|---|---|---|
+> | **Độ tươi DỮ LIỆU** — `live` / `delayed` / `disconnected` | Nến đầu vào | `predict()` | Lúc suy luận |
+> | **Độ tươi DỰ ĐOÁN** — `stale` | Bản dự đoán so với **hiện tại** | Tầng phục vụ | Mỗi lần hiển thị: `now > valid_until` |
+>
+> Tách ra thì nhánh L0 **không còn cần tồn tại**: σ̂ vẫn tính được từ những nến đang có — chỉ là chúng cũ. Dự đoán vẫn đầy đủ, `data_freshness` nói thật về đầu vào, và `new_tranches` rỗng vì không mở vị thế trên dữ liệu cũ. Khớp `03 M10`: *«giữ dự đoán cũ + đánh dấu stale, không bao giờ im lặng»*.
+>
+> Đồng thời khôi phục ba trường mà rc1 làm rơi so với `serving/schemas.py` gốc: `last_close` · `valid_until` (RULE 8) · `in_training_universe` (`00 §4.2`).
 
 **Ba quyết định nằm trong hợp đồng, không nằm trong tài liệu:**
 
@@ -592,79 +642,151 @@ Xem Phần 5 và Phần 9 — với hệ khuyến nghị, đây là tầng **qua
 
 # PHẦN 4 · HÀM QUYẾT ĐỊNH
 
-```python
-TRADE_TF   = frozenset({"1d"})                    # DANH SÁCH TRẮNG — rào CHÍNH
-RULE11_ACC = 0.60                                 # dây an toàn thứ hai (RULE 11)
-H_DAYS     = {"1h": 4/24, "4h": 1.0, "1d": 1.0}   # từ config horizon_bars
+## 4.1 · Hằng số và cấu hình
 
-def predict(bars, funding_hist, book: TrancheBook, now_hint, cfg
-            ) -> tuple[Prediction, TrancheBook]:
+```python
+TRADE_TF   = frozenset({"1d"})            # DANH SÁCH TRẮNG — rào CHÍNH (ADR-002)
+RULE11_ACC = 0.60                         # dây an toàn thứ hai (RULE 11)
+H_DAYS     = {"1h": 4/24, "4h": 1.0, "1d": 1.0}    # = horizon_bars × giờ_mỗi_nến / 24
+GRID_27    = tuple(itertools.product((10,20,50), (100,150,200), (20,55,100)))  # THỨ TỰ CỐ ĐỊNH
+EXP_HOLD_DAYS = 5.8                       # đo được — dùng cho choose_instrument_display
+SL_MULT, TP_MULT, DEADLINE_DAYS = 1.2, 4.0, 60
+MARGIN_PP  = 0.02                         # biên cổng L6
+SIZE_BASE_PCT, TRANCHE_PCT = 4.0, 1.0     # % NAV
+
+@dataclass(frozen=True)
+class PredictConfig:
+    symbol: str
+    tf: Literal["1h","4h","1d"]
+    model_sha: str
+    live_max: timedelta      # mặc định = 1 × timeframe_delta(tf)
+    delayed_max: timedelta   # mặc định = 3 × timeframe_delta(tf)
+    valid_for: timedelta     # mặc định = 1 × timeframe_delta(tf); sinh valid_until
+    rv_window: int = 20
+    har_target_days: int = 5
+```
+
+## 4.2 · Bảy hàm mà rc1 gọi nhưng không đặc tả (B9 · B14 · B15 · B18)
+
+```python
+# ── B15 · CONSTRUCTOR DUY NHẤT — mọi nhánh đi qua đây ⇒ không nhánh nào làm rơi trường
+def _emit(ctx: PredictCtx, *, fresh: DataFreshness, sigma_d: float, f_hat: float,
+          w: Optional[float], book: TrancheBook, closed: tuple[Tranche, ...],
+          new: tuple[Tranche, ...] = (), warns: tuple[str, ...] = (),
+          reason: Optional[str], cfg: PredictConfig) -> Prediction:
+    H  = H_DAYS[ctx.tf]
+    F  = Normal(mu=0.0, sd=sigma_d * sqrt(H))                    # trên LOG-RETURN
+    q  = tuple(ctx.last_close * exp(F.ppf(a)) for a in (0.10, 0.50, 0.90))
+    pr = p_required_symmetric(sigma_d, H, "spot", f_hat)
+    assert (new == ()) == (reason is not None)                   # bất biến #19, ép ở đây
+    return Prediction(
+        symbol=ctx.symbol, timeframe=ctx.tf, open_time=ctx.open_time,
+        model_sha=ctx.model_sha, last_close=ctx.last_close,
+        valid_until=ctx.open_time + cfg.valid_for,
+        expected_vol_pct=sigma_d * sqrt(H) * 100,                # B5 — quy đổi hiển thị
+        q10=q[0], q50=q[1], q90=q[2], p_up=1 - F.cdf(0.0),
+        p_required=pr.value, e_move_pct=sigma_d*ABS_MOVE_RATIO*sqrt(H)*100,
+        cost_assumed_pct=cost_gate(H, "spot", f_hat),
+        instrument=choose_instrument_display(EXP_HOLD_DAYS, f_hat),
+        trend_weight=w, new_tranches=new, closed_tranches=closed,
+        active_tranches=book.active, warnings=warns,
+        data_freshness=fresh, in_training_universe=ctx.in_training_universe,
+        silence_reason=reason)
+
+# ── B9 · CHỌN CÔNG CỤ — CHỈ ĐỂ HIỂN THỊ, không nằm trên đường quyết định
+def choose_instrument_display(exp_hold_days: float, f_daily: float) -> Literal["spot","perp"]:
+    """Ngưỡng d* = (c_spot − c_perp)/f̂ = 0,10/f̂.
+    ⚠️ Truyền EXP_HOLD_DAYS (5,8), KHÔNG phải H_DAYS — rc1 truyền nhầm H_DAYS[1d]=1,0
+       và hàm sẽ trả "perp", trái kết luận spot-only."""
+    return "spot" if exp_hold_days > 0.10 / max(f_daily, 1e-6) else "perp"
+
+# ── B14 · TIẾN SỔ — do GIÁ và w điều khiển. Nhận Bar (có high/low), không nhận last_close
+def advance_book(book: TrancheBook, bars: pd.DataFrame, w: Optional[float],
+                 cfg: PredictConfig) -> tuple[TrancheBook, tuple[Tranche, ...]]:
+    """Bắt kịp qua MỌI nến chưa xử lý kể từ book.last_bar_processed (bất biến #27).
+    THỨ TỰ TRONG MỘT NẾN LÀ CỐ ĐỊNH — nó quyết định kết quả khi nhiều điều kiện
+    cùng đúng, nên phải đóng băng:
+        ① STOP     low ≤ stop_price          ← ưu tiên cao nhất (thận trọng)
+        ② TARGET   close ≥ target_price      ← tại CLOSE, không intrabar (B11)
+        ③ DEADLINE now ≥ deadline
+        ④ LIFO     w tụt dưới level ⇒ đóng tranche mức cao nhất trước
+    Trả (sổ mới, tranche vừa đóng — mỗi cái đủ exit_time/exit_price/close_reason/realized_r)."""
+
+def open_tranches(w: float, book: TrancheBook, sigma_d: float,
+                  ctx: PredictCtx, now: datetime) -> tuple[PendingEvent, ...]:
+    """CHỈ mở. Mỗi bước 0,25 mà w vượt LÊN và slot TRỐNG ⇒ một PendingEvent.
+    Bước nhảy k mức ⇒ k sự kiện riêng, cùng entry/σ̂ (mỗi cái ≤1% NAV).
+    ctx.next_open is None ⇒ trả () — chưa có giá vào (B6)."""
+
+def with_size(ev: PendingEvent, ctx: PredictCtx, cfg) -> Tranche:
+    """PendingEvent → Tranche. size = TRANCHE_PCT (1% NAV) cố định theo NOTIONAL.
+    stop/target/deadline tính từ ev.entry_ref_price và ev.sigma_entry."""
+
+# ── B18 · CẢNH BÁO — cần lịch sử σ̂ và trạng thái TOÀN DANH MỤC
+def collect_warnings(book: TrancheBook, sigma_hist: pd.Series, f_hat: float,
+                     fresh: DataFreshness, pf: PortfolioSnapshot) -> tuple[str, ...]:
+    """rc1 truyền `sigma: float` và `book` một symbol ⇒ KHÔNG tính được 2/5 cảnh báo.
+    TUONG_QUAN_CAO cần pf.symbols_with_open_tranches; VOL_CUC_DOAN cần phân phối
+    σ̂ 90 ngày, không phải một số vô hướng.
+    predict() vẫn THUẦN — pf là tham số vào, do người gọi dựng từ sổ mọi symbol."""
+```
+
+## 4.3 · Hàm quyết định
+
+```python
+def predict(bars: pd.DataFrame, bars_1d: pd.DataFrame, funding_hist: pd.Series,
+            book: TrancheBook, pf: PortfolioSnapshot, now_hint: datetime,
+            cfg: PredictConfig) -> tuple[Prediction, TrancheBook]:
     """HÀM THUẦN: mọi trạng thái vào-ra qua tham số; không đồng hồ, không I/O,
     không global. Gọi hai lần cùng đầu vào ⇒ giống hệt từng byte."""
 
-    # ── L0 ── độ tươi
-    fresh = freshness(bars, now_hint, cfg)
+    ctx   = build_ctx(bars, cfg)
+    fresh = freshness(bars, now_hint, cfg)          # live | delayed | disconnected
 
-    # ★ MẤT KẾT NỐI: không có nến để tiến sổ. Đánh dấu, KHÔNG đoán.
+    # ── L1–L2 ── LUÔN tính được, kể cả trên nến cũ (B15)
+    sigma_d = sigma_hat_daily(bars_1d, window=cfg.rv_window)     # σ̂ NGÀY, Parkinson
+    f_hat   = forecast_funding_daily(funding_hist, asof=ctx.open_time)
+    w       = ensemble_weight(bars_1d, GRID_27)                  # None nếu chưa đủ nến
+
+    # ── L5a ── TIẾN SỔ TRƯỚC MỌI QUYẾT ĐỊNH (B1)
     if fresh == "disconnected":
-        return no_opinion(fresh, "mất kết nối"), book.mark_unverified(bars.index[-1])
+        book, closed = book.mark_unverified(ctx.open_time), ()   # không có nến ⇒ không đoán
+    else:
+        book, closed = advance_book(book, bars_1d, w, cfg)       # nến trễ vẫn là nến thật
 
-    # ★★ TIẾN SỔ TRƯỚC MỌI `return` KHÁC (B1)
-    #    Soi rào · đóng LIFO · cưỡng chế deadline — bắt kịp qua NHIỀU nến nếu có gap.
-    #    Việc này KHÔNG phụ thuộc cổng phí: một khuyến nghị đã phát phải được
-    #    theo dõi tới cùng, kể cả khi hệ không còn phát khuyến nghị mới.
-    book, closed = advance_book(book, bars, cfg)
+    warns = collect_warnings(book, sigma_hist(bars_1d), f_hat, fresh, pf)
+    emit  = partial(_emit, ctx, fresh=fresh, sigma_d=sigma_d, f_hat=f_hat,
+                    w=w, book=book, closed=closed, warns=warns, cfg=cfg)
 
-    if fresh == "delayed":     # nến trễ vẫn là nến THẬT ⇒ tiến sổ được, chỉ không mở mới
-        return display_only(..., closed=closed, reason="dữ liệu chậm"), book
+    # ── CÁC CỔNG — mỗi cái chỉ có thể làm hệ IM LẶNG, không bao giờ tạo hướng ──
+    if fresh != "live":            return emit(reason=f"dữ liệu {fresh}"), book
+    if cfg.tf not in TRADE_TF:     return emit(reason="khung hiển thị (ADR-002)"), book
+    if p_required_symmetric(sigma_d, H_DAYS[cfg.tf], "spot", f_hat).value > RULE11_ACC:
+                                   return emit(reason="ngưỡng thắng cần vượt RULE 11"), book
+    if w is None:                  return emit(reason="chưa đủ nến cho EMA200"), book
+    if ctx.next_open is None:      return emit(reason="chưa có giá mở nến kế tiếp"), book
 
-    # ── L1–L2 ──
-    feats = build_features(bars)                          # shift_all(1) bên trong
-    sigma = har_rv(bars_1d) or ewma_sigma(bars_1d, lam=0.94)   # σ̂ NGÀY
-    f_hat = forecast_funding_daily(funding_hist, asof=bars.close_time)
+    events = open_tranches(w, book, sigma_d, ctx, now_hint)
+    if not events:                 return emit(reason=f"w={w:.2f} — không có slot mở"), book
 
-    # ── L3 ── một phân phối, ba cách đọc
-    H = H_DAYS[cfg.tf]
-    F = Normal(mu=0.0, sd=sigma * sqrt(H))
-    q10, q50, q90 = (last_close * exp(F.ppf(a)) for a in (0.10, 0.50, 0.90))
-    p_up  = 1 - F.cdf(0.0)
+    # ── L6 · học máy CHỈ LỌC BỎ ──
+    p_star = p_star_event(sigma_d)
+    kept = [e for e in events
+            if calibrate(meta.predict(build_features(bars_1d), e)) >= p_star.value + MARGIN_PP]
+    if not kept:                   return emit(reason=f"L6 loại {len(events)} sự kiện"), book
 
-    # ── L4 ── cổng phí
-    p_req = p_required_symmetric(sigma, H, "spot", f_hat)
-    if cfg.tf not in TRADE_TF or p_req.value > RULE11_ACC:
-        return display_only(F, p_req, w=None, closed=closed,
-                            reason="khung hiển thị — không phát khuyến nghị"), book
-
-    # ── L5 ── hướng + máy trạng thái tranche
-    w = ensemble_weight(bars, GRID_27)
-    events, book2 = tranche_step(w, book, sigma, last_close, bars.close_time)
-    if not events:
-        return display_only(F, p_req, w, closed=closed,
-                            reason=f"w={w:.2f} — không có slot mở"), book2
-
-    # ── L6 ── học máy CHỈ LỌC BỎ
-    p_star = p_star_event(sigma)
-    kept = [ev for ev in events
-            if calibrate(meta.predict(feats, ev)) >= p_star.value + 0.02]
-    if not kept:
-        return display_only(F, p_req, w, closed=closed,
-                            reason=f"L6 loại {len(events)} sự kiện (p_win < {p_star.value:.3f}+2pp)"), book2
-
-    # ── L7 ── cỡ gợi ý + cảnh báo (KHÔNG chặn)
-    sized = [with_size(ev, cfg) for ev in kept]
-    warns = collect_warnings(book2, sigma, f_hat, fresh)
-
-    return Prediction(
-        symbol=cfg.symbol, timeframe=cfg.tf, open_time=bars.index[-1],
-        model_sha=cfg.model_sha,
-        expected_vol_pct=sigma * 100, q10=q10, q50=q50, q90=q90, p_up=p_up,
-        p_required=p_req.value, e_move_pct=..., cost_assumed_pct=...,
-        instrument=choose_instrument_display(H, f_hat),
-        trend_weight=w, new_tranches=tuple(sized), closed_tranches=closed,
-        active_tranches=book2.active, warnings=warns,
-        data_freshness=fresh, silence_reason=None,
-    ), book2.with_new(sized)
+    # ── L7 · cỡ gợi ý ──
+    new = tuple(with_size(e, ctx, cfg) for e in kept)
+    return emit(new=new, reason=None), book.with_new(new)
 ```
+
+**Ba thứ đọc ra từ hình dạng của hàm này:**
+
+| | |
+|---|---|
+| **Mọi cổng đều là `return emit(reason=...)`** | Không nhánh nào tạo hướng. `kept ⊆ events` theo cấu tạo — L6 lọc một danh sách, không sinh phần tử |
+| **`emit` là constructor duy nhất** | Không nhánh nào làm rơi trường; `assert (new == ()) == (reason is not None)` ép bất biến #19 ngay tại chỗ |
+| **Tiến sổ nằm TRƯỚC mọi cổng** | B1 — một khuyến nghị đã phát phải được theo dõi tới cùng, kể cả khi hệ ngừng phát khuyến nghị mới |
 
 ### Ma trận: tiến sổ so với mở khuyến nghị mới
 
@@ -783,6 +905,10 @@ Hệ **không biết** người dùng có vào lệnh không, và **không đư�
 | 31 | **σ̂ luôn thang NGÀY** (B5) | Gọi `predict()` với `tf` ∈ {1h, 4h, 1d} trên cùng mốc thời gian ⇒ σ̂ nội bộ **giống hệt**; chỉ `expected_vol_pct` khác theo `√H_DAYS[tf]` |
 | 32 | **Chân trời dự báo khớp thời gian nắm giữ** (C3) | `assert har_target_days == 5` và test hồi quy: nếu ai đổi sang 1 ngày, phép so QLIKE với EWMA phải **đỏ** |
 | 33 | **Điểm vào không bao giờ là `close[t]`** (B6) | `assert tranche.entry_ref_price == bars.open[t+1]` cho mọi tranche; và test rò rỉ: đưa vào chuỗi mà `open[t+1] != close[t]` ⇒ hai giá trị phải khác nhau |
+| 34 | **Constructor duy nhất** (B15) | Mọi nhánh `predict()` đi qua `_emit`; grep `Prediction(` trong `src/` chỉ được có **một** kết quả |
+| 35 | **Thứ tự đóng trong một nến** (B14) | Nến vừa xuyên stop vừa có `close ≥ target` ⇒ **`hit_stop`**. Nến vừa quá deadline vừa chạm target ⇒ **`hit_target`** (rào giá trước thời gian) |
+| 36 | **Chọn công cụ nhận thời gian NẮM GIỮ** (B9) | `choose_instrument_display(5,8; f̂=0,0292)` ⇒ `"spot"`; truyền nhầm `H_DAYS["1d"]=1,0` ⇒ `"perp"` ⇒ test đỏ |
+| 37 | **`stale` không do `predict()` sinh** (B10) | `DataFreshness` không chứa `"stale"` ở tầng kiểu; tầng phục vụ tính từ `valid_until` |
 
 **Quy tắc chọn chỗ đặt:**
 
@@ -1051,9 +1177,10 @@ Dải ·  ① độ phủ [q10,q90] = 80% ± 3pp trên ≥500 dự đoán đã c
 | Tệp | Thay đổi |
 |---|---|
 | `config/model.yaml` | **Xoá** `decision.p_up_threshold` / `p_down_threshold` (thay bằng `TRADE_TF` + `p_required` trong mã) · **xoá** khối `quantile` · `classifier` → `meta_label` (depth 3 · ≤15 lá · ≤300 cây) · `drop_flat_from_train: false` · `tuning.n_trials: 20` · `baselines` += `tsmom_grid_median`, `dca_hold`, `naive_rw` · `costs.funding_rate_8h_pct` giữ làm tham chiếu hiển thị, **cấm** dùng trong cổng |
-| `config/features.yaml` | Theo Phụ lục B — làm ở bước 4, **cùng lúc** viết `build_features` |
+| `config/features.yaml` | **Theo bảng Phụ lục B.3** — làm ở bước 4, **cùng lúc** viết `build_features` |
 | `config/symbols.yaml` | Mở rộng exclude: neo pháp định (EUR…) · vàng/hàng hoá (XAUT, PAXG) · RLUSD · cổ phiếu token hoá |
-| `serving/schemas.py` | Theo Phần 2 |
+| `serving/schemas.py` | Theo Phần 2 — kèm khôi phục `last_close` · `valid_until` · `in_training_universe` mà rc1 làm rơi |
+| `config/model.yaml` *(bổ sung)* | `validation.min_train_bars`: **theo khung** (1d ≈ 500, 1h 5000) — hiện 5000 khiến purged WF không sinh nổi fold nào ở khung ngày · `validation.purge_bars`/`embargo_bars`: **60** cho khung 1d *(nhãn L6 là kết cục rào chắn kéo dài tới 60 ngày, không phải `horizon_bars`=1)* · `tuning.objective` → `mean_oos_drawdown_ratio` · xoá `label.dead_zone` |
 
 ## 11.4 · Tài liệu quyết định cần viết
 
@@ -1114,35 +1241,56 @@ Mã tái tạo: `scripts/measurements_2026_08_26/` (13 script, có README).
 
 # PHỤ LỤC B · BỘ ĐẶC TRƯNG
 
-## B.1 · 13 suất dựng được ngay
+## B.1 · 13 suất dựng được ngay — CÔNG THỨC ĐẦY ĐỦ
 
-| # | Đặc trưng | Cụm | Vai trò |
+Mọi đặc trưng đi qua đúng một hàm `shift_all(1)` và qua `assert_scale_free()`.
+Ký hiệu: `c/h/l/o/v` = close/high/low/open/volume nến **ngày** · `lr = log(c).diff()` ·
+`z(x,n) = (x − mean(x,n)) / std(x,n)` · `σ̂` = `sigma_hat_daily` (Parkinson, §L1).
+
+| # | Đặc trưng | Công thức | Cửa sổ | Cụm |
+|---|---|---|---|---|
+| 1 | `sigma_ratio_90d` | `σ̂ / median(σ̂, 90)` | 90 | 5 |
+| 2 | `rv_24` | `sqrt(mean(parkinson_var, 24))` | 24 | 2 |
+| 3 | `rv_ratio_5d_20d` | `sqrt(mean(pv,5)) / sqrt(mean(pv,20))` | 5 · 20 | 7 |
+| 4 | `volume_z96` | `z(v, 96)` | 96 | 3 |
+| 5 | `log_ret_12` | `log(c).diff(12)` | 12 | 1 |
+| 6 | `ema50_ema200` | `EMA(c,50) / EMA(c,200)` — `adjust=False` | 50 · 200 | 8 |
+| 7 | `log_ret_1` | `log(c).diff(1)` | 1 | 4 |
+| 8 | `close_position_in_range` | `(c − l) / (h − l)`, `h==l ⇒ 0,5` | 1 | 4 |
+| 9 | `upper_wick_pct` | `(h − max(c,o)) / c` | 1 | 9 |
+| 10 | `dist_to_prior_swing_sigma` | `(c − rolling_max(h,20).shift(1)) / (σ̂ · c)` | 20 | 1 |
+| 11 | `funding_level_pct` | `f_8h · 3 · 100` — **%/ngày** | 1 | 6 |
+| 12 | `funding_z96` | `z(f_8h, 96)` — 96 **kỳ** ≈ 32 ngày | 96 | 13 |
+| 13 | `dow_sin` · `dow_cos` | `sin/cos(2π · dayofweek / 7)` | — | 10 · 11 |
+
+## B.2 · 5 suất chờ dữ liệu — công thức viết sẵn
+
+| # | Đặc trưng | Công thức | Nguồn cần | Ưu tiên |
+|---|---|---|---|---|
+| 14 | `taker_buy_ratio_z` | `z(taker_buy_vol / v, 96)` | cột 9 klines *(ccxt không trả)* | ★★★ |
+| 15 | `oi_price_div` | `sign(c.diff(24)) · sign(oi.diff(24))` | cron OI — **30 ngày, mất vĩnh viễn** | ★★★ |
+| 16 | `excess_return_vs_btc` | `log_ret_H − log_ret_H(BTC)`, timestamp căn khớp | 40 cặp cùng khung | ★★★ |
+| 17 | `cvd_slope_24` | `slope(cumsum(2·taker_buy − v), 24) / mean(v,24)` | `aggTrades` | ★★ |
+| 18 | `basis` | `(mark − spot) / spot · 100` | mark price | ★ |
+
+> ⚠️ Bốn đặc trưng dùng dữ liệu chưa có (**14 · 15 · 17 · 18**) **chưa qua đo trùng lặp**. Theo `14 §5` quy tắc 1: phải khai báo cụm trước khi chiếm suất; nếu `\|r\| ≥ 0,70` với một suất đã có thì **thay thế**, không **thêm vào**.
+
+## B.3 · Diff `config/features.yaml` (B8)
+
+| Khoá | Hiện tại | Phải thành | Vì sao |
 |---|---|---|---|
-| 1 | `sigma_ratio_90d` | 5 | Chế độ biến động |
-| 2 | `rv_24` | 2 | Mức biến động |
-| 3 | `rv_ratio_5d_20d` | 7 | Cấu trúc kỳ hạn biến động |
-| 4 | `volume_z96` | 3 | Bất thường khối lượng |
-| 5 | `log_ret_12` | 1 | Động lượng |
-| 6 | `ema50_ema200` | 8 | Xu hướng chậm |
-| 7 | `log_ret_1` | 4 | Nến gần nhất |
-| 8 | `close_position_in_range` | 4 | Vị trí đóng cửa |
-| 9 | `upper_wick_pct` | 9 | Áp lực bán trong nến |
-| 10 | `dist_to_prior_swing_sigma` | 1 | Cấu trúc |
-| 11 | `funding_level_pct` | 6 | **Chi phí thật** |
-| 12 | `funding_z96` | 13 | Chế độ chen chúc |
-| 13 | `dow_sin` + `dow_cos` | 10, 11 | Mùa vụ tuần |
+| `momentum.enabled` | `true` | **`false`** | Cả nhóm rơi vào cụm 1: RSI r=0,854 · MACD 0,735 · Stoch 0,765 · ROC 0,997 với log return thuần |
+| `trend.ratios` | ba tỉ số | **chỉ `ema50_ema200`** | `close/ema20` r=0,904 và `ema20/ema50` r=0,906 với log return |
+| `volatility` | 4 ước lượng | **`parkinson` duy nhất** + thêm `rv_ratio_5d_20d` | B4 — và `rv_24`/`atr`/`parkinson` trùng cụm 2 |
+| `returns.log_return_periods` | 7 chu kỳ | **`[1, 12]`** | Năm chu kỳ còn lại trùng cụm 1 |
+| `volume.obv_slope_window` | có | **bỏ** | Rơi vào cụm 1 — OBV là return có trọng số khối lượng |
+| `time.features` | có `hour_sin/cos` | **bỏ ở khung ngày**, giữ cho panel hiển thị | Vô nghĩa khi chân trời là ngày |
+| `candle.features` | 4 | **`close_position_in_range` · `upper_wick_pct`** | `hl_range_pct`/`body_pct` trùng cụm 3 |
+| — | *(không có)* | **thêm nhóm `derivatives`** | funding · OI · taker · basis |
 
-## B.2 · 5 suất chờ dữ liệu
+**Sửa `features.yaml` ở bước 4 của lộ trình — cùng lúc viết `build_features`, không sớm hơn.** Sửa cấu hình trước khi có mã đọc nó là tạo ra một tài liệu thứ hai để lệch pha.
 
-| # | Đặc trưng | Cần | Ưu tiên |
-|---|---|---|---|
-| 14 | `taker_buy_ratio` | Cột 9 klines (ccxt không trả) | ★★★ |
-| 15 | `oi_price_div` | Cron OI — **30 ngày, mất vĩnh viễn** | ★★★ |
-| 16 | `excess_return_vs_btc` | 40 cặp cùng khung | ★★★ |
-| 17 | `cvd_slope_24` | `aggTrades` | ★★ |
-| 18 | `basis` | mark − giao ngay | ★ |
-
-## B.3 · Đã bị đo và BÁC — không được quay lại
+## B.4 · Đã bị đo và BÁC — không được quay lại
 
 | Đặc trưng | Kết quả đo |
 |---|---|
