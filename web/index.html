@@ -106,36 +106,31 @@
         bot tự giao dịch.
       </div>
 
-      <p><strong>Trước khi bất kỳ lệnh tiền thật nào đi qua hệ thống</strong>, bốn
-        điều kiện sau phải đạt — không có ngoại lệ:</p>
+      <p><strong>Quyết định có tin một dự đoán hay không là của bạn.</strong> Việc
+        của hệ thống là không để phần mềm của mình làm bạn mất tiền vì lỗi kỹ thuật.
+        Vì vậy tính năng này chỉ ra mắt khi đủ những thứ sau — chúng chưa được xây:</p>
       <ul class="condition-list">
-        <li>Mô hình dự đoán phải được kiểm tra nghiêm ngặt qua nhiều giai đoạn
-          thị trường khác nhau, trải dài hơn hai năm, phải thật sự sinh lời sau
-          khi trừ hết mọi loại phí, và phải đánh bại chiến lược đơn giản nhất —
-          chỉ mua và giữ. Hiện chưa có mô hình nào tồn tại để kiểm tra điều này.</li>
-        <li>Các con số xác suất mô hình đưa ra phải phản ánh đúng thực tế: khi mô
-          hình nói "khả năng tăng giá là 60%", thì trên thực tế phải có khoảng
-          60% số lần giá thật sự tăng — không hơn, không kém. Phần này cũng chưa
-          được xây.</li>
-        <li>Trước khi chạm tiền thật, hệ thống phải chạy thử bằng tiền giả liên
-          tục ít nhất 60 ngày, qua ít nhất 100 lệnh, mà không xảy ra bất kỳ lỗi
-          kỹ thuật nào — lệnh bị đặt trùng, lệnh bị thất lạc, hay số dư hiển thị
-          sai lệch so với sàn thật. Phần đặt lệnh vẫn chưa được xây.</li>
-        <li>Phải có đầy đủ các lớp bảo vệ: một nút dừng khẩn cấp; giới hạn số
-          tiền tối đa có thể mất trong một ngày (tự tắt, không tự bật lại); giới
-          hạn số tiền cho mỗi lệnh riêng lẻ; cơ chế chống gửi trùng lệnh; đối
-          chiếu số dư nội bộ với số dư thật trên sàn mỗi vài phút; khoá truy cập
-          chỉ được phép giao dịch, tuyệt đối không được rút tiền; tự động chuyển
-          sang chế độ an toàn nếu mất kết nối; và mọi lần khởi động lại đều phải
-          bắt đầu ở trạng thái tắt, cần bật lại bằng tay. Toàn bộ phần này cũng
-          chưa được xây.</li>
+        <li>Một nút dừng khẩn cấp, dừng được ngay cả khi đang có vị thế mở.</li>
+        <li>Giới hạn số tiền tối đa có thể mất trong một ngày — chạm giới hạn thì
+          tự dừng và không tự bật lại — cùng giới hạn cho từng lệnh riêng lẻ.</li>
+        <li>Cơ chế chống gửi trùng lệnh, và đối chiếu định kỳ những lệnh hệ thống
+          đã tạo với trạng thái thật trên sàn.</li>
+        <li>Khoá truy cập chỉ được phép giao dịch, tuyệt đối không được rút tiền,
+          và bị ràng buộc theo địa chỉ máy chủ.</li>
+        <li>Lệnh cắt lỗ đặt thẳng trên sàn cùng lúc với lệnh vào — để khi phần mềm
+          có dừng thì rào chắn vẫn còn đó.</li>
+        <li>Mọi lần khởi động lại đều bắt đầu ở trạng thái tắt, và đường đặt lệnh
+          phải chạy thử đủ lâu bằng tiền giả trước khi ra mắt.</li>
       </ul>
+      <p>Bên cạnh mỗi khuyến nghị, hệ thống sẽ luôn hiển thị phương pháp đó đã được
+        kiểm chứng tới đâu và trên bao nhiêu mẫu — để bạn quyết định khi biết rõ
+        mình đang quyết định điều gì.</p>
 
       <p class="fine-print">
-        Nguồn: <code>docs/adr/019-nen-tang-da-nguoi-dung-hai-mode.md</code> ·
-        <code>docs/00_VISION.md §5</code> ·
-        <code>docs/Old/00_MASTER_PLAN.md §7</code>. Trang này chưa có ô nhập khoá
-        API — nó chỉ xuất hiện khi bốn điều kiện trên đã đạt.
+        Nguồn: <code>docs/adr/020-bo-he-thong-gate.md</code> ·
+        <code>docs/00_VISION.md §5.2</code> ·
+        <code>docs/01_REQUIREMENTS.md §8</code>. Trang này chưa có ô nhập khoá API
+        — nó chỉ xuất hiện khi bộ an toàn ở trên đã đủ.
       </p>
     </section>
   </main>

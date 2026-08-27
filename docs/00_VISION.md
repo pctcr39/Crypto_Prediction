@@ -31,7 +31,7 @@ hơn để người dùng mất tiền vì một con số chưa được kiểm 
 | Khớp lệnh | Mô phỏng tại giá thật + phí taker 0,10%/chiều + trượt giá 0,05% | Lệnh thật gửi lên Binance qua đường lệnh có đối soát |
 | Dự đoán & khuyến nghị | Có, đầy đủ | Có, đầy đủ — cùng một nguồn, cùng một con số |
 | Đặt lệnh thủ công | Có | Có — sau cổng kỹ thuật đường lệnh (§5) |
-| Bot tự giao dịch | Có (để đo bot trước) | Chỉ sau GATE 1–4 (§5), người dùng tự bật, có giới hạn rủi ro riêng |
+| Bot tự giao dịch | Có, mở từ Phase 2 — bot Paper là nơi hệ và người dùng cùng thấy bot làm gì trước khi có tiền thật | Người dùng tự bật, sau khi đã chạy một kỳ bot Paper của chính mình; giới hạn rủi ro riêng; nhãn trạng thái kiểm chứng luôn hiện (§5.2 Luật 15) |
 | Thành tích | Track record cá nhân, bất biến | Track record cá nhân + đối soát với số dư thật |
 | Phân biệt thị giác | Nhãn PAPER ở mọi panel | Nhãn TIỀN THẬT ở mọi panel — không bao giờ để nhầm |
 
@@ -76,7 +76,7 @@ Bản đầy đủ và lý do từng luật ở `docs/Old/00_MASTER_PLAN.md §1`
 | 6 | Xác suất phải hiệu chỉnh — isotonic trên tập validation riêng |
 | 7 | Dự đoán không được nhìn giống dữ liệu thật — tím, nét đứt, không bao giờ xanh/đỏ |
 | 8 | Dashboard luôn nói thật về độ tươi: Live / Chậm / Mất kết nối / Dự đoán cũ |
-| 9 | Tiền thật chỉ mở qua 4 GATE có ngưỡng số — không có ngoại lệ vì cảm tính |
+| 9 | *(đã thay bởi ADR-020)* — hệ 4 GATE bị bỏ; thay bằng Luật 15 và 15b dưới đây |
 | 10 | Mỗi lần train ghi vào MLflow: git hash, seed, hash dữ liệu, config, metric |
 | 11 | Accuracy > 60% ở khung 1h ⇒ giả định có rò rỉ cho tới khi chứng minh ngược lại |
 | 12 | Foundation model đã thấy quá khứ — chỉ đánh giá sau cutoff của chúng |
@@ -89,7 +89,8 @@ Bản đầy đủ và lý do từng luật ở `docs/Old/00_MASTER_PLAN.md §1`
 |---|---|---|
 | 13 | **Không custody.** Tiền luôn nằm trên Binance của người dùng. Hệ từ chối mọi khoá API có quyền rút tiền — kiểm tra quyền lúc liên kết và định kỳ. | Loại bỏ cả lớp rủi ro (hệ bị hack ⇒ mất tiền) và phần lớn gánh pháp lý về giữ tài sản |
 | 14 | **Khoá API là bí mật cấp cao nhất.** Mã hoá khi lưu, chỉ giải mã trong tiến trình đặt lệnh, không bao giờ vào log/lỗi/giao diện, người dùng thu hồi một chạm. | Một lần lộ khoá là mất niềm tin vĩnh viễn |
-| 15 | **GATE là cổng mở tính năng.** Bot trading với tiền thật chỉ mở sau GATE 1–4 (ngưỡng nguyên văn `docs/Old/00_MASTER_PLAN.md §7`). Trade thủ công tiền thật chỉ mở sau cổng kỹ thuật đường lệnh (idempotent, đối soát, kill switch). Không tính năng nào mở vì "có vẻ ổn". | RULE 9 áp cho mọi người dùng, không chỉ chủ dự án |
+| 15 | **Nói thật về mức độ đã kiểm chứng.** Mỗi phương pháp mang một trạng thái công khai — *chưa kiểm chứng* / *đang thu bằng chứng* / *đã kiểm chứng* — sinh tự động từ kết quả kiểm định, hiển thị cạnh mọi khuyến nghị và trong mọi luồng bật tính năng tiền thật, kèm số mẫu. **Hệ không bao giờ gợi ý nhiều tự tin hơn bằng chứng nó có.** | Người dùng quyết định có tin hay không — nhưng phải được quyết định khi biết mình đang quyết định điều gì (ADR-020) |
+| 15b | **Không phát hành nửa vời.** Tính năng chạm tiền thật chỉ ra mắt khi đủ bộ an toàn kỹ thuật: nút dừng khẩn cấp, chống gửi trùng lệnh, đối soát với sàn, giới hạn cỡ lệnh và lỗ ngày, khoá API không quyền rút tiền, khởi động lại về trạng thái tắt, lối ra định nghĩa trước lối vào. Đây **không phải cổng cấp phép** — đây là định nghĩa "đã viết xong". | Rủi ro thị trường là của người dùng; lỗi phần mềm là của nền tảng (ADR-020) |
 | 16 | **Mỗi lần khởi động về trạng thái an toàn, mỗi người dùng có giới hạn riêng.** Bot tắt sau restart; giới hạn lỗ ngày, cỡ lệnh, tổng exposure tính theo từng tài khoản; kill switch toàn hệ dừng mọi bot cùng lúc. | Sự cố không được lan từ người này sang người khác |
 | 17 | **Track record bất biến và công khai.** Mọi dự đoán/khuyến nghị đã phát được ghi trước khi biết kết cục, không sửa, không xoá; thành tích luôn kèm n=. | Khi hệ đặt lệnh hộ người khác, cách duy nhất để họ tin là cho họ kiểm |
 
@@ -105,7 +106,7 @@ Bản đầy đủ và lý do từng luật ở `docs/Old/00_MASTER_PLAN.md §1`
   lệnh khi thắng tầng 1 out-of-sample sau phí. Người dùng có thể *xem* nhiều
   method, nhưng chỉ chọn ở tầng độ chọn lọc (ADR-018), không chọn tham số rào chắn.
 - Khung 1 giờ và 4 giờ là **đầu ra hiển thị**, không phát ý định giao dịch
-  (ADR-002) — cho tới khi có bằng chứng ngược lại qua GATE.
+  (ADR-002) — cho tới khi có bằng chứng ngược lại, ghi bằng ADR mới.
 
 ## 7 · Những điều hệ KHÔNG làm — cố ý, có bằng chứng
 
@@ -124,7 +125,7 @@ Kế thừa từ các vòng phản biện (`docs/Old/09`, `11`, `12`); chi tiế
 |---|---|---|
 | Pháp lý vận hành nền tảng đặt lệnh hộ người dùng tại Việt Nam (điều kiện tư vấn/môi giới nếu có) | Chủ dự án — cần tư vấn pháp lý | Trading mode cho người ngoài (Phase 3) |
 | Mac mini tại nhà: điện và mạng gia đình là điểm hỏng đơn | Chủ dự án — UPS, watchdog, sao lưu ngoài máy | Mở đăng ký công khai (Phase 2 muộn) |
-| Chưa có mô hình nào qua GATE 1 — mọi khuyến nghị hiện chỉ có giá trị đo lường | Lộ trình Phase 1 | Bot trading tiền thật (Phase 4) |
+| Chưa phương pháp nào đạt nhãn *đã kiểm chứng* — mọi khuyến nghị hiện chỉ có giá trị đo lường, và UI phải nói đúng như vậy | Lộ trình Phase 1 | Không chặn phase nào (ADR-020), nhưng chặn quyền được *tuyên bố* là có kỹ năng |
 
 ## 9 · Bản đồ bộ tài liệu và trạng thái duyệt
 
@@ -135,7 +136,7 @@ Kế thừa từ các vòng phản biện (`docs/Old/09`, `11`, `12`); chi tiế
 | `02_FRD.md` | FR-xxx: đặc tả chức năng | ⬜ |
 | `03_ARCHITECTURE.md` | Kiến trúc end-to-end | ⬜ |
 | `04_PREDICTION_SPEC.md` | Lõi dự đoán hai tầng | ⬜ |
-| `05_TRADING_SPEC.md` | Paper / thủ công / bot, Risk Engine, Key Vault, GATE | ⬜ |
+| `05_TRADING_SPEC.md` | Paper / thủ công / bot, Risk Engine, Key Vault, bộ an toàn đường lệnh | ⬜ |
 | `06_DATA_SPEC.md` | Nền dữ liệu | ⬜ |
 | `07_UIUX_SPEC.md` | Design system + dashboard (nền: prototype v14) | ⬜ |
 | `08_ROADMAP.md` | Lộ trình theo phụ thuộc, mốc duyệt | ⬜ |
@@ -152,5 +153,6 @@ Xếp theo phụ thuộc, không theo lịch:
 2. **Nhiều người dùng** — đăng nhập, hồ sơ, ví Paper theo tài khoản, track record cá nhân
 3. **Liên kết Binance + trade thủ công** — Key Vault, xem số dư/lịch sử, đặt lệnh thủ công
    sau cổng kỹ thuật đường lệnh và sau khi gỡ ràng buộc pháp lý (§8)
-4. **Bot trading** — chỉ sau GATE 1–4; từng người tự bật, giới hạn rủi ro riêng
+4. **Bot trading tiền thật** — sau khi bộ an toàn đường lệnh đủ (Luật 15b) và mỗi
+   người đã chạy một kỳ bot Paper của chính mình; từng người tự bật, giới hạn riêng
 5. **ML tầng 2** — cắm method thứ hai qua cùng bộ kiểm định

@@ -2,6 +2,8 @@
 
 **Ngày:** 2026-08-27
 **Trạng thái:** đã chốt — **quyết định của chủ dự án**, trả lời trực tiếp 4 câu hỏi phạm vi
+> ⚠️ **Mục 4 (GATE đổi vai trò) ĐÃ THAY THẾ bởi `ADR-020`** — hệ 4 GATE bị bỏ hoàn toàn.
+> Các mục 1, 2, 3, 5 và toàn bộ phần Hệ quả vẫn còn hiệu lực. Giữ nguyên văn làm sử liệu (REQ DOC-02).
 **Thay thế:** `docs/Old/PREDICTION_DESIGN.md §0.1–0.3` (phần *phạm vi sản phẩm*) · `docs/Old/18_BUILD_AND_DEPLOY_PLAN.md` (phần *cắt đường khoá giao dịch* và *một người dùng*)
 **Không thay thế:** toàn bộ phần đo lường, phương pháp, hợp đồng dữ liệu của PREDICTION_DESIGN và các tài liệu 07–17 — chúng trở thành lõi tầng 1 của hệ dự đoán.
 

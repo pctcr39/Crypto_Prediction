@@ -1,7 +1,10 @@
-"""M13 · Giới hạn rủi ro — GATE 4, RULE 9.
+"""Giới hạn rủi ro — BỘ AN TOÀN BẮT BUỘC của đường lệnh.
 
-Mười một thứ BẮT BUỘC có và phải được kiểm thử trước khi chạm tiền thật
-(danh sách đầy đủ — khớp docs/00_MASTER_PLAN.md §7 GATE 4, không rút gọn):
+Hệ 4 GATE đã bị bỏ (ADR-020). Danh sách dưới đây KHÔNG phải cổng cấp phép — nó là
+ĐỊNH NGHĨA HOÀN THÀNH: phần mềm chạm tiền thật mà thiếu một mục là chưa viết xong.
+Đặc tả: docs/01_REQUIREMENTS.md §8 (REQ-SAFE) · chi tiết: docs/05_TRADING_SPEC.md
+
+Mười một thứ BẮT BUỘC có và phải được kiểm thử trước khi chạm tiền thật:
 
   [ ] Kill switch — một lệnh dừng toàn bộ và huỷ mọi lệnh chờ
   [ ] Giới hạn lỗ ngày — lỗ 2% vốn/ngày → tự tắt, KHÔNG tự bật lại
@@ -18,12 +21,13 @@ Mười một thứ BẮT BUỘC có và phải được kiểm thử trước k
       vị thế đang mở ngay, không chờ
   [ ] Chế độ thủ công — mọi lần khởi động lại đều bắt đầu ở trạng thái TẮT
 
-Vượt cả bốn gate KHÔNG có nghĩa là sẽ có lãi. Chúng chỉ loại bỏ những cách thua
-CÓ THỂ TRÁNH ĐƯỢC — lỗi kỹ thuật, rò rỉ dữ liệu, tự lừa mình.
+Đủ bộ an toàn KHÔNG có nghĩa là sẽ có lãi. Nó chỉ loại bỏ những cách thua CÓ THỂ
+TRÁNH ĐƯỢC — lỗi kỹ thuật, rò rỉ dữ liệu, tự lừa mình. Rủi ro thị trường vẫn thuộc
+về người dùng; đó là ranh giới trách nhiệm mà ADR-020 đặt ra.
 
-⚠️ 27/08/2026 — ADR-019 (docs/adr/019-*.md): sản phẩm là nền tảng NHIỀU người dùng
-có Trading mode. Module này sẽ được xây theo docs/05_TRADING_SPEC.md với giới hạn
-tính THEO TỪNG TÀI KHOẢN (Luật 16, docs/00_VISION.md §5.2) và kill switch toàn hệ.
+⚠️ ADR-019: sản phẩm là nền tảng NHIỀU người dùng có Trading mode. Mọi giới hạn ở
+đây tính THEO TỪNG TÀI KHOẢN (Luật 16, docs/00_VISION.md §5.2); riêng nút dừng
+khẩn cấp có thêm tầng toàn hệ cho admin (REQ SAFE-02).
 Giữ NotImplementedError cho tới phase tương ứng trong docs/08_ROADMAP.md.
 """
 
@@ -37,4 +41,4 @@ ATR_STOPLOSS_MULT = 1.5  # cắt lỗ = 1,5×ATR14, đặt cùng lúc với lệ
 
 
 def check_all(*args, **kwargs):
-    raise NotImplementedError("M13 — xem docs/00_MASTER_PLAN.md §7 GATE 4")
+    raise NotImplementedError("Chưa xây — xem docs/01_REQUIREMENTS.md §8 REQ-SAFE")

@@ -20,7 +20,8 @@ Pipeline dự đoán **hướng giá crypto** cho bất kỳ cặp USDT nào tr�
 dashboard realtime. Ba đầu ra mỗi lần suy luận: hướng (`p_up` đã hiệu chỉnh),
 dải giá (quantile 10/50/90), và biến động kỳ vọng. Khung 1h/4h (intraday) và 1d.
 
-Kiến trúc auto-trade được dựng sẵn nhưng **mặc định TẮT**, chỉ mở sau 4 gate.
+Kiến trúc auto-trade được dựng sẵn nhưng **mặc định TẮT**. Hệ 4 gate đã bị bỏ
+(ADR-020) — thay bằng nhãn trạng thái kiểm chứng + bộ an toàn kỹ thuật bắt buộc.
 
 Mục tiêu kép: xây sản phẩm thật **và** học Claude Code. Chủ repo là PCT, trình độ
 Python cơ bản — code cần comment giải thích, mỗi module có script chạy độc lập.
@@ -42,7 +43,7 @@ dự án dự đoán giá sẽ tự lừa mình. Bản đầy đủ ở `docs/00
 | 6 | **Xác suất phải hiệu chỉnh.** `predict_proba()` thô không phải xác suất. Isotonic trên tập validation riêng. | reliability diagram |
 | 7 | **Dự đoán không được nhìn giống dữ liệu thật.** Tím, nét đứt. Không bao giờ xanh/đỏ. | `docs/02_DESIGN_SYSTEM.md` |
 | 8 | **Dashboard luôn nói thật về độ tươi:** Live / Chậm / Mất kết nối / Dự đoán cũ. | — |
-| 9 | **Tiền thật chỉ mở qua 4 gate**, mỗi gate có ngưỡng số. Không có ngoại lệ vì cảm tính. | `§7 MASTER_PLAN` |
+| 9 | **Nói thật về mức độ đã kiểm chứng, và không phát hành nửa vời.** Mỗi phương pháp mang nhãn trạng thái kiểm chứng sinh tự động, hiện cạnh mọi khuyến nghị. Tính năng chạm tiền thật chỉ ra mắt khi đủ bộ an toàn kỹ thuật (nút dừng khẩn cấp, chống trùng lệnh, đối soát, giới hạn, khoá không quyền rút). *(ADR-020 thay hệ 4 gate — người dùng quyết định có tin dự đoán hay không; nền tảng chịu trách nhiệm về lỗi phần mềm.)* | `docs/01_REQUIREMENTS.md §8` |
 | 10 | **Mỗi lần train ghi vào MLflow:** git hash, seed, hash dữ liệu, config, metric. | — |
 | 11 | **Accuracy > 60% ở khung 1h ⇒ giả định có rò rỉ** cho tới khi chứng minh ngược lại. | `-m leakage` |
 | 12 | **Foundation model đã thấy quá khứ của bạn.** Kronos/Chronos chỉ đánh giá sau cutoff của chúng. | — |
@@ -111,11 +112,11 @@ make check-data     # xem đang có dữ liệu gì
 | P2 | M4 nhãn · M6 kiểm định ★ | ⬜ stub — 5 phép thử leakage đang `skip` |
 | P3–P4 | M5, M7, M8 | ⬜ stub |
 | P5 | M9–M11 | ⬜ stub — **prototype dashboard v6 là hợp đồng UI** (`docs/design/dashboard-prototype.html`, artifact đã publish): chart + khung 1m–1w chiếu model, chọn coin, trade setup M13, BUY/SELL paper, sổ lệnh mô phỏng |
-| P6–P7 | M12–M14 | ⬜ stub, khoá sau GATE |
+| P6–P7 | M12–M14 | ⬜ stub — xem lộ trình mới ở `docs/00_VISION.md §10` |
 
 Harness: skills `ai-coding` + `visualize-dashboard` ✅ · hooks H1–H5 ⬜ · agents ⬜ · MCP để M9.
 Docs: 00–03 gốc · 04 chiến lược (WBS W0–W18, 6 tầng audit) · 05 UX plan · 04_PHAN_TICH_VISHVAALGO · ADR-001. ADR-002..005 chưa viết.
-Quyết định chờ user: G4 (ngưỡng thanh khoản) · số coin tải W1 · chính sách khi trượt GATE 1.
+Quyết định chờ user: xem `docs/01_REQUIREMENTS.md §17`.
 
 **Việc tiếp theo theo kế hoạch:** M3 (feature) và M6 (kiểm định) làm **song song** —
 bộ kiểm định phải tồn tại *trước khi* có model nào để tự lừa mình.
