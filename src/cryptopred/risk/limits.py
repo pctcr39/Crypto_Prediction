@@ -21,10 +21,10 @@ Mười một thứ BẮT BUỘC có và phải được kiểm thử trước k
 Vượt cả bốn gate KHÔNG có nghĩa là sẽ có lãi. Chúng chỉ loại bỏ những cách thua
 CÓ THỂ TRÁNH ĐƯỢC — lỗi kỹ thuật, rò rỉ dữ liệu, tự lừa mình.
 
-⚠️ 27/08/2026 — theo docs/PREDICTION_DESIGN.md §0.1/§0.3, GATE 3 và GATE 4 hiện
-NGOÀI PHẠM VI sản phẩm: hệ thống được định nghĩa lại là chỉ dự đoán/khuyến nghị,
-không đặt lệnh, không giữ khoá API. Module này giữ nguyên NotImplementedError
-cho tới khi có một quyết định (ADR) đảo ngược lựa chọn phạm vi đó.
+⚠️ 27/08/2026 — ADR-019 (docs/adr/019-*.md): sản phẩm là nền tảng NHIỀU người dùng
+có Trading mode. Module này sẽ được xây theo docs/05_TRADING_SPEC.md với giới hạn
+tính THEO TỪNG TÀI KHOẢN (Luật 16, docs/00_VISION.md §5.2) và kill switch toàn hệ.
+Giữ NotImplementedError cho tới phase tương ứng trong docs/08_ROADMAP.md.
 """
 
 from __future__ import annotations

@@ -94,21 +94,20 @@
         <span class="status status--stale">Chưa khả dụng</span>
       </div>
 
-      <p>Live nghĩa là đặt lệnh thật, bằng tiền thật của bạn. Tính năng này
-        <strong>chưa mở</strong>.</p>
+      <p>Live nghĩa là đặt lệnh thật, bằng tiền thật, trên chính tài khoản Binance
+        của bạn. Tính năng này <strong>đang được xây, chưa mở</strong>.</p>
 
       <div class="reason-primary">
-        <strong>Lý do quan trọng nhất:</strong> đây là một lựa chọn có chủ đích,
-        không phải vì thiếu sót kỹ thuật. Hệ thống này được xây để chỉ làm một
-        việc — đưa ra dự đoán và khuyến nghị. Nó sẽ không bao giờ tự ý đặt lệnh
-        thay bạn, không bao giờ yêu cầu hay giữ khoá tài khoản Binance của bạn, và
-        không bao giờ chạm vào tiền của bạn. Bạn đọc thông tin, tự mình quyết
-        định, và nếu muốn giao dịch thì tự tay thực hiện trên chính tài khoản
-        Binance của bạn.
+        <strong>Nguyên tắc không bao giờ đổi:</strong> tiền của bạn luôn nằm trên
+        Binance của bạn — hệ thống không giữ hộ tiền. Khi tính năng mở, bạn sẽ liên
+        kết bằng một khoá chỉ có quyền giao dịch; hệ thống từ chối mọi khoá có quyền
+        rút tiền, mã hoá khoá khi lưu, và bạn thu hồi được ngay bất cứ lúc nào.
+        Thứ tự xây: tài khoản người dùng → liên kết Binance → đặt lệnh thủ công →
+        bot tự giao dịch.
       </div>
 
-      <p><strong>Ngay cả khi lựa chọn đó thay đổi trong tương lai</strong>, hệ
-        thống vẫn còn một chặng đường dài trước khi đủ tin cậy để tự đặt lệnh:</p>
+      <p><strong>Trước khi bất kỳ lệnh tiền thật nào đi qua hệ thống</strong>, bốn
+        điều kiện sau phải đạt — không có ngoại lệ:</p>
       <ul class="condition-list">
         <li>Mô hình dự đoán phải được kiểm tra nghiêm ngặt qua nhiều giai đoạn
           thị trường khác nhau, trải dài hơn hai năm, phải thật sự sinh lời sau
@@ -133,10 +132,10 @@
       </ul>
 
       <p class="fine-print">
-        Nguồn: <code>docs/Old/PREDICTION_DESIGN.md</code> ·
-        <code>docs/Old/00_MASTER_PLAN.md §7</code> ·
-        <code>src/cryptopred/risk/limits.py</code>. Trang này không có ô nhập khoá
-        API, và sẽ không có cho tới khi cả hai điều kiện trên đều được gỡ.
+        Nguồn: <code>docs/adr/019-nen-tang-da-nguoi-dung-hai-mode.md</code> ·
+        <code>docs/00_VISION.md §5</code> ·
+        <code>docs/Old/00_MASTER_PLAN.md §7</code>. Trang này chưa có ô nhập khoá
+        API — nó chỉ xuất hiện khi bốn điều kiện trên đã đạt.
       </p>
     </section>
   </main>
