@@ -139,7 +139,7 @@ class Tranche:
     tranche_id: str                    # symbol|open_time|level|model_sha
     symbol: str
     level: float                       # 0,25 | 0,50 | 0,75 | 1,00
-    entry_ref_price: float             # giá tham chiếu lúc phát khuyến nghị
+    entry_ref_price: float             # = OPEN nến t+1 (B6). KHÔNG BAO GIỜ close[t]
     entry_time: datetime               # UTC
     sigma_entry: float                 # σ̂ tại lúc phát — đóng băng cùng khuyến nghị
     stop_price: float                  # MỨC KHUYẾN NGHỊ — người dùng tự đặt lệnh
@@ -367,12 +367,43 @@ def p_star_event(sigma_d, sl_mult=1.2, tp_mult=4.0) -> PStar:
 **Bất biến khoảng cách — hình dạng cược KHÔNG tạo ra edge:**
 
 ```
-null(bước ngẫu nhiên không trôi) = sl/(sl+tp)              = 23,1%
-hoà vốn                          = (1+c_R)/(tp/sl + 1)     = 25,0%
-khoảng cách                      = c_R/(1 + tp/sl)         = 1,92 điểm   ← LUÔN DƯƠNG
+null (bước ngẫu nhiên không trôi, MÔ PHỎNG đúng quy ước) = 23,42%
+hoà vốn = (1 + c_R)/(tp/sl + 1)                          = 25,00%
+khoảng cách = c_R/(1 + tp/sl)                            =  1,92 điểm   ← LUÔN DƯƠNG
 ```
 
-> Dưới bước ngẫu nhiên, **mọi** cấu hình rào chắn đều lỗ, đúng bằng `c_R/(1+r)`. Hình dạng cược chỉ đổi **mức nâng tỉ lệ thắng mà tín hiệu phải cung cấp** — với 1,2/4,0 là 1,92 điểm; tín hiệu đo được nâng **10,6 điểm** (23,1% → 33,7%).
+> Dưới bước ngẫu nhiên, **mọi** cấu hình rào chắn đều lỗ, đúng bằng `c_R/(1+r)`. Hình dạng cược chỉ đổi **mức nâng tỉ lệ thắng mà tín hiệu phải cung cấp** — với 1,2/4,0 là 1,92 điểm; tín hiệu đo được nâng **6,6 điểm** (23,42% → 30,0%).
+
+### ⚠️ Null KHÔNG phải `1,2/5,2 = 23,08%` — ba tầng sai lệch chồng nhau
+
+Công thức gambler's ruin `sl/(sl+tp)` chỉ đúng cho chuyển động Brown **không trôi · giám sát liên tục CẢ HAI rào · không có hạn thời gian**. Thiết kế thật khác cả ba:
+
+| # | Sai lệch | Ảnh hưởng |
+|---|---|---|
+| 1 | Rào định nghĩa **nhân trong giá** (`e·(1±kσ)`) nhưng bước ngẫu nhiên **cộng trong log** ⇒ tỉ lệ rào trong log-space là `\|log(1−1,2σ)\| : log(1+4,0σ)` = 3,67% : 11,33%, **không phải** 1,2 : 4,0 | **+1,37 điểm** |
+| 2 | Bước **ngày rời rạc**, không liên tục | +1,1 điểm |
+| 3 | **TP soi tại CLOSE**, không intrabar (§L5) | −2,1 điểm |
+| | **Ròng** | 23,08% → **23,42%** *(gần nhau do trùng hợp, không do đúng)* |
+
+**Null đúng phải MÔ PHỎNG, và mô phỏng phải tái lập được:**
+
+```python
+NULL_SEED, NULL_PATHS, SUB_STEPS = 20_260_827, 200_000, 24
+# GBM μ=0 · σ = σ̂ đang dùng · 24 bước/ngày để sinh high/low trong ngày
+# · stop soi low (ưu tiên khi cùng nến) · target soi close · hạn 60 ngày
+```
+
+| σ̂ ngày | Null — quy ước vận hành | Null — cả hai intrabar |
+|---|---|---|
+| 2,43% | **23,19%** | 25,26% |
+| **3,00%** | **23,42%** | 25,52% |
+| 4,00% | **23,82%** | 25,99% |
+
+Ổn định theo seed *(5 seed, σ̂ = 3,00%)*: 23,42 · 23,70 · 23,51 · 23,28 · 23,41 — **độ lệch 0,138 điểm**.
+
+**Đối chiếu tỉ lệ nền thực nghiệm** *(vào lệnh mọi ngày trong mẫu, cùng quy ước, σ̂ Parkinson, n = 9.046)*: **23,67%** — cao hơn null mô phỏng **+0,25 điểm**, đúng bằng phần trôi dương của thị trường crypto.
+
+> Tỉ lệ nền thực nghiệm **23,67%** là đối chứng dùng cho cổng — nó bao gồm cả phần trôi, nên nó là thanh xà đúng. Null mô phỏng 23,42% dùng cho **bất biến test**, nơi cần một con số tái lập được không phụ thuộc dữ liệu.
 
 **Kiểm độ bền qua bề mặt tham số rào** *(89 lệnh, 4 cặp — kiểm tra, KHÔNG phải thủ tục chọn)*:
 
@@ -388,9 +419,15 @@ khoảng cách                      = c_R/(1 + tp/sl)         = 1,92 điểm   �
 
 **Sức chịu trượt giá của mức dừng lỗ:**
 
-Tỉ lệ chốt lời **theo quy ước vận hành** (stop treo, TP tại close): **29,2%** — thấp hơn quy ước cả-hai-intrabar (33,7%) nhưng **EV cao hơn 57%** vì lệnh thắng trung bình đạt **4,74R** thay vì bị chặn ở 3,33R.
+Tỉ lệ chốt lời **theo quy ước vận hành** (stop treo · TP tại close · σ̂ Parkinson): **30,0%** (n = 90). Thấp hơn quy ước cả-hai-intrabar nhưng **EV cao hơn** vì lệnh thắng trung bình đạt **4,48R** thay vì bị chặn ở 3,33R.
 
-> Cổng `p_star = 25,0%` tính theo payoff **hợp đồng** 3,33R ⇒ nó **thận trọng theo cấu tạo**: bỏ qua toàn bộ phần upside của việc để lệnh thắng chạy. Biên trên chính điều kiện của cổng: **+4,2 điểm**. EV thực đo kể cả phần chạy: **+0,593R**.
+> Cổng `p_star = 25,0%` tính theo payoff **hợp đồng** 3,33R ⇒ nó **thận trọng theo cấu tạo**: bỏ qua toàn bộ upside của việc để lệnh thắng chạy.
+>
+> | | |
+> |---|---|
+> | Biên trên điều kiện của chính cổng | **+5,0 điểm** (30,0% vs 25,0%) |
+> | Nâng so tỉ lệ nền thực nghiệm | **+6,3 điểm** (30,0% vs 23,67%) |
+> | **EV thực đo, kể cả phần chạy** | **+0,559R** |
 
 | Lỗ thực nhận | EV mỗi lệnh |
 |---|---|
@@ -403,6 +440,22 @@ Tỉ lệ chốt lời **theo quy ước vận hành** (stop treo, TP tại clos
 Ngưỡng cảnh báo 1,3R và chặn 1,4R nằm **trong vùng kỳ vọng dương** — chúng là cổng thận trọng, không phải điểm kỳ vọng âm.
 
 ## L5 · Hướng sơ cấp
+
+### ★ Quy ước khớp lệnh — ĐÓNG BĂNG (B6)
+
+```
+Tín hiệu tính tại CLOSE nến t          (dùng dữ liệu tới hết t, không hơn)
+Điểm vào tham chiếu = OPEN nến t+1     ← entry_ref_price
+Thực thi thật        = TWAP 00:15–00:45 UTC của ngày t+1
+```
+
+> ⛔ **Dùng `close[t]` làm điểm vào là LOOKAHEAD** — tín hiệu và giá khớp cùng một thời điểm đóng nến, tức bạn giả định khớp được ở đúng giá mà bạn vừa dùng để ra quyết định. `11 §5.1` gọi tên nó; bất biến #33 chặn nó.
+
+| | |
+|---|---|
+| **Vì sao lệch khỏi 00:00 UTC khi thực thi** | 00:00 UTC vừa là mốc funding vừa là mốc dồn cụm turn-of-candle (+0,58 bps/phút, `09 §4`) |
+| **Vì sao backtest vẫn dùng `open[t+1]`** | Là ước lượng có sẵn, không cần dữ liệu phút. **Chênh lệch `open[t+1]` ↔ TWAP CHƯA ĐO** — nằm ở phép đo #8; trước khi đo xong, không được gọi nó là "thận trọng" |
+| **Mọi phép đo trong repo dùng quy ước này** | `trend.py` · `null.py` · `all27.py` · `barrier_surface.py` · `groupB.py`. Lần duy nhất lệch khỏi nó là lỗi off-by-one của `pp4_final.py` (ADR-013) |
 
 ### Tín hiệu một ô
 
@@ -711,7 +764,7 @@ Hệ **không biết** người dùng có vào lệnh không, và **không đư�
 | 12 | Lưới đóng băng | Hash 27 ô pin trong test |
 | 13 | Máy trạng thái tranche | Property test: slot mở ⟺ w ≥ mức và slot trống · đóng đúng LIFO · không tranche nào sống quá deadline · Σ notional ≤ w × size_base |
 | 14 | Nhãn không phản thực | Hàm nhãn **không được đọc** giá sau thời điểm thoát |
-| 15 | Quy ước soi rào | Null mô phỏng = **23,1% ± 0,5 điểm** (soi-close cho 28,0% ⇒ refactor lệch quy ước sẽ đỏ) |
+| 15 | **Quy ước soi rào** | `simulate_null(σ=0,03, seed=NULL_SEED, n=200k, sub=24)` phải cho **23,42% ± 0,4 điểm**. Đổi sang cả-hai-intrabar cho 25,5% ⇒ refactor lệch quy ước làm test đỏ. *(Con số 23,1% cũ là giải tích sai — xem §L4)* |
 | 16 | Mọi tranche là giao ngay | `instrument == "spot"` toàn sổ |
 | 17 | `predict()` thuần | Gọi hai lần cùng đầu vào ⇒ giống hệt từng byte |
 | 18 | Độ tươi chặn trước | `delayed`/`disconnected` ⇒ `new_tranches == ()`, mọi trường hợp |
@@ -729,6 +782,7 @@ Hệ **không biết** người dùng có vào lệnh không, và **không đư�
 | 30 | **Một hàm biến động duy nhất** (B4) | `sigma_hat_daily` là đường DUY NHẤT sinh σ̂ — quét `src/` cấm mọi `.std()`/`rolling` tính vol ngoài nó |
 | 31 | **σ̂ luôn thang NGÀY** (B5) | Gọi `predict()` với `tf` ∈ {1h, 4h, 1d} trên cùng mốc thời gian ⇒ σ̂ nội bộ **giống hệt**; chỉ `expected_vol_pct` khác theo `√H_DAYS[tf]` |
 | 32 | **Chân trời dự báo khớp thời gian nắm giữ** (C3) | `assert har_target_days == 5` và test hồi quy: nếu ai đổi sang 1 ngày, phép so QLIKE với EWMA phải **đỏ** |
+| 33 | **Điểm vào không bao giờ là `close[t]`** (B6) | `assert tranche.entry_ref_price == bars.open[t+1]` cho mọi tranche; và test rò rỉ: đưa vào chuỗi mà `open[t+1] != close[t]` ⇒ hai giá trị phải khác nhau |
 
 **Quy tắc chọn chỗ đặt:**
 
@@ -1034,9 +1088,13 @@ Dải ·  ① độ phủ [q10,q90] = 80% ± 3pp trên ≥500 dự đoán đã c
 | Tương quan hạng tham số hai đoạn | +0,19 | `12 §2.6` |
 | Tỉ số sụt giảm tổ hợp | 0,29 / 0,29 / 0,31 | `12 §6.5` |
 | Tỉ số sụt giảm tái lập | 54/54 quan sát | `12 §2.7` |
-| Tỉ lệ chốt lời đo được | **33,7%** (89 lệnh, 4 cặp) | `15 §1.5` **đã sửa** — ADR-013 |
+| **Tỉ lệ chốt lời — quy ước vận hành + Parkinson** | **30,0%** (90 lệnh, 4 cặp) | `rv_estimators.py` |
+| *Tỉ lệ chốt lời — cả hai intrabar + close-to-close* | *33,7%* | `15 §1.5` đã sửa — ADR-013 |
+| **EV mỗi lệnh (kể cả phần chạy)** | **+0,559R** · R TB thắng 4,48R | `rv_estimators.py` |
 | Tỉ lệ nền khớp cửa sổ | 23,7% | `12 §2.9` |
-| Null bước ngẫu nhiên | 23,1% | **giải tích** `sl/(sl+tp)` = 1,2/5,2 — không phải mô phỏng |
+| **Null bước ngẫu nhiên** | **23,42%** (mô phỏng, seed 20260827, 200k đường) | `null_barrier.py` |
+| *Null — giá trị giải tích `1,2/5,2` (SAI, ba tầng sai lệch)* | *23,08%* | *§L4 — bỏ* |
+| **Tỉ lệ nền thực nghiệm** (n = 9.046) | **23,67%** | `null_barrier.py` |
 | Rào 35 ngày ⇒ hết hạn | 11/23 | `12 §2.8` |
 | Rào k=1 ⇒ hết hạn | 0/23 | ↑ |
 | LIFO-thoát | 16% tổng tranche | mô phỏng phản biện |
