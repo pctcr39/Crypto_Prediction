@@ -13,8 +13,9 @@
 
     <div class="card">
       <p style="font: var(--text-sm); color: var(--text-2); margin-top: 0">
-        Dashboard là <strong>M11</strong> — chưa xây. Khung này chỉ để xác nhận
-        design token nạp đúng.
+        Dashboard đầy đủ là <strong>M11</strong> — chưa xây (chưa có chart, chưa có
+        luồng dự đoán thật). Phần <strong>Paper trading</strong> bên dưới đã chạy
+        thật, dùng giá Binance công khai (không cần API key).
       </p>
 
       <div style="display: flex; gap: var(--sp-4); align-items: center; flex-wrap: wrap">
@@ -32,6 +33,112 @@
         Tím = do model sinh ra (DS-RULE 4). Không bao giờ dùng xanh/đỏ cho dự đoán.
       </p>
     </div>
+
+    <div class="mode-tabs" role="tablist" aria-label="Chế độ giao dịch">
+      <button type="button" class="mode-tab" id="tab-paper" role="tab" aria-selected="true">Paper</button>
+      <button type="button" class="mode-tab" id="tab-live" role="tab" aria-selected="false">Live</button>
+    </div>
+
+    <section class="card" id="panel-paper" aria-label="Đặt lệnh chế độ paper">
+      <div class="pc-head">
+        <h2>Đặt lệnh · PAPER</h2>
+        <span class="chip">mô phỏng — không kết nối Binance</span>
+      </div>
+
+      <div class="bal-row">
+        <span>Giá tham chiếu (BTC/USDT)</span>
+        <span class="sv num" id="ref-price">
+          <span class="status status--stale" id="ref-status"></span>
+          <span id="ref-price-val">—</span>
+        </span>
+      </div>
+      <div class="bal-row"><span>Số dư paper</span><span class="sv num" id="paper-cash">—</span></div>
+      <div class="bal-row"><span>BTC đang giữ</span><span class="sv num" id="paper-asset">0.000000</span></div>
+
+      <label class="amt-lbl">Giá trị lệnh (USDT)
+        <input type="number" id="ord-amt" class="sinput num" value="500" min="10" step="50">
+      </label>
+      <div class="pct-row">
+        <button type="button" class="pct-btn num" data-p="25">25%</button>
+        <button type="button" class="pct-btn num" data-p="50">50%</button>
+        <button type="button" class="pct-btn num" data-p="75">75%</button>
+        <button type="button" class="pct-btn num" data-p="100">100%</button>
+      </div>
+      <div class="ord-btns">
+        <button type="button" class="ord-buy" id="btn-buy">Mua BTC</button>
+        <button type="button" class="ord-sell" id="btn-sell">Bán BTC</button>
+      </div>
+
+      <div id="pos-box" class="bal-box" hidden>
+        <div class="bal-row"><span>Vị thế</span><span class="sv num" id="pos-qty"></span></div>
+        <div class="bal-row"><span>Giá vào trung bình</span><span class="sv num" id="pos-entry"></span></div>
+        <div class="bal-row"><span>uPnL (đang mở)</span><span class="sv num" id="pos-pnl"></span></div>
+      </div>
+
+      <ul class="ord-log" id="ord-log">
+        <li class="ord-log__empty">Chưa có lệnh nào.</li>
+      </ul>
+
+      <p class="fine-print">
+        PAPER = khớp mô phỏng tại giá Binance thật (REST công khai, không cần API
+        key), phí taker 0,10%/chiều, theo cơ chế spot (bán cần có coin). Trạng thái
+        chỉ lưu trên trình duyệt này (không đồng bộ thiết bị khác). Đặt lệnh
+        Binance thật hiện <strong>ngoài phạm vi sản phẩm</strong> — xem tab Live để
+        biết vì sao.
+      </p>
+    </section>
+
+    <section class="card card--locked" id="panel-live" aria-label="Chế độ live" hidden>
+      <div class="pc-head">
+        <h2>Đặt lệnh · LIVE</h2>
+        <span class="status status--stale">Chưa khả dụng</span>
+      </div>
+
+      <p>Live nghĩa là đặt lệnh thật, bằng tiền thật của bạn. Tính năng này
+        <strong>chưa mở</strong>.</p>
+
+      <div class="reason-primary">
+        <strong>Lý do quan trọng nhất:</strong> đây là một lựa chọn có chủ đích,
+        không phải vì thiếu sót kỹ thuật. Hệ thống này được xây để chỉ làm một
+        việc — đưa ra dự đoán và khuyến nghị. Nó sẽ không bao giờ tự ý đặt lệnh
+        thay bạn, không bao giờ yêu cầu hay giữ khoá tài khoản Binance của bạn, và
+        không bao giờ chạm vào tiền của bạn. Bạn đọc thông tin, tự mình quyết
+        định, và nếu muốn giao dịch thì tự tay thực hiện trên chính tài khoản
+        Binance của bạn.
+      </div>
+
+      <p><strong>Ngay cả khi lựa chọn đó thay đổi trong tương lai</strong>, hệ
+        thống vẫn còn một chặng đường dài trước khi đủ tin cậy để tự đặt lệnh:</p>
+      <ul class="condition-list">
+        <li>Mô hình dự đoán phải được kiểm tra nghiêm ngặt qua nhiều giai đoạn
+          thị trường khác nhau, trải dài hơn hai năm, phải thật sự sinh lời sau
+          khi trừ hết mọi loại phí, và phải đánh bại chiến lược đơn giản nhất —
+          chỉ mua và giữ. Hiện chưa có mô hình nào tồn tại để kiểm tra điều này.</li>
+        <li>Các con số xác suất mô hình đưa ra phải phản ánh đúng thực tế: khi mô
+          hình nói "khả năng tăng giá là 60%", thì trên thực tế phải có khoảng
+          60% số lần giá thật sự tăng — không hơn, không kém. Phần này cũng chưa
+          được xây.</li>
+        <li>Trước khi chạm tiền thật, hệ thống phải chạy thử bằng tiền giả liên
+          tục ít nhất 60 ngày, qua ít nhất 100 lệnh, mà không xảy ra bất kỳ lỗi
+          kỹ thuật nào — lệnh bị đặt trùng, lệnh bị thất lạc, hay số dư hiển thị
+          sai lệch so với sàn thật. Phần đặt lệnh vẫn chưa được xây.</li>
+        <li>Phải có đầy đủ các lớp bảo vệ: một nút dừng khẩn cấp; giới hạn số
+          tiền tối đa có thể mất trong một ngày (tự tắt, không tự bật lại); giới
+          hạn số tiền cho mỗi lệnh riêng lẻ; cơ chế chống gửi trùng lệnh; đối
+          chiếu số dư nội bộ với số dư thật trên sàn mỗi vài phút; khoá truy cập
+          chỉ được phép giao dịch, tuyệt đối không được rút tiền; tự động chuyển
+          sang chế độ an toàn nếu mất kết nối; và mọi lần khởi động lại đều phải
+          bắt đầu ở trạng thái tắt, cần bật lại bằng tay. Toàn bộ phần này cũng
+          chưa được xây.</li>
+      </ul>
+
+      <p class="fine-print">
+        Nguồn: <code>docs/PREDICTION_DESIGN.md</code> ·
+        <code>docs/00_MASTER_PLAN.md §7</code> ·
+        <code>src/cryptopred/risk/limits.py</code>. Trang này không có ô nhập khoá
+        API, và sẽ không có cho tới khi cả hai điều kiện trên đều được gỡ.
+      </p>
+    </section>
   </main>
   <script type="module" src="app.js"></script>
 </body>

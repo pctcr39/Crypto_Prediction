@@ -45,3 +45,102 @@ body {
 
 /* TODO(M11): ProbabilityMeter, PriceHero, PredictionCard, SymbolPicker
    — đặc tả đầy đủ ở docs/02_DESIGN_SYSTEM.md §4 */
+
+/* ══════════════════════════════════════════════════════════════════
+   PAPER TRADING — Swap Mode Paper ⇄ Live, Phase 1
+   Nguồn logic: docs/design/dashboard-prototype.html (UX-16)
+   ══════════════════════════════════════════════════════════════════ */
+
+.mode-tabs { display: flex; gap: var(--sp-2); margin: var(--sp-5) 0 var(--sp-4); }
+.mode-tab {
+  font: var(--text-sm);
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-2);
+  cursor: pointer;
+}
+.mode-tab--active { color: var(--text-1); background: var(--surface-2); border-color: var(--accent); }
+
+.pc-head { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-2); }
+.pc-head h2 { margin: 0; font: var(--text-md); }
+
+.chip {
+  font: var(--text-2xs);
+  padding: 2px var(--sp-2);
+  border-radius: var(--radius-pill);
+  background: var(--surface-2);
+  color: var(--text-2);
+  border: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.bal-row { display: flex; justify-content: space-between; align-items: center; font: var(--text-sm); padding: var(--sp-1) 0; }
+.bal-row .sv { color: var(--text-1); display: inline-flex; align-items: center; gap: var(--sp-2); }
+.bal-box { margin-top: var(--sp-3); padding-top: var(--sp-3); border-top: 1px solid var(--border); }
+
+.amt-lbl { display: block; font: var(--text-xs); color: var(--text-2); margin-top: var(--sp-3); }
+.sinput {
+  display: block;
+  width: 100%;
+  margin-top: var(--sp-1);
+  padding: var(--sp-2);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-1);
+  font: var(--text-sm);
+}
+
+.pct-row { display: flex; gap: var(--sp-2); margin-top: var(--sp-2); }
+.pct-btn {
+  flex: 1;
+  padding: var(--sp-1) 0;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-2);
+  cursor: pointer;
+}
+.pct-btn:hover { background: var(--surface-2); }
+
+.ord-btns { display: flex; gap: var(--sp-2); margin-top: var(--sp-3); }
+.ord-buy, .ord-sell {
+  flex: 1;
+  padding: var(--sp-2);
+  border: none;
+  border-radius: var(--radius-sm);
+  font: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--surface-0); /* nền chính luôn tối/sáng ngược accent — tương phản tốt cả 2 theme */
+}
+.ord-buy  { background: var(--up); }
+.ord-sell { background: var(--down); }
+
+.ord-log { list-style: none; margin: var(--sp-3) 0 0; padding: 0; max-height: 160px; overflow-y: auto; font: var(--text-xs); color: var(--text-2); }
+.ord-log li { padding: var(--sp-1) 0; border-bottom: 1px solid var(--border); }
+.ord-log__empty { color: var(--text-3); }
+.ord-log .pos { color: var(--up); }
+.ord-log .neg { color: var(--down); }
+
+.fine-print { font: var(--text-xs); color: var(--text-3); margin-top: var(--sp-3); }
+
+/* ── Live — khoá, chỉ hiển thị điều kiện còn thiếu (RULE 8/9) ──── */
+.card--locked { opacity: 0.96; }
+.condition-list { font: var(--text-sm); color: var(--text-2); padding-left: var(--sp-4); }
+.condition-list li { margin-bottom: var(--sp-2); }
+
+/* Lý do CHÍNH (quyết định phạm vi sản phẩm) — nổi bật hơn danh sách điều kiện kỹ
+   thuật bên dưới, vì nó quan trọng hơn: đủ điều kiện kỹ thuật cũng không mở Live
+   nếu sản phẩm vẫn được định nghĩa là "chỉ khuyến nghị". */
+.reason-primary {
+  font: var(--text-sm);
+  color: var(--text-1);
+  background: var(--surface-2);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius-sm);
+  padding: var(--sp-3);
+  margin: var(--sp-3) 0;
+}
