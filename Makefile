@@ -9,7 +9,7 @@ TF  ?= 1h
 
 .DEFAULT_GOAL := help
 .PHONY: help setup setup-model test test-network test-leakage lint fmt \
-        download universe check-data train mlflow api clean clean-data
+        download universe derivatives cron-daily check-data train mlflow api clean clean-data
 
 help:  ## Danh sách lệnh
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}'
@@ -29,6 +29,13 @@ test-network:  ## Chạy test có gọi API Binance thật
 
 test-leakage:  ## ★ Chỉ chạy bộ dò rò rỉ — chạy trước mỗi commit
 	$(PY) -m pytest -m leakage -v
+
+derivatives:  ## Thu thập funding · OI · taker · sổ lệnh cho SYM
+	$(PY) -m cryptopred.data.derivatives $(SYM)
+
+cron-daily:  ## ★ CHẠY HẰNG NGÀY — OI chỉ có 30 ngày lịch sử, mất là mất vĩnh viễn
+	$(PY) -m cryptopred.data.universe --refresh || true
+	$(PY) -m cryptopred.data.derivatives --universe
 
 lint:  ## Kiểm tra code style
 	$(PY) -m ruff check src tests scripts
