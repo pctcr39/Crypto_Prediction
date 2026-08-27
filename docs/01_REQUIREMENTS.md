@@ -1,8 +1,9 @@
 # 01 · YÊU CẦU HỆ THỐNG (REQ) — cryptopred
 
-> **Trạng thái:** nháp 2 · 27/08/2026 · chờ chủ dự án duyệt
+> **Trạng thái:** nháp 3 · 28/08/2026 · chờ chủ dự án duyệt
 > **Căn cứ:** `00_VISION.md` · `adr/019` (phạm vi: đa người dùng, hai mode) · `adr/020` (**bỏ hệ thống GATE**) · `adr/016` (luật soạn thảo) · `adr/017`, `adr/018`, `adr/002`
-> **Nháp 2 khác nháp 1 ở đâu:** bỏ toàn bộ nhóm `REQ-GATE`; thêm `REQ-SAFE` (bộ an toàn đường lệnh) và `REQ-NOTIFY` (thông báo ngoài màn hình); áp 72 phát hiện MAJOR đã xác nhận của vòng phản biện đối kháng; bỏ thuế khỏi mô hình chi phí.
+> **Nháp 2 khác nháp 1:** bỏ toàn bộ nhóm `REQ-GATE`; thêm `REQ-SAFE` (bộ an toàn đường lệnh) và `REQ-NOTIFY` (thông báo ngoài màn hình); áp 72 phát hiện MAJOR đã xác nhận của vòng phản biện đối kháng; bỏ thuế khỏi mô hình chi phí.
+> **Nháp 3 khác nháp 2:** bỏ hoàn toàn `SAFE-06` (kỳ chạy thử đường lệnh) và mọi điều kiện kỳ-bot-Paper — **không còn bất kỳ con số nào đóng vai trò điều kiện mở tính năng**; `SAFE-05` thành lớp bảo đảm duy nhất của đường lệnh; áp tiếp các phát hiện MINOR của vòng phản biện.
 > **Vai trò:** nói **CÁI GÌ** hệ phải làm và **KIỂM BẰNG GÌ**. Không nói làm thế nào (`02_FRD`) hay bằng gì (`03_ARCHITECTURE`).
 
 ---
@@ -37,7 +38,12 @@ Không có ngưỡng thống kê nào chặn người dùng bật một tính n�
    hành khi đủ bộ an toàn. Đây không phải cổng cấp phép — đây là định nghĩa
    "đã viết xong".
 
-*ID đã bỏ:* `GATE-01`…`GATE-04` (ADR-020) · `TRADE-07`, `LEGAL-03` (bỏ thuế).
+*ID đã bỏ:* `GATE-01`…`GATE-04` (ADR-020) · `SAFE-06` (bỏ kỳ chạy thử, 28/08) · `TRADE-07`, `LEGAL-03` (bỏ thuế).
+
+> **Không còn điều kiện định lượng nào chặn việc mở một tính năng.** Mọi thứ còn
+> lại trong `§8 REQ-SAFE` là **cơ chế phải tồn tại và phải có test**, không phải
+> ngưỡng phải đạt. Điều kiện duy nhất còn tính chất "chờ bên ngoài" là `LEGAL-01`
+> (tư vấn pháp lý) — và đó không phải quyết định kỹ thuật.
 
 ## 1 · Tác nhân
 
@@ -116,7 +122,7 @@ Không có ngưỡng thống kê nào chặn người dùng bật một tính n�
 | PAPER-03 | PHẢI | Track record Paper cá nhân bất biến. **"Reset ví" mở kỳ mới, không xoá lịch sử**; mọi kỳ đều hiển thị được và **số lần reset hiện cạnh thành tích** — chống chọn kỳ đẹp nhất | Test: reset ⇒ kỳ cũ vẫn truy vấn được; UI hiện số kỳ |
 | PAPER-04 | PHẢI (P2) | Ví Paper lưu theo tài khoản, đồng bộ mọi thiết bị; bản lưu trên trình duyệt hiện tại chỉ là mầm P1, phải di trú lên server khi có tài khoản | Test di trú |
 | PAPER-05 | PHẢI | Nhãn **PAPER** ở mọi panel, không thể nhầm với tiền thật | Review UI; test: mọi panel có nhãn mode |
-| PAPER-06 | PHẢI (P2) | **Bot chạy trên ví Paper** mở cho mọi user từ P2, đi qua **đúng đường mã** của bot tiền thật (cùng registry, cùng Risk Engine `BOT-03`, cùng nút dừng `BOT-04`, cùng nhật ký `BOT-05`, cùng sổ `BOT-07`), chỉ khác đích lệnh là ví ảo và **không có đường nào tới Key Vault hay Binance có ký**. Đây là vật mang bằng chứng cho `SAFE-06` | Test: bot Paper và bot Trading dùng chung module; test không có đường tới vault |
+| PAPER-06 | PHẢI (P2) | **Bot chạy trên ví Paper** mở cho mọi user từ P2, đi qua **đúng đường mã** của bot tiền thật (cùng registry, cùng Risk Engine `BOT-03`, cùng nút dừng `BOT-04`, cùng nhật ký `BOT-05`, cùng sổ `BOT-07`), chỉ khác đích lệnh là ví ảo và **không có đường nào tới Key Vault hay Binance có ký**. Là công cụ để user tự đánh giá — **không** phải điều kiện bắt buộc trước khi bật bot tiền thật (`SAFE-06` đã bỏ) | Test: bot Paper và bot Trading dùng chung module; test không có đường tới vault |
 
 ## 6 · REQ-TRADE · Đặt lệnh thủ công tiền thật (P3)
 
@@ -136,7 +142,7 @@ Không có ngưỡng thống kê nào chặn người dùng bật một tính n�
 
 | ID | Mức | Yêu cầu | Kiểm bằng |
 |---|---|---|---|
-| BOT-01 | PHẢI | **Không có cổng thống kê chặn bot** (ADR-020). Bot tiền thật phát hành khi: (a) đủ `§8 REQ-SAFE`; (b) user đã chạy **một kỳ bot Paper** đủ dài của chính mình (ngưỡng ở `05_TRADING_SPEC`); (c) `LEGAL-01` đã xong. Khi bật, UI hiện **nhãn trạng thái kiểm chứng** của phương pháp (`PRED-12`) và, nếu nhãn không phải `đã kiểm chứng`, một xác nhận riêng nói rõ điều đó bằng tiếng người | Test cờ phát hành; test: nhãn chưa kiểm chứng ⇒ có bước xác nhận thêm |
+| BOT-01 | PHẢI | **Không có cổng thống kê và không có kỳ chạy thử bắt buộc nào chặn bot** (ADR-020). Bot tiền thật phát hành khi: (a) đủ `§8 REQ-SAFE`; (b) `LEGAL-01` đã xong. Khi bật, UI hiện **nhãn trạng thái kiểm chứng** của phương pháp (`PRED-12`) và, nếu nhãn không phải `đã kiểm chứng`, một xác nhận riêng nói rõ điều đó bằng tiếng người | Test cờ phát hành; test: nhãn chưa kiểm chứng ⇒ có bước xác nhận thêm |
 | BOT-02 | PHẢI | Per-user opt-in. Bot chỉ hành động theo khuyến nghị của phương pháp user đã chọn, ở tầng chọn lọc user đã chọn (`PRED-07`), trong giới hạn rủi ro của user (`TRADE-05`) | Test |
 | BOT-03 | PHẢI | **Giới hạn lỗ ngày per-user, định nghĩa đủ ba chiều**: *lỗ ngày* = PnL đã thực hiện **+** PnL chưa thực hiện tại giá sàn, của các vị thế **do bot mở**, sau chi phí; *ngày* tính từ **00:00 UTC**; *NAV đầu ngày* theo định nghĩa `TRADE-05` đo tại 00:00 UTC. Chạm −2% NAV đầu ngày ⇒ bot sang **chế độ an toàn**, **không tự bật lại** | Test cố tình vi phạm; test ranh giới ngày |
 | BOT-03b | PHẢI | **Chế độ an toàn định nghĩa rõ**: không mở vị thế mới, **giữ nguyên lệnh dừng lỗ đang treo trên sàn**, tiếp tục đối soát, thông báo user (`NOTIFY-02`). Kích hoạt bởi: chạm giới hạn lỗ ngày, mất tick > 60 giây, đối soát lệch nghiêm trọng, khoá bị vô hiệu. Rời chế độ an toàn **chỉ bằng thao tác tay của user** sau khi đối soát sạch | Test từng nguyên nhân kích hoạt; test không tự rời |
@@ -159,8 +165,8 @@ Không có ngưỡng thống kê nào chặn người dùng bật một tính n�
 | SAFE-02 | PHẢI | **Nút dừng toàn hệ của admin**: một thao tác chặn **mọi** đường gửi lệnh — thủ công lẫn bot, mọi user — và huỷ mọi lệnh **vào** đang chờ; giữ nguyên stop. Trạng thái đã dừng **không tự mở lại**, chỉ admin mở tay và ghi audit | Test: sau khi dừng, mọi lời gọi gửi lệnh bị từ chối |
 | SAFE-03 | PHẢI | **Giới hạn cỡ lệnh và tổng exposure** (`TRADE-05`) — hằng số trong mã, pin test | Test vượt trần |
 | SAFE-04 | PHẢI | **Giới hạn lỗ ngày, không tự bật lại** (`BOT-03`) | Test |
-| SAFE-05 | PHẢI | **Chống gửi trùng lệnh** (`TRADE-02`) + **đối soát** (`TRADE-03`) — cả hai đã kiểm bằng test tiêm lỗi mạng | Test tiêm |
-| SAFE-06 | PHẢI | **Đường lệnh đã chạy thử trước khi phát hành** (thay GATE 3, ADR-020): chạy đủ số ngày và số lệnh đăng ký ở `05_TRADING_SPEC` trên môi trường không-tiền-thật (ví Paper `PAPER-06` và/hoặc môi trường demo của sàn), với **0 lệnh trùng, 0 lệnh mồ côi, 0 lệch trạng thái chưa giải thích**. Tiêu chí là **sự cố kỹ thuật**, không phải PnL — **không bao giờ chấm PnL trên môi trường demo** | Báo cáo chạy thử tự sinh |
+| SAFE-05 | PHẢI | **Chống gửi trùng lệnh** (`TRADE-02`) + **đối soát** (`TRADE-03`). Vì `SAFE-06` (kỳ chạy thử) đã bị bỏ, đây là **lớp bảo đảm duy nhất còn lại** cho tính đúng đắn của đường lệnh — bộ test tiêm lỗi phải phủ tối thiểu: hết giờ chờ giữa lúc gửi, mất mạng sau khi sàn đã nhận, phản hồi trùng, khớp một phần, sàn trả trạng thái khác sổ | Test tiêm lỗi cho từng kịch bản kể trên, chạy trong CI |
+| ~~SAFE-06~~ | *đã bỏ* | Yêu cầu "đường lệnh phải chạy thử đủ ngày/đủ số lệnh trước khi phát hành" **đã bị bỏ hoàn toàn** (quyết định chủ dự án 27/08/2026, ADR-020 phụ lục). Không có kỳ chạy thử bắt buộc nào. Bảo đảm đúng đắn của đường lệnh nay dựa **hoàn toàn** vào `SAFE-05` (test tiêm lỗi mạng cho chống-trùng-lệnh và đối soát) và các test cố-tình-vi-phạm của `SAFE-01`…`SAFE-09`. Giữ ID để không ai đưa lại mà không có ADR | — |
 | SAFE-07 | PHẢI | **Khoá API đúng quyền và ràng buộc IP** (`LINK-01`, `LINK-05`) — danh sách trắng, không quyền rút tiền, IP cố định | Test từng cờ cấm |
 | SAFE-08 | PHẢI | **Khởi động lại về trạng thái tắt**; rời trạng thái tắt chỉ sau khi đối soát sạch (`BOT-07`) | Test khởi động lại khi có vị thế |
 | SAFE-09 | PHẢI | **Lối ra định nghĩa trước lối vào**: mỗi vị thế do hệ mở có lệnh dừng lỗ trên sàn (`BOT-07`), có hạn thời gian giữ, và quy tắc thoát khi tín hiệu hết hiệu lực — cả ba đăng ký ở `05_TRADING_SPEC` theo thiết kế tranche hiện hành (**không** dùng ba mục lỗi thời của `Old/00 §7`) | Test từng lối ra |
@@ -255,8 +261,8 @@ Không có ngưỡng thống kê nào chặn người dùng bật một tính n�
 |---|---|---|
 | **P1** | PRED, PAPER (ẩn danh), TRACK, DATA, UI cơ bản, NFR, DOC, NOTIFY-04 | Bộ doc 00–08 duyệt |
 | **P2** | ACC (kín, có trần), PAPER theo tài khoản, **bot Paper**, UI đầy đủ, NFR-09 | P1 chạy ổn · `NFR-03` (Mac mini + Cloudflare) chịu tải · `NFR-04` threat model |
-| **P3** | LINK, TRADE, NOTIFY, ACC-03 | `LEGAL-01` **và** `LEGAL-06` xong · `§8 REQ-SAFE` đủ cho đường lệnh tay · `NFR-05` sao lưu + `LINK-08` |
-| **P4** | BOT (tiền thật) | `§8 REQ-SAFE` đủ **bao gồm `SAFE-06`** · `PAPER-06` mỗi user có kỳ bot Paper · `NOTIFY-01/02` chạy |
+| **P3** | LINK, TRADE, NOTIFY, ACC-03 | `LEGAL-01` **và** `LEGAL-06` xong · `§8 REQ-SAFE` đủ cho đường lệnh tay (đã trừ `SAFE-06`) · `NFR-05` sao lưu + `LINK-08` |
+| **P4** | BOT (tiền thật) | `§8 REQ-SAFE` đủ (đã trừ `SAFE-06`) · `NOTIFY-01/02` chạy |
 | **P5** | `PRED-05b` (method ML) | Method mới qua `PRED-09`/`10`/`11` như mọi method |
 
 > **Không còn điều kiện GATE nào trong bảng này** (ADR-020). Mỗi phase mở khi phần
@@ -266,9 +272,11 @@ Không có ngưỡng thống kê nào chặn người dùng bật một tính n�
 
 | # | Việc | Chặn gì |
 |---|---|---|
-| 1 | Ngưỡng `SAFE-06`: bao nhiêu ngày và bao nhiêu lệnh chạy thử đường lệnh trước khi phát hành | P3, P4 |
-| 2 | Ngưỡng `BOT-01(b)`: một kỳ bot Paper "đủ dài" của user là bao nhiêu | P4 |
-| 3 | Trần số tài khoản `ACC-09` khi còn chạy trên Mac mini | P2 |
-| 4 | Ngưỡng thanh khoản của vũ trụ (`PRED-13`) | P1 |
-| 5 | Tư vấn pháp lý `LEGAL-01` + rà điều khoản Binance `LEGAL-06` | P3 |
-| 6 | ADR còn nợ từ thế hệ 1: 005, 008, 009, 010, 015 — viết mới hoặc khai tử. (**007, 011, 014 đã tự tiêu** cùng hệ GATE — ADR-020) | P1 |
+| 1 | Trần số tài khoản `ACC-09` khi còn chạy trên Mac mini | P2 |
+| 2 | Ngưỡng thanh khoản của vũ trụ (`PRED-13`) | P1 |
+| 3 | Tư vấn pháp lý `LEGAL-01` + rà điều khoản Binance `LEGAL-06` | P3 |
+| 4 | ADR còn nợ từ thế hệ 1: 005, 008, 009, 010, 015 — viết mới hoặc khai tử. (**007, 011, 014 đã tự tiêu** cùng hệ GATE — ADR-020) | P1 |
+
+> Hai điểm chờ của nháp 2 — ngưỡng `SAFE-06` và ngưỡng kỳ bot Paper — **đã tự tiêu**
+> khi chủ dự án bỏ hoàn toàn `SAFE-06` (28/08/2026). Không còn con số nào đóng vai
+> trò điều kiện mở tính năng trong toàn bộ tài liệu này.

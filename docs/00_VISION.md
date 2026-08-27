@@ -31,7 +31,7 @@ hơn để người dùng mất tiền vì một con số chưa được kiểm 
 | Khớp lệnh | Mô phỏng tại giá thật + phí taker 0,10%/chiều + trượt giá 0,05% | Lệnh thật gửi lên Binance qua đường lệnh có đối soát |
 | Dự đoán & khuyến nghị | Có, đầy đủ | Có, đầy đủ — cùng một nguồn, cùng một con số |
 | Đặt lệnh thủ công | Có | Có — sau cổng kỹ thuật đường lệnh (§5) |
-| Bot tự giao dịch | Có, mở từ Phase 2 — bot Paper là nơi hệ và người dùng cùng thấy bot làm gì trước khi có tiền thật | Người dùng tự bật, sau khi đã chạy một kỳ bot Paper của chính mình; giới hạn rủi ro riêng; nhãn trạng thái kiểm chứng luôn hiện (§5.2 Luật 15) |
+| Bot tự giao dịch | Có, mở từ Phase 2 — nơi người dùng thấy bot làm gì mà không mất gì | Người dùng tự bật, không có kỳ tập bắt buộc; giới hạn rủi ro riêng; nhãn trạng thái kiểm chứng luôn hiện (§5.2 Luật 15) |
 | Thành tích | Track record cá nhân, bất biến | Track record cá nhân + đối soát với số dư thật |
 | Phân biệt thị giác | Nhãn PAPER ở mọi panel | Nhãn TIỀN THẬT ở mọi panel — không bao giờ để nhầm |
 
@@ -153,6 +153,6 @@ Xếp theo phụ thuộc, không theo lịch:
 2. **Nhiều người dùng** — đăng nhập, hồ sơ, ví Paper theo tài khoản, track record cá nhân
 3. **Liên kết Binance + trade thủ công** — Key Vault, xem số dư/lịch sử, đặt lệnh thủ công
    sau cổng kỹ thuật đường lệnh và sau khi gỡ ràng buộc pháp lý (§8)
-4. **Bot trading tiền thật** — sau khi bộ an toàn đường lệnh đủ (Luật 15b) và mỗi
-   người đã chạy một kỳ bot Paper của chính mình; từng người tự bật, giới hạn riêng
+4. **Bot trading tiền thật** — khi bộ an toàn đường lệnh đủ (Luật 15b) và đã có
+   tư vấn pháp lý; từng người tự bật, giới hạn rủi ro riêng, không có kỳ tập bắt buộc
 5. **ML tầng 2** — cắm method thứ hai qua cùng bộ kiểm định

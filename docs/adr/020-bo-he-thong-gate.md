@@ -1,7 +1,24 @@
 # ADR-020 · Bỏ hệ thống GATE — thay bằng nhãn trung thực và bộ an toàn kỹ thuật
 
-**Ngày:** 2026-08-27
+**Ngày:** 2026-08-27 · **bổ sung 2026-08-28**
 **Trạng thái:** đã chốt — **quyết định của chủ dự án**
+
+> ### Bổ sung 28/08/2026 — bỏ nốt kỳ chạy thử đường lệnh
+> Bản gốc dưới đây chuyển GATE 3 (chạy tiền ảo 60 ngày / 100 lệnh) thành `SAFE-06`
+> — một kỳ chạy thử kỹ thuật trước khi phát hành. Chủ dự án quyết định **bỏ luôn
+> `SAFE-06`**: không còn kỳ chạy thử bắt buộc nào, và không còn điều kiện "user
+> phải chạy bot Paper một kỳ" trước khi bật bot tiền thật.
+>
+> **Hệ quả phải ghi rõ:** bảo đảm về tính đúng đắn của đường lệnh nay dựa **hoàn
+> toàn vào test tự động** (`SAFE-05` và các test cố-tình-vi-phạm của `SAFE-01`…`09`),
+> không còn bằng chứng vận hành thật nào trước lần đặt lệnh tiền thật đầu tiên.
+> Các lỗi chỉ lộ ra khi chạy dài — rò rỉ bộ nhớ, trôi trạng thái sau nhiều ngày,
+> hành vi của sàn ở biên, tắc nghẽn hàng đợi — sẽ được phát hiện **trên tiền thật
+> của người dùng** thay vì trong kỳ chạy thử. Đổi lại, `SAFE-05` được siết: bộ test
+> tiêm lỗi phải phủ tối thiểu 5 kịch bản mạng/sàn liệt kê trong REQ.
+>
+> Bảng ở §Quyết định bên dưới giữ nguyên văn làm sử liệu; dòng "GATE 3 → SAFE-06"
+> nay đọc là **"GATE 3 → đã bỏ hẳn"**.
 **Thay thế:** `RULE 9` trong `CLAUDE.md` · `docs/00_VISION.md` Luật 15 · nhóm `REQ-GATE` trong `docs/01_REQUIREMENTS.md` · `docs/Old/00_MASTER_PLAN.md §7` (bốn cổng) · `docs/adr/019` mục 4
 **Liên quan:** ADR-017 (rào chắn), ADR-018 (tầng chọn lọc)
 
