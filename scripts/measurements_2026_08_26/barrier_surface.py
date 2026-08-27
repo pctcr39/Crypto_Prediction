@@ -1,6 +1,7 @@
-"""Do be mat tham so rao chan — KIEM TRA DO BEN, khong phai thu tuc CHON.
-Neu bien on dinh qua be mat => giu nguyen 1,2/4,0. Neu no phu thuoc manh vao
-tham so => toan bo lap luan kinh te mong manh, va do moi la phat hien."""
+"""⚠️ LỖI THỜI — dùng close-to-close + cả-hai-intrabar.
+Đặc tả đã chốt là Parkinson + stop-intrabar/TP-close.
+Dùng barrier_surface_v2.py. File này giữ lại vì D/SYMS/signal được import từ đây."""
+
 import pandas as pd, numpy as np, glob, itertools, sys
 sys.path.insert(0, str(__import__('pathlib').Path(__file__).parent))
 

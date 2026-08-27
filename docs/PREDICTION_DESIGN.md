@@ -534,17 +534,28 @@ NULL_SEED, NULL_PATHS, SUB_STEPS = 20_260_827, 200_000, 24
 
 > Tỉ lệ nền thực nghiệm **23,67%** là đối chứng dùng cho cổng — nó bao gồm cả phần trôi, nên nó là thanh xà đúng. Null mô phỏng 23,42% dùng cho **bất biến test**, nơi cần một con số tái lập được không phụ thuộc dữ liệu.
 
-**Kiểm độ bền qua bề mặt tham số rào** *(89 lệnh, 4 cặp — kiểm tra, KHÔNG phải thủ tục chọn)*:
+**Kiểm độ bền qua bề mặt tham số rào** *(90 lệnh, 4 cặp — kiểm tra độ bền, KHÔNG phải thủ tục chọn)*
 
-| stop / target | payoff | null | hoà vốn | đo được | **biên** |
-|---|---|---|---|---|---|
-| 1,0 / 4,0 | 4,00R | 20,0% | 22,0% | 29,2% | +7,2 |
-| **1,2 / 4,0** ← dùng | **3,33R** | **23,1%** | **25,0%** | **33,7%** | **+8,7** |
-| 1,2 / 4,8 | 4,00R | 20,0% | 21,7% | 29,2% | +7,5 |
-| 1,5 / 4,0 | 2,67R | 27,3% | 29,1% | 36,0% | +6,9 |
-| 2,0 / 3,0 | 1,50R | 40,0% | 42,0% | 56,2% | +14,2 |
+Đo **đúng đặc tả đã chốt**: ước lượng Parkinson · stop soi intrabar / TP soi tại close · vào tại `open[t+1]`.
 
-**16/16 ô cho biên dương** (trung vị +8,2 · độ lệch 2,8) ⇒ kết luận không phụ thuộc lựa chọn rào. Ô đang dùng nằm **trên** trung vị. Nâng target lên 4,8σ̂ để có payoff 4:1 thật cho biên **thấp hơn** (+7,5). *Biên không đơn điệu theo payoff — ô 2,0/3,0 cho biên lớn nhất; chọn nó sẽ là selection-on-data bị cấm, nhưng nó cho thấy luận điểm của hình dạng cược là về **bất biến theo chế độ**, không phải về tối đa hoá biên.*
+| stop / target | payoff | hoà vốn | % thắng | **biên** | R TB thắng | **EV sau phí** |
+|---|---|---|---|---|---|---|
+| 1,0 / 4,0 | 4,00R | 22,0% | 26,7% | +4,7 | 5,46R | +0,623R |
+| 1,2 / 3,0 | 2,50R | 31,0% | 35,6% | +4,6 | 3,69R | +0,584R |
+| **1,2 / 4,0** ← dùng | **3,33R** | **25,0%** | **30,0%** | **+5,0** | **4,48R** | **+0,559R** |
+| 1,2 / 4,8 | 4,00R | 21,7% | 28,9% | +7,2 | 5,48R | +0,788R |
+| 1,5 / 4,0 | 2,67R | 29,1% | 32,2% | +3,1 | 3,58R | +0,410R |
+| 2,0 / 6,0 | 3,00R | 26,2% | 34,4% | +8,2 | 3,88R | +0,632R |
+| *…10 ô còn lại* | | | | +3,3 … +7,6 | | +0,454 … +0,936R |
+
+```
+Biên: trung vị +5,7 · min +3,1 · max +8,2 · độ lệch 1,6
+16/16 ô có biên DƯƠNG   ·   16/16 ô có EV DƯƠNG
+```
+
+⇒ Kết luận **không phụ thuộc lựa chọn rào**. Ô đang dùng nằm dưới trung vị một chút — **không phải ô được chọn vì đẹp**.
+
+> ⚠️ **Bảng này thay bảng cũ đo bằng close-to-close + cả-hai-intrabar** (`barrier_surface.py`), vốn cho ô 1,2/4,0 là +8,7 điểm và mâu thuẫn với con số +5,0 ở chính tài liệu này. Đo lại đúng đặc tả: `barrier_surface_v2.py`. Bề mặt mới **ổn định hơn** (độ lệch 1,6 so với 2,8) và mọi ô đều dương cả biên lẫn EV.
 
 **Sức chịu trượt giá của mức dừng lỗ:**
 
@@ -1591,6 +1602,7 @@ Bước 5 (*σ̂ + f̂ cùng đợt*) **không có đầu vào**: `data/raw/fund
 | p\* hình dạng 1,2σ̂/4,0σ̂ (payoff 3,33R) | **25,0% / 25,5%** | ADR-013 · `barrier_surface.py` |
 | Hoà vốn trượt giá | **1,57R** | ADR-013 |
 | Tương quan hạng tham số hai đoạn | +0,19 | `12 §2.6` |
+| Bề mặt 16 ô rào chắn (Parkinson, quy ước vận hành) | biên trung vị +5,7 · 16/16 dương | `barrier_surface_v2.py` |
 | Tỉ số sụt giảm tổ hợp — **thang `w`** | 0,29 / 0,29 / 0,31 · rời rạc hoá: **0,322** | `12 §6.5` · `ens.py` |
 | *Tỉ số sụt giảm ở 4% NAV (KHÔNG dùng cho cổng)* | *0,0143 — đạt dư 42 lần* | *§8.2* |
 | Tỉ số sụt giảm tái lập | 54/54 quan sát | `12 §2.7` |
