@@ -39,9 +39,9 @@ OI_DIR = RAW_DIR / "open_interest"
 TAKER_DIR = RAW_DIR / "taker_ratio"
 BOOK_DIR = RAW_DIR / "orderbook"
 
-OI_PERIOD = "5m"          # độ mịn nhỏ nhất Binance cho phép
-OI_MAX_DAYS = 30          # ← giới hạn cứng của sàn. Đây là lý do module này tồn tại.
-BOOK_LIMIT = 20           # số mức mỗi bên
+OI_PERIOD = "5m"  # độ mịn nhỏ nhất Binance cho phép
+OI_MAX_DAYS = 30  # ← giới hạn cứng của sàn. Đây là lý do module này tồn tại.
+BOOK_LIMIT = 20  # số mức mỗi bên
 
 
 def _perp(symbol: str) -> str:
@@ -68,6 +68,7 @@ def _merge_write(df: pd.DataFrame, path: Path, key: str = "ts") -> int:
 #  Bốn nguồn
 # ══════════════════════════════════════════════════════════════════
 
+
 def fetch_funding(ex, symbol: str, since_ms: int | None = None) -> pd.DataFrame:
     """Lịch sử funding 8 giờ. LẤY LẠI ĐƯỢC — không gấp, nhưng rẻ nên gom luôn."""
     rows, since = [], since_ms or ex.parse8601("2019-09-01T00:00:00Z")
@@ -81,10 +82,20 @@ def fetch_funding(ex, symbol: str, since_ms: int | None = None) -> pd.DataFrame:
             break
         since = nxt
         time.sleep(ex.rateLimit / 1000)
-    return pd.DataFrame(
-        [{"ts": pd.to_datetime(r["timestamp"], unit="ms", utc=True),
-          "funding_rate": float(r["fundingRate"])} for r in rows]
-    ).drop_duplicates("ts").set_index("ts").sort_index()
+    return (
+        pd.DataFrame(
+            [
+                {
+                    "ts": pd.to_datetime(r["timestamp"], unit="ms", utc=True),
+                    "funding_rate": float(r["fundingRate"]),
+                }
+                for r in rows
+            ]
+        )
+        .drop_duplicates("ts")
+        .set_index("ts")
+        .sort_index()
+    )
 
 
 def fetch_open_interest(ex, symbol: str) -> pd.DataFrame:
@@ -94,11 +105,17 @@ def fetch_open_interest(ex, symbol: str) -> pd.DataFrame:
     out = []
     for r in rows:
         info = r.get("info", {}) or {}
-        out.append({
-            "ts": pd.to_datetime(r["timestamp"], unit="ms", utc=True),
-            "oi_base": float(info.get("sumOpenInterest") or r.get("openInterestAmount") or "nan"),
-            "oi_quote": float(info.get("sumOpenInterestValue") or r.get("openInterestValue") or "nan"),
-        })
+        out.append(
+            {
+                "ts": pd.to_datetime(r["timestamp"], unit="ms", utc=True),
+                "oi_base": float(
+                    info.get("sumOpenInterest") or r.get("openInterestAmount") or "nan"
+                ),
+                "oi_quote": float(
+                    info.get("sumOpenInterestValue") or r.get("openInterestValue") or "nan"
+                ),
+            }
+        )
     return pd.DataFrame(out).drop_duplicates("ts").set_index("ts").sort_index()
 
 
@@ -109,10 +126,14 @@ def fetch_taker_ratio(ex, symbol: str) -> pd.DataFrame:
     out = []
     for r in raw:
         info = r.get("info", {}) or {}
-        out.append({
-            "ts": pd.to_datetime(r["timestamp"], unit="ms", utc=True),
-            "long_short_ratio": float(r.get("longShortRatio") or info.get("longShortRatio") or "nan"),
-        })
+        out.append(
+            {
+                "ts": pd.to_datetime(r["timestamp"], unit="ms", utc=True),
+                "long_short_ratio": float(
+                    r.get("longShortRatio") or info.get("longShortRatio") or "nan"
+                ),
+            }
+        )
     return pd.DataFrame(out).drop_duplicates("ts").set_index("ts").sort_index()
 
 
@@ -150,7 +171,7 @@ SOURCES = {
 def collect(symbols: list[str], what: list[str], exchange=None) -> dict[str, dict[str, int]]:
     """Thu thập và ghi. Trả về {symbol: {nguồn: số hàng mới}}."""
     ex = exchange or make_exchange()
-    ex.options["defaultType"] = "future"        # OI/funding/taker chỉ có ở futures
+    ex.options["defaultType"] = "future"  # OI/funding/taker chỉ có ở futures
     report: dict[str, dict[str, int]] = {}
     for sym in symbols:
         report[sym] = {}
@@ -161,7 +182,7 @@ def collect(symbols: list[str], what: list[str], exchange=None) -> dict[str, dic
                 n = _merge_write(df, base / f"symbol={sym}" / "data.parquet")
                 report[sym][name] = n
                 log.info("%-10s %-8s +%d hàng", sym, name, n)
-            except Exception as exc:                      # noqa: BLE001 — cron không được chết
+            except Exception as exc:  # noqa: BLE001 — cron không được chết
                 report[sym][name] = -1
                 log.warning("%-10s %-8s LỖI: %s", sym, name, exc)
             time.sleep(ex.rateLimit / 1000)
@@ -187,8 +208,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p.add_argument("symbols", nargs="*", help="vd BTCUSDT ETHUSDT")
     p.add_argument("--universe", action="store_true", help="dùng ảnh chụp vũ trụ mới nhất")
-    p.add_argument("--what", default="funding,oi,taker,book",
-                   help="nguồn cần lấy, phân tách bằng dấu phẩy")
+    p.add_argument(
+        "--what", default="funding,oi,taker,book", help="nguồn cần lấy, phân tách bằng dấu phẩy"
+    )
     p.add_argument("--log-level", default="INFO")
     return p
 
@@ -201,8 +223,12 @@ def main(argv: list[str] | None = None) -> int:
         log.error("Chưa có symbol nào. Dùng --universe hoặc liệt kê tường minh.")
         return 2
     what = [w.strip() for w in args.what.split(",") if w.strip() in SOURCES]
-    log.info("Thu thập %s cho %d cặp — %s", what, len(symbols),
-             datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC"))
+    log.info(
+        "Thu thập %s cho %d cặp — %s",
+        what,
+        len(symbols),
+        datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC"),
+    )
     rep = collect(symbols, what)
     fails = sum(1 for v in rep.values() for n in v.values() if n < 0)
     total = sum(n for v in rep.values() for n in v.values() if n > 0)

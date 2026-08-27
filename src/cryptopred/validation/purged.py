@@ -129,10 +129,23 @@ class PurgedWalkForward:
 
         `times` là cột thời gian của bảng dài (một hàng = một (symbol, thời điểm)).
         Mốc cắt tính trên tập thời điểm DUY NHẤT, rồi ánh xạ ngược về hàng — nên
-        mọi symbol dùng chung đúng một mốc. `symbols` chỉ để kiểm tra, không đổi
-        kết quả.
+        mọi symbol dùng chung đúng một mốc.
+
+        Truyền `symbols` để bật một phép kiểm rẻ: cặp (symbol, thời điểm) trùng
+        lặp là lỗi dữ liệu âm thầm — nó nhân đôi trọng số một số mẫu trong train
+        mà không có dấu hiệu nào.
         """
         times = pd.Series(pd.to_datetime(times)).reset_index(drop=True)
+        if symbols is not None:
+            sym = pd.Series(symbols).reset_index(drop=True)
+            if len(sym) != len(times):
+                raise ValueError("`symbols` và `times` phải cùng độ dài")
+            dup = pd.DataFrame({"s": sym, "t": times}).duplicated()
+            if dup.any():
+                raise ValueError(
+                    f"{int(dup.sum())} cặp (symbol, thời điểm) trùng lặp — "
+                    "dữ liệu bị nhân bản, trọng số train sẽ lệch âm thầm."
+                )
         axis = pd.DatetimeIndex(sorted(times.unique()))
         for k, (tr_end, ts, te) in enumerate(self._layout(len(axis))):
             t_train_end, t_test_start, t_test_end = axis[tr_end - 1], axis[ts], axis[te - 1]

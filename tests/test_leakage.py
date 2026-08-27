@@ -27,7 +27,7 @@ import pandas as pd
 import pytest
 
 from cryptopred.features.builder import RAW_LEVEL_COLUMNS, assert_scale_free, shift_all
-
+from cryptopred.validation.purged import Fold, PurgedWalkForward
 
 # ══════════════════════════════════════════════════════════════════
 #  HÀNG RÀO — đã chạy được ngay từ P0
@@ -89,13 +89,10 @@ def test_shift_bars_trong_config_luon_it_nhat_1():
     assert features_config()["shift_bars"] >= 1, "Đổi shift_bars về 0 là mở cửa cho rò rỉ"
 
 
-
 # ══════════════════════════════════════════════════════════════════
 #  NĂM PHÉP DÒ CỦA M6 — mỗi phép kèm một phép TIÊM RÒ RỈ
 #  docs/03_MODULE_SPECS.md §M6 · docs/PREDICTION_DESIGN.md §LV
 # ══════════════════════════════════════════════════════════════════
-
-from cryptopred.validation.purged import Fold, PurgedWalkForward  # noqa: E402
 
 PURGE = 20  # độ dài nhãn của bộ dữ liệu giả lập dưới đây
 
@@ -130,7 +127,7 @@ def _panel(
                 {
                     "ts": idx,
                     "symbol": f"SYM{s}",
-                    "f_ret1": pd.Series(r1).shift(1).to_numpy(),      # RULE 2 — đã dịch
+                    "f_ret1": pd.Series(r1).shift(1).to_numpy(),  # RULE 2 — đã dịch
                     "f_vol20": pd.Series(r1).rolling(20).std().shift(1).to_numpy(),
                     "label": np.sign(fwd),
                 }
@@ -175,16 +172,14 @@ def test_probe1_shifted_labels_khong_lam_diem_tang():
     moved["label"] = moved.groupby("symbol")["label"].shift(-1)
     moved = moved.dropna().reset_index(drop=True)
     shifted = _score(moved, list(_cv().split_panel(moved["ts"])), feats)
-    assert shifted <= base + 0.05, (
-        f"Dịch nhãn làm điểm TĂNG {base:.3f} → {shifted:.3f} ⇒ rò rỉ."
-    )
+    assert shifted <= base + 0.05, f"Dịch nhãn làm điểm TĂNG {base:.3f} → {shifted:.3f} ⇒ rò rỉ."
 
 
 @pytest.mark.leakage
 def test_probe1_BAT_DUOC_ro_ri_tiem_vao():
     """★ NGHIỆM THU — tiêm một đặc trưng bằng chính nhãn của nến kế tiếp."""
     df = _panel()
-    df["f_leak"] = df.groupby("symbol")["label"].shift(-1)   # nhìn tương lai
+    df["f_leak"] = df.groupby("symbol")["label"].shift(-1)  # nhìn tương lai
     df = df.dropna().reset_index(drop=True)
     feats = ["f_ret1", "f_vol20", "f_leak"]
     base = _score(df, list(_cv().split_panel(df["ts"])), feats)
@@ -214,7 +209,7 @@ def test_probe2_BAT_DUOC_ro_ri_tiem_vao():
     df = _panel()
     rng = np.random.default_rng(0)
     df["label"] = df.groupby("symbol")["label"].transform(lambda s: rng.permutation(s.to_numpy()))
-    df["f_copy"] = df["label"]                                # rò rỉ tiêm vào
+    df["f_copy"] = df["label"]  # rò rỉ tiêm vào
     acc = _score(df, list(_cv().split_panel(df["ts"])), ["f_ret1", "f_copy"])
     assert acc > 0.58, f"PROBE 2 KHÔNG BẮT ĐƯỢC: điểm chỉ {acc:.3f}"
 
@@ -250,9 +245,7 @@ def test_probe4_moi_symbol_dung_chung_MOT_moc_cat():
         assert te["ts"].min() >= f.test_start and te["ts"].max() <= f.test_end
         assert tr["ts"].max() <= f.train_end
         # ② KHÔNG symbol nào bị bỏ sót nếu nó CÓ dữ liệu trong cửa sổ đó
-        co_du_lieu = set(
-            df.loc[df["ts"].between(f.test_start, f.test_end), "symbol"].unique()
-        )
+        co_du_lieu = set(df.loc[df["ts"].between(f.test_start, f.test_end), "symbol"].unique())
         assert set(te["symbol"].unique()) == co_du_lieu, (
             "Một symbol có dữ liệu trong cửa sổ test nhưng bị loại — mốc cắt không toàn cục"
         )
