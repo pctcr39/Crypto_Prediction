@@ -81,15 +81,21 @@ Và **một thứ không hiển thị**: nút giao dịch, gợi ý vào lệnh,
 
 ## 4 · Thực thi
 
-**Hàng rào bằng mã** (`12 §8.4` Hàng rào 1):
+**Hàng rào bằng mã** — *vá 27/08/2026 sau phản biện đối kháng (`17 §5.3`)*:
 
 ```
-với mọi (khung thời gian, công cụ):
-    nếu p_required > sanity.suspicious_accuracy_1h:      # 0,60
-        trade_intent PHẢI là None
+TRADE_TF = frozenset({"1d"})          # DANH SÁCH TRẮNG, cứng trong mã — rào CHÍNH
+nếu tf not in TRADE_TF  hoặc  p_required > 0.60:
+    trade_intent PHẢI là None
 ```
 
-Test: cố tình phát tín hiệu khung 4 giờ ⇒ khẳng định output là KHÔNG RÕ. **Không cờ cấu hình nào bật được nó.**
+> ⚠️ **Vì sao ngưỡng 0,60 một mình KHÔNG đủ** (phản biện bắt được): `config/model.yaml`
+> đặt `horizon_bars["4h"] = 6` — tức panel 4 giờ dự báo chân trời **24 giờ**, và
+> p_required của chân trời đó chỉ ≈ 56–58%, **dưới** ngưỡng 0,60. Các con số 63–69%
+> ở §2.3 là cho chân trời 4 giờ. Rào thật là danh sách trắng khung thời gian;
+> ngưỡng 0,60 chỉ là dây an toàn khi thêm khung mới mà quên tính phí.
+
+Test: cố tình phát tín hiệu ở "1h"/"4h" ⇒ đỏ. **Không cờ cấu hình nào bật được nó.**
 
 Lý do đặt trong mã chứ không trong quy ước: đây chính là dòng sẽ bị sửa vào cái đêm ai đó muốn "cho dashboard sinh động hơn". Khi nó bị sửa, không test nào đỏ trừ khi có test này.
 
