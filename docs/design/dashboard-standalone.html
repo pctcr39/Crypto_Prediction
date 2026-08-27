@@ -153,7 +153,26 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer;pad
 .price-hero.flash-up{background:var(--up-bg)}
 .price-hero.flash-down{background:var(--down-bg)}
 .ph-change{font:400 14px/20px var(--font-num);display:inline-flex;gap:var(--sp-2)}
-.ph-right{display:flex;flex-direction:column;align-items:flex-end;gap:var(--sp-2)}
+.ph-right{display:flex;flex-direction:column;align-items:flex-end;gap:var(--sp-2);min-width:0}
+.stat24{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:var(--sp-1) var(--sp-4)}
+.stat24.stale{opacity:.5}
+.s24{display:flex;flex-direction:column;align-items:flex-end;gap:1px}
+.s24 s{text-decoration:none;font:400 10px/13px var(--font-cond);letter-spacing:.08em;
+  text-transform:uppercase;color:var(--text-3)}
+.s24 b{font:500 12px/16px var(--font-num);font-variant-numeric:tabular-nums;color:var(--text-1)}
+/* Thanh vị trí trong biên độ 24h: rẻ nhất mà nhiều tin nhất — thấy ngay giá
+   đang ở đáy hay đỉnh của một ngày, không cần đọc hai con số rồi tự trừ. */
+.rng24{position:relative;width:min(260px,42vw);height:4px;border-radius:var(--radius-pill);
+  background:linear-gradient(90deg,
+    color-mix(in srgb,var(--down) 42%,transparent),
+    color-mix(in srgb,var(--text-3) 26%,transparent) 50%,
+    color-mix(in srgb,var(--up) 42%,transparent))}
+.rng24 i{position:absolute;top:-3px;width:2px;height:10px;border-radius:1px;
+  background:var(--text-1);transform:translateX(-1px)}
+.rng-lbl{display:flex;justify-content:space-between;gap:var(--sp-2);width:min(260px,42vw);
+  font:400 10px/14px var(--font-ui);color:var(--text-3)}
+.rng-lbl .num{font-family:var(--font-num);font-variant-numeric:tabular-nums}
+@media (max-width:900px){.rng24,.rng-lbl{width:min(220px,58vw)}}
 .status{display:inline-flex;align-items:center;gap:var(--sp-2);font:400 12px/16px var(--font-ui);color:var(--text-2)}
 .status::before{content:"";width:8px;height:8px;border-radius:var(--radius-pill);flex:none}
 /* RULE 8 có hình: CHỈ trạng thái live được đeo quầng. Hỏng thì BỚT sáng, không
@@ -276,6 +295,14 @@ canvas{display:block;width:100%;height:100%}
   margin-left:-1.5px;border-radius:2px;background:var(--text-1);
   box-shadow:0 0 0 3px color-mix(in srgb,var(--text-1) 10%,transparent)}
 .nc-ends{display:flex;justify-content:space-between;font:500 10px/14px var(--font-ui);color:var(--text-3)}
+/* Nhiễu của chính nowcast, in ngay dưới thước. Với một con số nhảy 5–15 lần
+   mỗi giây thì BIÊN ĐỘ là thông tin quan trọng hơn giá trị tức thời. */
+.nc-noise{margin-top:var(--sp-2);font:500 10.5px/15px var(--font-num);
+  font-variant-numeric:tabular-nums;color:var(--text-3)}
+/* Nowcast KHÔNG được trông tự tin hơn dự đoán đã khoá. Nó là ô duy nhất nhúc
+   nhích cạnh một con số tím đứng yên, nên nếu nó còn to hơn thì ngôn ngữ thị
+   giác đang ngầm dạy rằng ô giật đáng tin hơn — ngược hẳn điều đúng. */
+.nc-num{font-size:.78em;color:var(--text-2)}
 .nc-vs{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-3);margin-top:var(--sp-3)}
 .nc-cell{border:1px solid var(--border);border-radius:var(--radius-md);padding:var(--sp-2) var(--sp-3)}
 .nc-cell .t{font:600 10px/14px var(--font-ui);letter-spacing:.06em;text-transform:uppercase;color:var(--text-2)}
@@ -433,7 +460,33 @@ body.mode-all .navtab:hover{color:var(--text-1)}
 .ord-buy{background:var(--up)} .ord-sell{background:var(--down)}
 .ord-buy:hover,.ord-sell:hover{filter:brightness(1.12)}
 #pos-box[hidden]{display:none}
-.ord-log{margin:var(--sp-2) 0 0;font:400 12px/18px var(--font-ui);color:var(--text-2)}
+.ord-log{margin:var(--sp-2) 0 0;font:400 12px/18px var(--font-ui);color:var(--text-2);
+  max-height:190px;overflow-y:auto}
+.ord-row{display:flex;gap:var(--sp-2);padding:3px 0;border-bottom:1px solid var(--border)}
+.ord-t{color:var(--text-3);flex:none;font-size:11px}
+.ord-foot{margin-top:var(--sp-2);font-size:11px;color:var(--text-3)}
+.wipe-btn{margin-left:var(--sp-3);padding:2px 10px;background:transparent;cursor:pointer;
+  border:1px solid var(--border);border-radius:var(--radius-pill);
+  font:500 11px/17px var(--font-ui);color:var(--text-2)}
+.wipe-btn:hover{border-color:var(--text-3);color:var(--text-1)}
+/* Hộ chiếu dự đoán — luôn hiện, KHÔNG BAO GIỜ gập vào ⓘ. Đây là chỗ duy nhất
+   nói dự đoán này LÀ GÌ; mọi cảnh báo khác chỉ nói nó KHÔNG PHẢI gì. Mỗi dấu
+   gạch ngang là một lời khẳng định: chưa có model, chưa hiệu chỉnh, chưa có n. */
+.passport{display:flex;flex-wrap:wrap;gap:2px var(--sp-3);margin:0 0 var(--sp-3);
+  padding:var(--sp-2) var(--sp-3);border:1px solid var(--border);border-radius:var(--radius-md);
+  font:500 10.5px/16px var(--font-num);font-variant-numeric:tabular-nums;color:var(--text-3)}
+.passport b{color:var(--text-2);font-weight:500}
+.passport .em{color:var(--text-1)}
+.passport .age{margin-left:auto;color:var(--text-2)}
+.passport.overdue .age{color:var(--status-slow)}
+@keyframes relockflash{from{background:color-mix(in srgb,var(--pred) 22%,transparent)}
+  to{background:transparent}}
+.relock-fx{animation:relockflash 260ms var(--ease)}
+@media (prefers-reduced-motion:reduce){.relock-fx{animation:none}}
+.viewpill{font:500 11px/17px var(--font-num);font-variant-numeric:tabular-nums;
+  color:var(--text-3);padding:1px 8px;border:1px solid var(--border);border-radius:var(--radius-pill)}
+.live-btn{cursor:pointer;border-color:var(--accent);color:var(--accent);background:transparent}
+.live-btn:hover{background:color-mix(in srgb,var(--accent) 12%,transparent)}
 .warn-banner[hidden]{display:none}
 .warn-banner{display:flex;gap:var(--sp-2);align-items:flex-start;
   background:color-mix(in srgb,var(--status-slow) 10%,transparent);
@@ -1028,12 +1081,14 @@ body.mode-all .navtab::after{display:none}
           <span class="price-hero num" id="hero">—</span>
           <span class="ph-change num" id="ph-change"></span>
         </div>
-        <div class="ph-right"></div>
+        <div class="ph-right" id="ph-right"></div>
       </div>
 
       <section class="card" id="chart-card">
         <div class="filter-row">
           <div class="tabs" role="tablist" aria-label="Khung thời gian" id="tf-tabs"></div>
+          <span class="viewpill num" id="view-pill" title="Số nến đang hiện / số nến đã tải"></span>
+          <button type="button" class="chip live-btn" id="btn-live" hidden></button>
           <span class="chip" id="model-chip">minh hoạ · chưa có model</span>
         </div>
         <div class="chart-wrap" id="chart-wrap">
@@ -1062,6 +1117,7 @@ body.mode-all .navtab::after{display:none}
         <div class="warn-banner" data-i="k006">⚠<span>Đây <b>không phải</b> đầu ra của model. Hướng lấy từ
           baseline động lượng thô; dải giá là ±1σ biến động thực tế. Model thật (LightGBM + hiệu
           chỉnh isotonic) là M5–M7, chưa xây.</span></div>
+        <div class="passport num" id="pred-passport"></div>
         <span class="badge badge--unclear" id="dir-badge">● KHÔNG RÕ</span>
         <div class="meter"><div class="meter-fill" id="meter-fill" style="width:50%"></div>
           <div class="meter-notch"></div></div>
@@ -1166,13 +1222,14 @@ body.mode-all .navtab::after{display:none}
         <h3>Nowcast · nhịp tick</h3>
         <p class="psub">Tính lại <b>mỗi tick</b>, dùng cả nến đang chạy — không phải model.</p>
       </div><div style="text-align:right">
-        <div class="pbig num" id="nc-score">—</div>
+        <div class="pbig num nc-num" id="nc-score">—</div>
         <div style="font:600 13px/18px var(--font-ui)" id="nc-label">—</div>
       </div></div>
       <div class="nc-gauge"><span class="nc-mid"></span>
         <span class="nc-needle" id="nc-needle" style="transform:translateX(50%)"></span></div>
       <div class="nc-ends" data-i="k018"><span>−100 · nghiêng giảm</span><span>0 · cân bằng</span>
         <span>+100 · nghiêng tăng</span></div>
+      <div class="nc-noise num" id="nc-noise"></div>
       <canvas id="cv-nc" height="56" style="margin-top:var(--sp-3)"></canvas>
       <div class="nc-vs">
         <div class="nc-cell"><div class="t">Nowcast · tick</div>
@@ -1324,10 +1381,13 @@ body.mode-all .navtab::after{display:none}
   </div>
 </div>
 
-<footer data-i="m26">
-  Dữ liệu thị trường: Binance public REST + WebSocket (không cần API key, chỉ đọc).
-  Trang này không gửi dữ liệu đi đâu; trên máy bạn chỉ lưu bốn lựa chọn giao diện: bố cục, ngôn ngữ, bảng màu và phần giải thích.
-  · Mã nguồn dự án: <span class="num">cryptopred</span> · docs 00–05.
+<footer>
+  <span data-i="m26">Dữ liệu thị trường: Binance public REST + WebSocket (không cần API key, chỉ đọc).
+  Trang này không gửi dữ liệu đi đâu. Trên máy bạn chỉ lưu <b>lựa chọn giao diện</b>: bố cục, ngôn ngữ,
+  bảng màu, phần giải thích, bộ lọc phương pháp và panel nào đang gập.
+  Không lưu bất kỳ dự đoán, kết quả hay lịch sử giao dịch nào.
+  · Mã nguồn dự án: <span class="num">cryptopred</span> · docs 00–05.</span>
+  <button type="button" class="wipe-btn" id="wipe-btn"></button>
 </footer>
 
 <div class="boot-veil" id="boot-veil">
@@ -1383,6 +1443,12 @@ body.mode-all .navtab::after{display:none}
   const fmt = v => v.toLocaleString("en-US", { minimumFractionDigits: S.dec, maximumFractionDigits: S.dec });
   const fmtUsd = v => v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const fmtQty = v => v < 1 ? v.toFixed(4) : v < 100 ? v.toFixed(3) : v.toFixed(1);
+  /* Khối lượng 24h là hàng tỉ USDT — in đủ chữ số thì không đọc được, mà đọc
+     được mới là mục đích. Rút gọn K/M/B, giữ 2 chữ số có nghĩa. */
+  const fmtBig = v => !isFinite(v) ? "—"
+    : v >= 1e9 ? (v / 1e9).toFixed(2) + "B"
+    : v >= 1e6 ? (v / 1e6).toFixed(2) + "M"
+    : v >= 1e3 ? (v / 1e3).toFixed(1) + "K" : v.toFixed(0);
   const pctStr = v => (v >= 0 ? "+" : "−") + Math.abs(v).toFixed(2) + "%";
   const base = () => S.sym.replace(/USDT$|BUSD$|FDUSD$/, "");
   const lerp = (a, b, f) => a + (b - a) * f;
@@ -1428,6 +1494,7 @@ body.mode-all .navtab::after{display:none}
     const syms = JSON.stringify(DEFAULT_SYMS.concat(DEFAULT_SYMS.includes(S.sym) ? [] : [S.sym]));
     const rows = await api("/ticker/24hr?symbols=" + encodeURIComponent(syms));
     rows.forEach(t => S.tickers[t.symbol] = { price: +t.lastPrice, chg: +t.priceChangePercent,
+      hi24: +t.highPrice, lo24: +t.lowPrice, qv24: +t.quoteVolume, n24: +t.count,
       dec: Math.max(+t.lastPrice >= 1 ? 2 : 4, decOf(t.lastPrice)), at: Date.now() });
     renderCoins();
   }
@@ -1542,6 +1609,37 @@ body.mode-all .navtab::after{display:none}
         + `${t.chg >= 0 ? "▲ +" : "▼ −"}${fmt(Math.abs(abs))} (${pctStr(t.chg)})</span>`
         + `<span style="color:var(--text-3)">24h</span>`;
     }
+    renderStats(t);
+  }
+
+  /* Thống kê 24h + mark/basis. TẤT CẢ đều là số ĐO ĐƯỢC — không một con số nào
+     ở đây bắt nguồn từ dự đoán, nên không dùng --pred ở bất kỳ đâu.
+     highPrice/lowPrice/quoteVolume vốn đã có trong phản hồi /ticker/24hr và
+     P.fund.mark vốn đã lấy về ở loadDerivs — trước đây cả hai bị vứt đi. */
+  function renderStats(t) {
+    const el = $("ph-right"); if (!el) return;
+    if (!t || !isFinite(t.hi24) || !isFinite(t.lo24)) { el.innerHTML = ""; return; }
+    const rg = t.hi24 - t.lo24;
+    const pos = rg > 0 ? Math.max(0, Math.min(1, (t.price - t.lo24) / rg)) : 0.5;
+    const stale = Date.now() - (t.at || 0) > 90000;
+    // basis = (mark − spot) / spot, tính bằng điểm cơ bản. Chỉ hiện khi CÓ mark,
+    // không bao giờ suy ra hay điền tạm.
+    const mk = P.fund && isFinite(P.fund.mark) ? P.fund.mark : null;
+    const bps = mk ? (mk / t.price - 1) * 10000 : null;
+    el.innerHTML =
+      `<div class="stat24${stale ? " stale" : ""}">`
+      + `<span class="s24"><s>${T("24h cao")}</s><b class="num">${fmt(t.hi24)}</b></span>`
+      + `<span class="s24"><s>${T("24h thấp")}</s><b class="num">${fmt(t.lo24)}</b></span>`
+      + `<span class="s24"><s>${T("24h khối lượng")}</s><b class="num">${fmtBig(t.qv24)}</b></span>`
+      + (mk ? `<span class="s24"><s>${T("Mark")}</s><b class="num">${fmt(mk)}</b></span>` : "")
+      + (bps !== null ? `<span class="s24" title="${T("Chênh giữa mark hợp đồng và giá spot")}">`
+          + `<s>${T("Basis")}</s><b class="num">${bps >= 0 ? "+" : "−"}${Math.abs(bps).toFixed(1)} bps</b></span>` : "")
+      + `</div>`
+      + `<div class="rng24" title="${T("Vị trí giá hiện tại trong biên độ 24 giờ")}">`
+      + `<i style="left:${(pos * 100).toFixed(1)}%"></i></div>`
+      + `<div class="rng-lbl"><span class="num">${fmt(t.lo24)}</span>`
+      + `<span>${(pos * 100).toFixed(0)}% ${T("của biên độ 24h")}</span>`
+      + `<span class="num">${fmt(t.hi24)}</span></div>`;
   }
 
   /* ── Sổ lệnh + tape ───────────────────────────────────────── */
@@ -1605,6 +1703,19 @@ body.mode-all .navtab::after{display:none}
        model     tên+phiên bản model, null khi chưa có model
      ══════════════════════════════════════════════════════════════════ */
   const PRED_SOURCE = "dummy";
+  /* ★ CHỐT CỨNG. Mọi thứ định in ra TỈ LỆ ĐÚNG, ĐỘ PHỦ, hit-rate, Brier,
+     reliability, hay bất kỳ thống kê thành tích nào phải mở đầu bằng
+     `if (!PRED_IS_MODEL) return ...`.
+
+     Lý do là TOÁN HỌC, không phải khẩu vị. Dải q10–q90 của nguồn dummy được
+     dựng từ ±1σ của log-return 30 nến gần nhất — của CHÍNH chuỗi đó. Phát lại
+     nó trên quá khứ sẽ cho độ phủ quanh ngưỡng mục tiêu GẦN NHƯ THEO CẤU TRÚC:
+     nó đang đo lại phương sai của chính mình, không đoán đúng cái gì cả. Một
+     bảng in ra "độ phủ 79% · đích 80% ✓" cho công thức này là cỗ máy rửa uy
+     tín hoàn hảo — nó mượn chính bộ máy trung thực của repo (RULE 4, RULE 6)
+     để cấp giấy chứng nhận cho một dấu động lượng.
+     Rào chắn nằm trong một câu `if`, không nằm trong trí nhớ của ai. */
+  const PRED_IS_MODEL = PRED_SOURCE !== "dummy";
 
   function computeOutlook() {
     // chỉ lấy tới nến đã đóng cuối cùng — bỏ nến đang chạy
@@ -1644,7 +1755,54 @@ body.mode-all .navtab::after{display:none}
 
   function relock() {
     const src = PRED[PRED_SOURCE];
+    const prev = S.locked;
     S.locked = src ? src() : null;
+    // Mỗi lần khoá lại là một sự kiện có thật — cho nó hiện hình. Đây là câu
+    // trả lời đúng cho "predict realtime" dưới phương án C: cái chạy theo thời
+    // gian thực là NHỊP, không phải con số. Con số phải đứng yên trong nến.
+    if (S.locked) relockFX(prev, S.locked);
+    paintPassport();
+  }
+
+  /* Chớp NỀN 150ms lên đúng các trường thật sự đổi giá trị. Không hoạt hoạ vị
+     trí, không đếm số chạy — DS-RULE 2 cấm chuyển động bám GIÁ. Chớp nền theo
+     đúng hoa văn flashHero đã dùng cho giá thật. */
+  function relockFX(prev, next) {
+    if (matchMedia("(prefers-reduced-motion:reduce)").matches) return;
+    const same = (a, b) => a != null && b != null && Math.abs(a - b) < 1e-12;
+    const fields = [
+      ["dir-badge", prev && same(prev.score, next.score)],
+      ["meter-num", prev && same(prev.score, next.score)],
+      ["q-range-vals", prev && same(prev.lo, next.lo) && same(prev.hi, next.hi)],
+      ["steps-body", prev && same(prev.mid, next.mid)],
+    ];
+    fields.forEach(([id, unchanged]) => {
+      if (unchanged) return;
+      const el = $(id); if (!el) return;
+      el.classList.remove("relock-fx"); void el.offsetWidth; el.classList.add("relock-fx");
+      setTimeout(() => el.classList.remove("relock-fx"), 260);
+    });
+  }
+
+  /* Hộ chiếu: nguồn · model · hiệu chỉnh · n · tuổi. Chạy trong vòng 1 giây có
+     sẵn nên tuổi ĐẾM LÊN — chuyển động bám TRỤC THỜI GIAN, hợp lệ vì thời gian
+     thật sự đang trôi (DS-RULE 2 chỉ cấm chuyển động bám GIÁ). */
+  function paintPassport() {
+    const el = $("pred-passport"); if (!el) return;
+    const o = S.locked;
+    if (!o) { el.innerHTML = `<span>${T("nguồn")} <b class="em">—</b></span>`; return; }
+    const age = Math.max(0, now() - o.lockedAt);
+    const overdue = age > o.step * 1.5;      // cùng ngưỡng lamp("src-pred") đang dùng
+    el.classList.toggle("overdue", overdue);
+    const mm = String(Math.floor(age / 60000)).padStart(2, "0");
+    const ss = String(Math.floor(age / 1000) % 60).padStart(2, "0");
+    el.innerHTML =
+      `<span>${T("nguồn")} <b class="em">${o.source}</b></span>`
+      + `<span>model <b>${o.model || "—"}</b></span>`
+      + `<span>${T("hiệu chỉnh")} <b>—</b></span>`
+      + `<span>n <b>—</b></span>`
+      + `<span class="age" title="${T("Tuổi của dự đoán đang khoá")}">`
+      + `${overdue ? T("QUÁ HẠN") : "PRED"} ${mm}:${ss}</span>`;
   }
 
   // ── LỚP BÁM SÁT — cập nhật từng tick, thuần SỐ HỌC trên dự đoán đã khoá ──
@@ -1816,27 +1974,59 @@ body.mode-all .navtab::after{display:none}
 
   function placeOrder(side) {
     if (!S.candles.length) return;
-    const price = S.candles[S.candles.length - 1].close, log = $("ord-log");
+    const price = S.candles[S.candles.length - 1].close;
     const usdIn = Math.max(0, parseFloat($("ord-amt").value) || 0);
     if (side === "buy") {
       const usd = Math.min(paper.cash, usdIn);
-      if (usd < 10) { log.textContent = T("Lệnh tối thiểu 10 USDT (hoặc số dư không đủ)."); return; }
+      if (usd < 10) { logOrder({ k: "min" }); return; }
       const qty = usd * (1 - FEE_SIDE) / price;
       const h = paper.assets[S.sym] || { qty: 0, entry: price };
       h.entry = (h.entry * h.qty + price * qty) / (h.qty + qty);
       h.qty += qty; paper.assets[S.sym] = h; paper.cash -= usd;
-      log.innerHTML = `${T("✓ Đã khớp · PAPER: mua")} <b class="num">${qty.toFixed(6)} ${base()}</b> @ <span class="num">${fmt(price)}</span>`;
+      logOrder({ k: "buy", qty, price, sym: S.sym });
     } else {
       const h = paper.assets[S.sym];
-      if (!h || h.qty <= 0) { log.textContent = T("Không có {c} để bán — PAPER theo cơ chế spot.", { c: base() }); return; }
+      if (!h || h.qty <= 0) { logOrder({ k: "noqty", sym: S.sym }); return; }
       const qty = usdIn > 0 ? Math.min(h.qty, usdIn / price) : h.qty;
       paper.cash += qty * price * (1 - FEE_SIDE);
       const pnl = (price - h.entry) * qty;
       h.qty -= qty; if (h.qty < 1e-9) delete paper.assets[S.sym];
-      log.innerHTML = `${T("✓ Đã khớp · PAPER: bán")} <b class="num">${qty.toFixed(6)} ${base()}</b> @ <span class="num">${fmt(price)}</span>`
-        + ` · PnL <b class="${pnl >= 0 ? "pos" : "neg"}">${pnl >= 0 ? "+" : "−"}${fmtUsd(Math.abs(pnl))} USDT</b>`;
+      logOrder({ k: "sell", qty, price, pnl, sym: S.sym });
     }
     updWallet(); draw();
+  }
+
+  /* Nhật ký lệnh giấy — chỉ trong PHIÊN, không localStorage. Trước đây mỗi lệnh
+     mới ghi đè lệnh cũ bằng innerHTML, nên một "sổ lệnh" chưa bao giờ có quá
+     một dòng. CỐ TÌNH không có win% / profit factor / max drawdown: những con
+     số đó tính trên lệnh sinh từ thiết lập dummy là bảng thành tích của hư
+     không, và sáu tháng nữa một ảnh chụp sẽ bị đọc thành bằng chứng GATE. */
+  const orderLog = [];
+  /* Lưu DỮ LIỆU, không lưu chuỗi đã dựng. Dựng chuỗi lúc ghi thì mỗi dòng đóng
+     băng ở ngôn ngữ lúc đó, và bấm VI/EN sẽ để lại một sổ lệnh nửa tiếng Việt
+     nửa tiếng Anh — hỏng LẶNG LẼ, không ai báo. */
+  function logOrder(rec) {
+    orderLog.unshift({ t: now(), ...rec });
+    if (orderLog.length > 40) orderLog.pop();
+    renderOrderLog();
+  }
+  function orderText(o) {
+    const b = o.sym ? o.sym.replace(/USDT$|BUSD$|FDUSD$/, "") : "";
+    if (o.k === "min") return "✗ " + T("Lệnh tối thiểu 10 USDT (hoặc số dư không đủ).");
+    if (o.k === "noqty") return "✗ " + T("Không có {c} để bán — PAPER theo cơ chế spot.", { c: b });
+    const head = `${o.k === "buy" ? T("✓ Đã khớp · PAPER: mua") : T("✓ Đã khớp · PAPER: bán")}`
+      + ` <b class="num">${o.qty.toFixed(6)} ${b}</b> @ <span class="num">${fmt(o.price)}</span>`;
+    if (o.k === "buy") return head;
+    return head + ` · PnL <b class="${o.pnl >= 0 ? "pos" : "neg"}">`
+      + `${o.pnl >= 0 ? "+" : "−"}${fmtUsd(Math.abs(o.pnl))} USDT</b>`;
+  }
+  function renderOrderLog() {
+    const el = $("ord-log"); if (!el) return;
+    if (!orderLog.length) { el.textContent = T("Chưa có lệnh."); return; }
+    el.innerHTML = orderLog.map(o =>
+      `<div class="ord-row"><span class="num ord-t">${fmtT(o.t, 60000)}</span>${orderText(o)}</div>`).join("")
+      + `<div class="ord-foot">${T("{n} lệnh trong phiên này · không lưu trên máy, đóng tab là mất",
+          { n: orderLog.length })}</div>`;
   }
   $("btn-buy").addEventListener("click", () => placeOrder("buy"));
   $("btn-sell").addEventListener("click", () => placeOrder("sell"));
@@ -1851,6 +2041,39 @@ body.mode-all .navtab::after{display:none}
      PANEL MỞ RỘNG — mọi thứ dưới đây chạy bằng dữ liệu Binance
      công khai, không cần model. Màu chỉ lấy từ token (DS-RULE 8).
      ══════════════════════════════════════════════════════════════ */
+  /* ══ LƯU TRỮ CỤC BỘ — một cửa duy nhất ═══════════════════════════════
+     Lý do không phải "cho gọn":
+     ① localStorage NÉM trong chế độ riêng tư của Safari và khi hết quota —
+        mỗi chỗ gọi thẳng là một chỗ có thể làm chết cả trang;
+     ② phải LIỆT KÊ ĐƯỢC toàn bộ thứ đã lưu, nếu không nút "Xoá dữ liệu" nói
+        dối và câu ở chân trang cũng nói dối;
+     ③ schema để sau này đổi định dạng còn biết đường bỏ dữ liệu cũ.
+     LUẬT: mọi khoá mới PHẢI đi qua đây và PHẢI được kể tên ở chân trang. */
+  const LS = "cryptopred-", LS_SCHEMA = "1";
+  const store = (k, v) => { try { localStorage.setItem(LS + k, String(v)); } catch (e) {} };
+  const load = (k, d = null) => {
+    try { const v = localStorage.getItem(LS + k); return v === null ? d : v; } catch (e) { return d; }
+  };
+  const lsKeys = () => { try { return Object.keys(localStorage).filter(k => k.startsWith(LS)); }
+                         catch (e) { return []; } };
+  const wipeLocal = () => lsKeys().forEach(k => { try { localStorage.removeItem(k); } catch (e) {} });
+  /* Nút xoá phải NÓI ĐÚNG số khoá đang có — nếu nó ghi "3 mục" mà thực tế 6 thì
+     nó cũng là một lời nói dối nhỏ, cùng loại với câu chân trang vừa sai. */
+  function wireWipe() {
+    const b = document.getElementById("wipe-btn"); if (!b) return;
+    const paint = () => b.textContent = T("Xoá {n} mục đã lưu trên máy", { n: lsKeys().length });
+    paint();
+    b.onclick = () => { wipeLocal(); b.textContent = T("Đã xoá — tải lại để về mặc định"); };
+  }
+  // Đổi schema ⇒ vứt sạch, đừng đoán ý dữ liệu cũ. Nhưng lần ĐẦU đóng dấu
+  // schema thì tên khoá chưa hề đổi, nên chỉ đóng dấu — không xoá thiết lập
+  // mà người dùng đã chọn từ trước.
+  {
+    const cur = load("schema");
+    if (cur === null) store("schema", LS_SCHEMA);
+    else if (cur !== LS_SCHEMA) { wipeLocal(); store("schema", LS_SCHEMA); }
+  }
+
   const P = { fund: null, fundHist: [], oi: [], liq: [], hb: [], spa: null, ctxTick: 0,
               _bg: {} };   // _bg: các lớp NƯỚNG SẴN offscreen, hết hạn qua redrawAll
 
@@ -1858,7 +2081,7 @@ body.mode-all .navtab::after{display:none}
      Chuỗi TĨNH: phần tử mang data-i (innerHTML tra từ điển DOM_I18N).
      Chuỗi ĐỘNG (JS/canvas): gọi T("key") hoặc T("key", {x: ...}).      */
   S.lang = "vi";
-  try { if (localStorage.getItem("cryptopred-lang") === "en") S.lang = "en"; } catch (e) {}
+  if (load("lang") === "en") S.lang = "en";
 
   const I18N = { vi: {}, en: {} };          // chuỗi động — nạp ở cuối file
   const DOM_I18N = { vi: {}, en: {} };      // chuỗi tĩnh theo data-i
@@ -1891,7 +2114,7 @@ body.mode-all .navtab::after{display:none}
         el.setAttribute(at, S.lang === "en" ? (ATTR_I18N[vi] || vi) : vi);
       });
     });
-    try { localStorage.setItem("cryptopred-lang", S.lang); } catch (e) {}
+    store("lang", S.lang);
   }
 
   const dpr = () => window.devicePixelRatio || 1;
@@ -2355,11 +2578,11 @@ body.mode-all .navtab::after{display:none}
   const VOTERS = ["trend", "donchian", "meanrev", "funding", "oi", "cvd"];
   S.mSel = new Set(VOTERS);
   try {
-    const raw = localStorage.getItem("cryptopred-methods");
+    const raw = load("methods");
     if (raw) S.mSel = new Set(JSON.parse(raw).filter(k => VOTERS.includes(k)));
   } catch (e) {}
   function saveMSel() {
-    try { localStorage.setItem("cryptopred-methods", JSON.stringify([...S.mSel])); } catch (e) {}
+    store("methods", JSON.stringify([...S.mSel]));
   }
 
   function tally(M) {
@@ -2446,8 +2669,18 @@ body.mode-all .navtab::after{display:none}
     const score = Math.round(parts.reduce((a, b) => a + b, 0) / parts.length * 100);
     P.nc.push({ t: now(), s: score });
     if (P.nc.length > 300) P.nc.shift();
-    renderNowcast(score);
-    renderSelected();          // panel theo phương pháp đã chọn: mỗi tick
+    // DÂY CƯƠNG: nowcast là thứ DUY NHẤT nhúc nhích trong khu dự đoán, nên nó
+    // sẽ bị bám vào làm bằng chứng "đang dự đoán realtime" — dù nó là con số ít
+    // ý nghĩa nhất trên trang. Hai cái hãm:
+    // ① chỉ vẽ lại khi đổi ≥2 điểm hoặc đã quá 1 giây — số nhảy 5–15 lần/giây
+    //    không thêm thông tin, chỉ thêm vẻ bận rộn;
+    // ② tự công bố nhiễu của chính nó bằng số (xem nc-noise bên dưới).
+    const dt = now() - (P.ncPaint || 0);
+    if (Math.abs(score - (P.ncLast ?? score)) >= 2 || dt >= 1000) {
+      P.ncPaint = now(); P.ncLast = score;
+      renderNowcast(score);
+      renderSelected();        // panel theo phương pháp đã chọn
+    }
   }
 
   function renderNowcast(score) {
@@ -2460,6 +2693,16 @@ body.mode-all .navtab::after{display:none}
     lbl.style.color = dir ? "var(--pred)" : "var(--text-2)";
     $("nc-needle").style.transform = "translateX(" + (50 + score / 2).toFixed(2) + "%)";
     $("nc-vs-now").innerHTML = lbl.textContent + ` <small style="color:var(--text-3)">${(score > 0 ? "+" : "") + score}</small>`;
+    // Nhiễu của chính nó, tính trên 60 giây gần nhất. Một con số dao động ±20
+    // trong một phút thì biên độ của nó chính là thông tin quan trọng nhất về
+    // nó — quan trọng hơn giá trị tức thời.
+    const el60 = $("nc-noise");
+    if (el60) {
+      const cut = now() - 60000, win = P.nc.filter(p => p.t >= cut).map(p => p.s);
+      el60.textContent = win.length < 4 ? T("đang đo nhiễu…")
+        : T("dao động ±{a} trong 60 giây · n={n}",
+            { a: Math.round((Math.max(...win) - Math.min(...win)) / 2), n: win.length });
+    }
     const o = S.locked;
     if (o) {
       const d = o.score > 58 ? 1 : o.score < 42 ? -1 : 0;
@@ -3067,7 +3310,30 @@ body.mode-all .navtab::after{display:none}
   /* ── Chart ────────────────────────────────────────────────── */
   const canvas = $("chart"), wrap = $("chart-wrap"), tt = $("tt"), ctx = canvas.getContext("2d");
   const cssVar = V;   // chart nến dùng chung bộ nhớ đệm token với các panel
-  const VIEW = 80;   // số nến hiển thị
+  const VIEW = 80;            // số nến hiển thị MẶC ĐỊNH
+  const VIEW_MIN = 20, VIEW_MAX = 500;
+  /* Khung nhìn: n = số nến hiện, end = chỉ số nến cuối cùng đang hiện trong
+     S.candles (null = bám nến mới nhất). Trước đây trang tải 500 nến rồi chỉ
+     bao giờ vẽ 80 — 420 nến đã trả băng thông mà không ai xem được. */
+  S.view = { n: VIEW, end: null };
+  const viewEnd = () => S.view.end === null ? S.candles.length : Math.min(S.view.end, S.candles.length);
+  const atLive = () => S.view.end === null || S.view.end >= S.candles.length;
+  function setView(n, end) {
+    const L = S.candles.length;
+    S.view.n = Math.max(VIEW_MIN, Math.min(VIEW_MAX, Math.min(n, L)));
+    if (end === null || end === undefined || end >= L) S.view.end = null;
+    else S.view.end = Math.max(S.view.n, Math.min(end, L));
+    paintViewUI();
+    requestDraw();
+  }
+  function paintViewUI() {
+    const b = document.getElementById("btn-live");
+    if (b) { b.hidden = atLive(); b.textContent = T("⇥ về hiện tại"); }
+    const p = document.getElementById("view-pill");
+    // Nói thẳng đang xem bao nhiêu trên tổng bao nhiêu — trước đây trang tải 500
+    // nến rồi lặng lẽ chỉ vẽ 80, không chỗ nào cho biết điều đó.
+    if (p) p.textContent = Math.min(S.view.n, S.candles.length) + "/" + S.candles.length;
+  }
 
   let drawPending = 0;
   function requestDraw() {                    // gộp nhiều lời gọi trong cùng frame thành một
@@ -3090,8 +3356,13 @@ body.mode-all .navtab::after{display:none}
     const C = { up: cssVar("--up"), down: cssVar("--down"), pred: cssVar("--pred"),
                 border: cssVar("--border"), t1: cssVar("--text-1"), t2: cssVar("--text-2"),
                 t3: cssVar("--text-3"), s1: cssVar("--surface-1"), s2: cssVar("--surface-2") };
-    const cs = S.candles.slice(-VIEW), N = cs.length;
-    const o = outlook(), FB = HORIZON_BARS;
+    const e = viewEnd(), i0 = Math.max(0, e - S.view.n);
+    const cs = S.candles.slice(i0, e), N = cs.length;
+    if (!N) { if (bclip < 1) ctx.restore(); return; }
+    // Khi đã cuộn về quá khứ thì "bây giờ" nằm ngoài khung ⇒ không vẽ nón.
+    // Neo nón vào một nến quá khứ là BỊA ra một dự đoán chưa từng được đưa ra —
+    // tệ hơn cả việc không hiện gì.
+    const live = atLive(), o = live ? outlook() : null, FB = live ? HORIZON_BARS : 0;
     const padL = 8, padR = 66, padT = 18, padB = 26;
     const plotW = W - padL - padR, plotH = H - padT - padB;
     const slotW = plotW / (N + FB + 1.5);
@@ -3100,10 +3371,16 @@ body.mode-all .navtab::after{display:none}
     // Vùng minh hoạ vẽ sau vẫn bị clip trái nên chỉ hiện khi quét XONG (đúng ý «không chung động từ»).
     if (bclip < 1) { ctx.beginPath(); ctx.rect(0, 0, padL + N * slotW * bclip, H); ctx.clip(); }
 
+    // RULE 7 ở tầng KỸ THUẬT, không phải tầng màu sắc: trục giá được tính CHỈ
+    // từ nến thật. Trước đây nón minh hoạ được đưa vào phép min/max, nên mỗi
+    // lần relock() chạy thì một con số dummy lại định đoạt tỉ lệ đọc 80 nến
+    // thật. Dữ liệu giả không được phép định hình cách nhìn dữ liệu thật.
     let lo = Math.min(...cs.map(c => c.low)), hi = Math.max(...cs.map(c => c.high));
-    if (o) { lo = Math.min(lo, o.lo); hi = Math.max(hi, o.hi); }
     const pad = (hi - lo) * 0.06 || 1; lo -= pad; hi += pad;
     const y = p => padT + (1 - (p - lo) / (hi - lo)) * plotH;
+    // Nón vượt khung thì bị CẮT và trang phải NÓI là đã cắt — im lặng cắt còn
+    // tệ hơn giãn trục, vì người xem tưởng mình đang thấy toàn bộ dải.
+    const clipped = o ? { lo: o.lo < lo, hi: o.hi > hi } : { lo: false, hi: false };
 
     ctx.font = "500 11px 'IBM Plex Mono', monospace";
     const raw = (hi - lo) / 6, mag = Math.pow(10, Math.floor(Math.log10(raw)));
@@ -3121,14 +3398,22 @@ body.mode-all .navtab::after{display:none}
 
     const bw = Math.max(2, slotW - 2);
     // ① Dải khối lượng dưới chân plot — kết cấu chỉ có ở phía dữ liệu đo được
-    if (plotH >= 200) {
-      const vmax = Math.max(...cs.map(c => c.vol), 1e-9), vbH = 22, vb0 = H - padB;
-      ctx.globalAlpha = .22;
+    // Bỏ ngưỡng `plotH >= 200` cũ: một tính năng tự quyết định lúc nào nó tồn
+    // tại và không nói với ai là thứ tệ hơn cả việc không có nó. Nay dải luôn
+    // hiện, chỉ co lại theo chiều cao thật của plot.
+    {
+      const vbH = Math.max(10, Math.min(22, plotH * 0.12)), vb0 = H - padB;
+      const vmax = Math.max(...cs.map(c => c.vol), 1e-9);
+      // takerBuy đã nằm sẵn trong S.candles — tách phần mua CHỦ ĐỘNG khỏi tổng
+      // là thông tin thật, không tốn thêm một request nào.
       for (let i = 0; i < N; i++) {
-        const c = cs[i];
+        const c = cs[i], bh = c.vol / vmax * vbH;
+        const bb = (c.takerBuy || 0) / vmax * vbH;
+        ctx.globalAlpha = .14;
         ctx.fillStyle = c.close >= c.open ? C.up : C.down;
-        const bh = c.vol / vmax * vbH;
         ctx.fillRect(x(i) - bw / 2, vb0 - bh, bw, bh);
+        ctx.globalAlpha = .34;                       // phần mua chủ động, đậm hơn
+        ctx.fillRect(x(i) - bw / 2, vb0 - bb, bw, bb);
       }
       ctx.globalAlpha = 1;
     }
@@ -3154,14 +3439,26 @@ body.mode-all .navtab::after{display:none}
     ctx.setLineDash([3, 3]); ctx.strokeStyle = C.t2; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(padL, yNow); ctx.lineTo(W - padR, yNow); ctx.stroke();
     ctx.setLineDash([]);
-    ctx.fillStyle = C.s2; ctx.fillRect(W - padR + 2, yNow - 9, padR - 6, 18);
-    ctx.fillStyle = C.t1; ctx.fillText(fmt(cs[N - 1].close), W - padR + 6, yNow + 4);
+    // Thẻ giá mép phải nghĩa là GIÁ HIỆN TẠI. Khi đã cuộn về quá khứ nó sẽ là
+    // giá của một nến cũ nhưng trông y hệt thẻ live ⇒ chỉ vẽ khi đang bám live.
+    if (live) {
+      ctx.fillStyle = C.s2; ctx.fillRect(W - padR + 2, yNow - 9, padR - 6, 18);
+      ctx.fillStyle = C.t1; ctx.fillText(fmt(cs[N - 1].close), W - padR + 6, yNow + 4);
+    }
 
-    /* ═══ V13 · VÁCH «BÂY GIỜ» ═══════════════════════════════════════
+    /* ═══ V13 · VÁCH «BÂY GIỜ» — chỉ tồn tại khi khung nhìn đang bám hiện tại ══
        Ranh giới thật/đoán là KIẾN TRÚC của biểu đồ, không phải một đường kẻ mờ.
        Bên trái: dữ liệu đo được. Bên phải: ĐỔI HẲN VẬT LIỆU sang giấy can kẻ chéo —
        ai nhìn cũng đọc ra «bên này biết, bên kia đoán» mà không cần một chữ nào. */
-    const xB = padL + N * slotW, yTop = padT - 6, yBot = H - padB, futW = Math.max(0, W - padR - xB);
+    /* Vách đặt ở ĐÚNG thời điểm hiện tại bên trong ô nến đang chạy, không ở
+       mép phải của ô. Đặt ở mép ô là nói rằng cả nến đang chạy đã là số đo —
+       trong khi 3/4 của nó còn chưa xảy ra. Vách bò sang phải suốt cả nến rồi
+       nhảy về khi nến mới mở: chuyển động bám TRỤC THỜI GIAN, hợp lệ. */
+    const lastC = cs[N - 1], stepMs2 = TF_MS[S.tf];
+    const frac = live && lastC && !lastC.closed
+      ? Math.max(0, Math.min(1, (now() - lastC.ts) / stepMs2)) : 1;
+    const xB = padL + (N - 1 + frac) * slotW, yTop = padT - 6, yBot = H - padB;
+    const futW = live ? Math.max(0, W - padR - xB) : 0;
     // Vệt quét boot chỉ tiết lộ phần QUÁ KHỨ. Vùng tương lai + nón hiện sau, KHÔNG nghi thức:
     // minh hoạ không được dùng chung động từ với năm phép đo thật vừa được chứng thực.
     if (bclip < 1) { ctx.beginPath(); ctx.rect(0, 0, padL + (xB - padL) * bclip, H); ctx.clip(); }
@@ -3190,18 +3487,21 @@ body.mode-all .navtab::after{display:none}
     for (let t = 0; t < 8; t++) { const yy = yTop + (yBot - yTop) * (t + .5) / 8;
       ctx.moveTo(xB - 4, yy); ctx.lineTo(xB, yy); }
     ctx.stroke(); ctx.globalAlpha = 1;
-    // ⑤ ray chữ dọc «BÂY GIỜ» áp sát vách
-    ctx.save();
-    ctx.translate(xB - 6, yTop + 8); ctx.rotate(-Math.PI / 2);
-    ctx.fillStyle = C.t2; ctx.font = "600 9px 'IBM Plex Sans Condensed',sans-serif";
-    ctx.textAlign = "right"; ctx.letterSpacing = "2.5px";
-    ctx.fillText(T("BÂY GIỜ").toUpperCase(), 0, 0);
-    ctx.letterSpacing = "0px"; ctx.textAlign = "left"; ctx.restore();
+    // ⑤ ray chữ dọc «BÂY GIỜ» áp sát vách — chỉ đúng khi khung đang bám hiện tại
+    if (live) {
+      ctx.save();
+      ctx.translate(xB - 6, yTop + 8); ctx.rotate(-Math.PI / 2);
+      ctx.fillStyle = C.t2; ctx.font = "600 9px 'IBM Plex Sans Condensed',sans-serif";
+      ctx.textAlign = "right"; ctx.letterSpacing = "2.5px";
+      ctx.fillText(T("Bây giờ").toUpperCase(), 0, 0);
+      ctx.letterSpacing = "0px"; ctx.textAlign = "left"; ctx.restore();
+    }
     ctx.font = "500 11px 'IBM Plex Mono', monospace";
 
     if (o) {   // Minh hoạ: tím nét đứt + nón phân vị — không bao giờ xanh/đỏ (RULE 7)
       const x0 = x(N - 1), y0 = yNow, xE = x(N + FB - 1);
       const XF = k => x0 + (xE - x0) * k / FB;
+      ctx.save(); ctx.beginPath(); ctx.rect(padL, padT, plotW, plotH); ctx.clip();
 
       // ① Nón KHÍ HẬU HỌC (baseline câm) — vẽ TRƯỚC nên luôn nằm dưới nón model
       const cl = climatologyBand();
@@ -3255,6 +3555,24 @@ body.mode-all .navtab::after{display:none}
       ctx.beginPath(); ctx.arc(xE, y(o.mid), 4.5, 0, 7);
       ctx.fillStyle = cssVar("--surface-0"); ctx.fill();   // rỗng = chưa có gì bên trong
       ctx.lineWidth = 1.5; ctx.strokeStyle = C.pred; ctx.stroke();
+      ctx.restore();
+
+      // Trục do nến THẬT định đoạt ⇒ nón có thể vượt khung. Khi đó phải NÓI ra,
+      // kèm con số bị cắt — im lặng cắt làm người xem tưởng đang thấy trọn dải.
+      ctx.font = "600 9px 'IBM Plex Mono',monospace"; ctx.textAlign = "center";
+      if (clipped.hi) {
+        ctx.fillStyle = C.pred;
+        ctx.beginPath(); ctx.moveTo(xE, padT + 1); ctx.lineTo(xE - 4, padT + 7);
+        ctx.lineTo(xE + 4, padT + 7); ctx.closePath(); ctx.fill();
+        ctx.fillText(fmt(o.hi), xE, padT - 4);
+      }
+      if (clipped.lo) {
+        ctx.fillStyle = C.pred;
+        ctx.beginPath(); ctx.moveTo(xE, H - padB - 1); ctx.lineTo(xE - 4, H - padB - 7);
+        ctx.lineTo(xE + 4, H - padB - 7); ctx.closePath(); ctx.fill();
+        ctx.fillText(fmt(o.lo), xE, H - padB + 10);
+      }
+      ctx.textAlign = "left"; ctx.font = "500 11px 'IBM Plex Mono', monospace";
     }
 
     const h = paper.assets[S.sym];
@@ -3270,7 +3588,11 @@ body.mode-all .navtab::after{display:none}
 
     // Crosshair KHÔNG vẽ ở đây nữa — nó sống trên #chart-fx (xem drawFX).
     // Nhờ vậy draw() thôi chạy mỗi mousemove: từ ~1 lần/rê xuống ~1 lần/giây.
-    CHART = { x, y, padL, padR, padT, padB, plotH, lo, hi, W, H };
+    // Mọi lớp vẽ khác (crosshair, thước, mức lệnh) PHẢI đọc từ đây. Chép tay
+    // công thức slotW sang chỗ khác là cách chắc chắn để crosshair lệch khỏi
+    // nến sau lần đổi khung nhìn đầu tiên mà không ai biết vì sao.
+    CHART = { x, y, padL, padR, padT, padB, plotW, plotH, slotW, lo, hi, W, H, i0, N, cs, FB, live };
+    paintViewUI();       // số nến / nút "về hiện tại" luôn khớp với thứ vừa vẽ
     if (bclip < 1) ctx.restore();
     drawFX();
   }
@@ -3296,13 +3618,20 @@ body.mode-all .navtab::after{display:none}
     fxctx.fillStyle = cssVar("--text-1"); fxctx.fillText(fmt(pv), G.W - G.padR + 6, my + 4);
   }
 
+  /* Chỉ số nến dưới một toạ độ x — DUY NHẤT một chỗ biết công thức này, và nó
+     đọc từ CHART do draw() vừa dựng. Trước đây showCrosshair chép tay công thức
+     slotW kèm hằng số 74 (= padL 8 + padR 66): đúng cho tới đúng lần đầu ai đó
+     đổi padding hoặc khung nhìn, rồi crosshair lệch khỏi nến mà không ai biết. */
+  function idxAt(mx) {
+    const G = CHART; if (!G) return null;
+    return Math.floor((mx - G.padL) / G.slotW);
+  }
   function showCrosshair(clientX, clientY) {
-    if (S.candles.length < 5) return;
+    if (S.candles.length < 5 || !CHART) return;
     const r = wrap.getBoundingClientRect(), mx = clientX - r.left, my = clientY - r.top;
-    const cs = S.candles.slice(-VIEW), N = cs.length, FB = HORIZON_BARS;
-    const slotW = (wrap.clientWidth - 74) / (N + FB + 1.5);
-    const i = Math.floor((mx - 8) / slotW);
-    if (i < 0 || i >= N + FB) { S.hover = null; tt.style.display = "none"; drawFX(); return; }
+    const cs = CHART.cs, N = CHART.N, FB = CHART.FB;
+    const i = idxAt(mx);
+    if (i === null || i < 0 || i >= N + FB) { S.hover = null; tt.style.display = "none"; drawFX(); return; }
     S.hover = { i, my };
     const o = outlook();
     if (i < N) {
@@ -3323,23 +3652,107 @@ body.mode-all .navtab::after{display:none}
     const flip = mx > wrap.clientWidth - 220;
     tt.style.left = flip ? (mx - tt.offsetWidth - 14) + "px" : (mx + 14) + "px";
     tt.style.top = Math.max(4, my - 20) + "px";
-    drawFX();
+    drawFX(); updOHLC();
   }
-  function hideCrosshair() { S.hover = null; tt.style.display = "none"; drawFX(); }
-  wrap.addEventListener("mousemove", e => showCrosshair(e.clientX, e.clientY));
+  function hideCrosshair() { S.hover = null; tt.style.display = "none"; drawFX(); updOHLC(); }
+
+  /* ══ KHUNG NHÌN SỐNG ═══════════════════════════════════════════════════
+     500 nến vẫn được tải như cũ; trước đây 420 trong số đó không xem được.
+     Chuột: lăn = phóng CÓ NEO (nến dưới con trỏ đứng yên) · kéo = trượt ngang ·
+     nhấp đúp = về mặc định. Bàn phím: ←/→ trượt, +/− phóng.
+     Chạm: pinch = phóng · HAI ngón ngang = trượt. MỘT ngón ngang vẫn là
+     crosshair — đó là thắng lợi của v12, không được cướp lại. */
+  function zoomAt(mx, factor) {
+    const G = CHART; if (!G) return;
+    const iAnchor = G.i0 + (mx - G.padL) / G.slotW;          // nến dưới con trỏ
+    const n2 = Math.max(VIEW_MIN, Math.min(VIEW_MAX, Math.round(S.view.n * factor)));
+    if (n2 === S.view.n) return;
+    // giữ nguyên vị trí TƯƠNG ĐỐI của nến neo trong khung ⇒ nó đứng yên dưới con trỏ
+    const frac = (iAnchor - G.i0) / Math.max(1, G.N);
+    setView(n2, Math.round(iAnchor + (1 - frac) * n2));
+  }
+  wrap.addEventListener("wheel", e => {
+    if (!CHART || S.candles.length < 5) return;
+    e.preventDefault();
+    const r = wrap.getBoundingClientRect();
+    zoomAt(e.clientX - r.left, e.deltaY > 0 ? 1.15 : 1 / 1.15);
+    showCrosshair(e.clientX, e.clientY);
+  }, { passive: false });
+
+  let panFrom = null;
+  wrap.addEventListener("mousedown", e => {
+    if (e.button !== 0 || !CHART) return;
+    panFrom = { x: e.clientX, end: viewEnd(), moved: false };
+  });
+  window.addEventListener("mousemove", e => {
+    if (!panFrom || !CHART) return;
+    const dx = e.clientX - panFrom.x;
+    if (Math.abs(dx) < 3 && !panFrom.moved) return;
+    panFrom.moved = true; wrap.style.cursor = "grabbing";
+    setView(S.view.n, panFrom.end - Math.round(dx / CHART.slotW));
+  });
+  window.addEventListener("mouseup", () => {
+    if (panFrom) wrap.style.cursor = "";
+    panFrom = null;
+  });
+  wrap.addEventListener("dblclick", () => setView(VIEW, null));
+  document.getElementById("btn-live").addEventListener("click", () => setView(S.view.n, null));
+  wrap.addEventListener("mousemove", e => { if (!panFrom || !panFrom.moved) showCrosshair(e.clientX, e.clientY); });
   wrap.addEventListener("mouseleave", hideCrosshair);
+  window.addEventListener("keydown", e => {
+    if (/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)) return;
+    const step = Math.max(1, Math.round(S.view.n / 8));
+    if (e.key === "ArrowLeft") { setView(S.view.n, viewEnd() - step); e.preventDefault(); }
+    else if (e.key === "ArrowRight") { setView(S.view.n, viewEnd() + step); e.preventDefault(); }
+    else if (e.key === "+" || e.key === "=") { setView(Math.round(S.view.n / 1.25), viewEnd()); e.preventDefault(); }
+    else if (e.key === "-" || e.key === "_") { setView(Math.round(S.view.n * 1.25), viewEnd()); e.preventDefault(); }
+    else if (e.key === "Home") { setView(VIEW, null); e.preventDefault(); }
+  });
   /* V12: chạm trên điện thoại cũng đọc được nến — kéo ngón để dò, nhấc ngón thì ẩn.
      touch-action:none để trình duyệt không cuộn trang khi đang dò chart. */
   // pan-y: vẫn cuộn trang được bằng ngón — chỉ khi ngón đi NGANG mới bắt crosshair,
   // nếu không chart cao 46vh giữa màn hình thành cái bẫy ngón tay trên điện thoại.
   wrap.style.touchAction = "pan-y";
   let touching = false, tStart = null;
+  /* HAI ngón: pinch = phóng, trượt ngang = trượt khung. Một ngón vẫn thuộc về
+     crosshair — v12 đã gỡ được cái bẫy ngón tay ở chart cao 46vh, không lấy lại.
+     Vẫn giữ touchAction "pan-y" để cuộn trang bằng ngón dọc còn chạy. */
+  const pts = new Map();
+  let gest = null;
   wrap.addEventListener("pointerdown", e => {
     if (e.pointerType === "mouse") return;
+    pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pts.size === 2) {
+      const [a, b] = [...pts.values()];
+      gest = { d0: Math.hypot(a.x - b.x, a.y - b.y) || 1, cx0: (a.x + b.x) / 2,
+               n0: S.view.n, end0: viewEnd() };
+      touching = false; tStart = null; hideCrosshair();
+      try { wrap.setPointerCapture(e.pointerId); } catch (err) {}
+    }
+  });
+  wrap.addEventListener("pointermove", e => {
+    if (e.pointerType === "mouse") return;
+    if (pts.has(e.pointerId)) pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (gest && pts.size >= 2 && CHART) {
+      e.preventDefault();
+      const [a, b] = [...pts.values()];
+      const d = Math.hypot(a.x - b.x, a.y - b.y) || 1, cx = (a.x + b.x) / 2;
+      const n2 = Math.max(VIEW_MIN, Math.min(VIEW_MAX, Math.round(gest.n0 * gest.d0 / d)));
+      const shift = Math.round((cx - gest.cx0) / CHART.slotW);
+      setView(n2, gest.end0 - shift);
+      return;
+    }
+  }, { passive: false });
+  ["pointerup", "pointercancel"].forEach(ev => wrap.addEventListener(ev, e => {
+    pts.delete(e.pointerId);
+    if (pts.size < 2) gest = null;
+  }));
+  wrap.addEventListener("pointerdown", e => {
+    if (e.pointerType === "mouse" || pts.size > 1) return;
     tStart = { x: e.clientX, y: e.clientY }; touching = false;
   });
   wrap.addEventListener("pointermove", e => {
-    if (e.pointerType === "mouse" || !tStart) return;
+    if (e.pointerType === "mouse" || !tStart || gest || pts.size > 1) return;
     if (!touching) {
       const dx = Math.abs(e.clientX - tStart.x), dy = Math.abs(e.clientY - tStart.y);
       if (dy > dx || dx < 6) return;                      // ngón đi dọc → nhường việc cuộn trang
@@ -3383,7 +3796,7 @@ body.mode-all .navtab::after{display:none}
   /* ── Chế độ bố cục: 'tabs' (tách) hoặc 'all' (gộp 1 trang cuộn dọc) ──
      Lựa chọn được nhớ trên máy — khoản lưu duy nhất của trang (đã ghi ở footer). */
   S.layout = "tabs";
-  try { if (localStorage.getItem("cryptopred-layout") === "all") S.layout = "all"; } catch (e) {}
+  if (load("layout") === "all") S.layout = "all";
 
   function drawPane(id) {
     if (id === "pane-trade") { draw(); renderCtx(); }
@@ -3411,7 +3824,7 @@ body.mode-all .navtab::after{display:none}
       document.querySelectorAll(".tabpane").forEach(pn => pn.hidden = pn.id !== id);
       requestAnimationFrame(() => drawPane(id));
     }
-    try { localStorage.setItem("cryptopred-layout", S.layout); } catch (e) {}
+    store("layout", S.layout);
   }
 
   $("mode-btn").addEventListener("click", () => {
@@ -3424,11 +3837,11 @@ body.mode-all .navtab::after{display:none}
   const THEMES = ["dark", "ember", "steel", "light"];
   const THEME_NAME = { dark: "Aurora", ember: "Ember", steel: "Steel", light: "Light" };
   S.theme = "dark";
-  try { const t = localStorage.getItem("cryptopred-theme"); if (THEMES.includes(t)) S.theme = t; } catch (e) {}
+  { const t = load("theme"); if (THEMES.includes(t)) S.theme = t; }
   function applyTheme() {
     document.documentElement.setAttribute("data-theme", S.theme);
     $("theme-btn").title = T("Bảng màu: {n} — bấm để đổi", { n: THEME_NAME[S.theme] });
-    try { localStorage.setItem("cryptopred-theme", S.theme); } catch (e) {}
+    store("theme", S.theme);
   }
   $("theme-btn").addEventListener("click", () => {
     S.theme = THEMES[(THEMES.indexOf(S.theme) + 1) % THEMES.length];
@@ -3445,6 +3858,9 @@ body.mode-all .navtab::after{display:none}
     renderGates(); applyLayout(); updHeader(); updWallet();
     renderPrediction(); renderTracking(); setConn(S.conn);
     setupNotes(); setupCollapse();                      // applyLang xoá nút trong [data-i] → dựng lại
+    // Mọi khối dựng bằng T() lúc chạy đều phải dựng LẠI ở đây, nếu không nó
+    // đứng nguyên tiếng cũ — và hỏng LẶNG LẼ, không ai báo.
+    wireWipe(); paintPassport(); renderOrderLog(); paintViewUI();
     if (typeof redrawAll === "function") redrawAll();   // nhãn canvas vẽ qua T()
   });
 
@@ -3534,6 +3950,8 @@ body.mode-all .navtab::after{display:none}
       document.querySelector(".statusbar").style.setProperty("--cdp", (1 - rem / step).toFixed(4));
     }
     renderTracking();   // thời gian vẫn trôi kể cả khi giá đứng im
+    paintPassport();    // tuổi dự đoán đếm lên — bám TRỤC THỜI GIAN, hợp lệ
+    requestDraw();      // vách «bây giờ» bò theo giờ thật trong lòng nến đang chạy
     const pane = document.querySelector('.navtab[aria-selected="true"]');
     if (S.layout === "all" || (pane && pane.dataset.pane === "pane-mkt")) { drawHeartbeat(); drawLiq(); }
     if (++P.ctxTick % 10 === 0) renderCtx();          // băng bối cảnh: 10 giây/lần
@@ -3565,10 +3983,26 @@ body.mode-all .navtab::after{display:none}
       off.textContent = T("NGOẠI TUYẾN {t} · thử lại {n}", { t: fmtCd(Date.now() - S.downSince), n: S.retry });
     } else off.hidden = true;
     // Dòng OHLC kiểu dòng lệnh
-    const oh = $("ohlc-line"), lc = S.candles[S.candles.length - 1];
-    if (oh && lc) { oh.hidden = false;
-      oh.textContent = `O ${fmt(lc.open)}  H ${fmt(lc.high)}  L ${fmt(lc.low)}  C ${fmt(lc.close)}  Δ ${pctStr((lc.close / lc.open - 1) * 100)}`; }
+    updOHLC();
     updTapebar();
+  }
+
+  /* Dòng OHLC bám nến ĐANG TRỎ. Trước đây nó luôn hiện nến cuối cùng, kể cả khi
+     con trỏ đang ở nến thứ 12 — một dashboard tự nhận nói thật về độ tươi mà
+     dòng OHLC hiện sai nến là mâu thuẫn nội tại, không phải chuyện tiện nghi. */
+  function updOHLC() {
+    const oh = $("ohlc-line"); if (!oh) return;
+    const hv = S.hover && CHART && S.hover.i >= 0 && S.hover.i < CHART.N ? CHART.cs[S.hover.i] : null;
+    const lc = hv || S.candles[S.candles.length - 1];
+    if (!lc) return;
+    oh.hidden = false;
+    // Nến đang trỏ ≠ nến cuối ⇒ nói ra giờ của nó, nếu không người đọc tưởng
+    // đây vẫn là "bây giờ".
+    const tag = hv && hv !== S.candles[S.candles.length - 1]
+      ? `<span style="color:var(--text-3)">${fmtT(hv.ts, TF_MS[S.tf])}</span>  ` : "";
+    oh.innerHTML = tag
+      + `O ${fmt(lc.open)}  H ${fmt(lc.high)}  L ${fmt(lc.low)}  C ${fmt(lc.close)}`
+      + `  Δ ${pctStr((lc.close / lc.open - 1) * 100)}`;
   }
 
   /* ── V11: tape bar — watchlist ô TĨNH, click = đổi cặp ── */
@@ -3672,6 +4106,48 @@ body.mode-all .navtab::after{display:none}
   "Minh hoạ hiện tại · q10–q90": "Current illustration · q10–q90",
   "✓ hẹp hơn baseline {x}%": "✓ {x}% narrower than baseline",
   "mốc baseline": "baseline mark",
+  "Bảng màu: {n} — bấm để đổi": "Palette: {n} — click to change",
+  "Bấm để điền giá trị lệnh": "Click to fill the order amount",
+  "Bật ít nhất một phương pháp ở bàn phương pháp bên dưới.":
+    "Turn on at least one method in the method board below.",
+  "Bật/tắt phương pháp này trong bảng đếm phiếu": "Include or exclude this method from the vote count",
+  "CHƯA CHỌN PHƯƠNG PHÁP NÀO": "NO METHOD SELECTED",
+  "Enter → thử tải": "Enter → try loading",
+  "Không bỏ phiếu hướng — đo độ lớn / làm mốc so sánh":
+    "Casts no directional vote — it measures magnitude / sets a reference",
+  "NGHIÊNG GIẢM": "LEANING DOWN",
+  "NGHIÊNG TĂNG": "LEANING UP",
+  "NGOẠI TUYẾN {t} · thử lại {n}": "OFFLINE {t} · retry {n}",
+  "cặp": "pairs",
+  "dự đoán": "prediction",
+  "key": "key",
+  "mức": "levels",
+  "ngược": "against",
+  "thuận": "for",
+  "tick đầu": "first tick",
+  "Đã điền {v} USDT từ sổ lệnh": "Filled {v} USDT from the order book",
+  "đang bật": "on",
+  "đã nối": "connected",
+  "— KHÔNG CÓ": "— NONE",
+  "Xoá {n} mục đã lưu trên máy": "Clear {n} items stored on this device",
+  "⇥ về hiện tại": "⇥ back to now",
+  "nguồn": "source",
+  "hiệu chỉnh": "calibrated",
+  "QUÁ HẠN": "OVERDUE",
+  "đang đo nhiễu…": "measuring its own noise…",
+  "dao động ±{a} trong 60 giây · n={n}": "swings ±{a} over 60 seconds · n={n}",
+  "Chưa có lệnh.": "No orders yet.",
+  "{n} lệnh trong phiên này · không lưu trên máy, đóng tab là mất":
+    "{n} orders this session · not stored on your device, closing the tab loses them",
+  "Đã xoá — tải lại để về mặc định": "Cleared — reload for defaults",
+  "24h cao": "24h high",
+  "24h thấp": "24h low",
+  "24h khối lượng": "24h volume",
+  "Mark": "Mark",
+  "Basis": "Basis",
+  "Chênh giữa mark hợp đồng và giá spot": "Gap between contract mark and spot price",
+  "Vị trí giá hiện tại trong biên độ 24 giờ": "Where the current price sits in the 24-hour range",
+  "của biên độ 24h": "of 24h range",
   "⚠ chưa sắc nét hơn baseline ({d}%)": "⚠ not sharper than baseline ({d}%)",
   "rộng hơn": "wider by",
   "chỉ hẹp": "only narrower by",
@@ -3889,9 +4365,13 @@ body.mode-all .navtab::after{display:none}
   "m23": "<i style=\"border-top:2px dashed var(--pred);height:0\"></i>3 paths nearest q10 / q50 / q90",
   "m24": "OI vs Price",
   "m25": "Price↑ OI↑ = new money in · Price↑ OI↓ = short covering.",
-  "m26": "Market data: Binance public REST + WebSocket (no API key, read-only). This page sends nothing anywhere; it stores only four UI choices on your device: layout, language, palette and notes. · Project source: <span class=\"num\">cryptopred</span> · docs 00–05."
+  "m26": "Market data: Binance public REST + WebSocket (no API key, read-only). This page sends nothing anywhere. It stores only <b>UI choices</b> on your device: layout, language, palette, notes, the method filter and which panels are folded. No prediction, result or trading history is ever stored. · Project source: <span class=\"num\">cryptopred</span> · docs 00–05."
 });
   const ATTR_I18N = {
+  "Tuổi của dự đoán đang khoá": "Age of the locked prediction",
+  "Số nến đang hiện / số nến đã tải": "Candles shown / candles loaded",
+  "Vị trí giá hiện tại trong biên độ 24 giờ": "Where the current price sits in the 24-hour range",
+  "Chênh giữa mark hợp đồng và giá spot": "Gap between contract mark and spot price",
   "Khu vực dashboard": "Dashboard sections",
   "Tách tab: mỗi khu vực một trang. Gộp: toàn bộ panel trên một trang cuộn dọc.": "Split: one page per section. All-in-one: every panel on one scrolling page.",
   "Tìm cặp… ↵": "Search pair… ↵",
@@ -4073,10 +4553,10 @@ body.mode-all .navtab::after{display:none}
     });
     const b = $("notes-btn");
     if (b) b.setAttribute("aria-pressed", String(S.notes));
-    try { localStorage.setItem("cryptopred-notes", S.notes ? "1" : "0"); } catch (e) {}
+    store("notes", S.notes ? "1" : "0");
   }
   S.notes = false;
-  try { S.notes = localStorage.getItem("cryptopred-notes") === "1"; } catch (e) {}
+  S.notes = load("notes") === "1";
 
   /* ══════════ V12 · Ô bối cảnh bấm được → nhảy thẳng tới panel ══════════ */
   const CTX_JUMP = [
@@ -4247,11 +4727,11 @@ body.mode-all .navtab::after{display:none}
       btn.dataset.i18nT = "Gập/mở bảng số";
       btn.title = "Gập/mở bảng số";
       let open = !COLLAPSE_DEFAULT.includes(key);
-      try { const v = localStorage.getItem("cryptopred-fold-" + key); if (v !== null) open = v === "1"; } catch (e) {}
+      { const v = load("fold-" + key); if (v !== null) open = v === "1"; }
       const apply = () => {
         pn.classList.toggle("collapsed", !open);
         btn.setAttribute("aria-expanded", String(open));
-        try { localStorage.setItem("cryptopred-fold-" + key, open ? "1" : "0"); } catch (e) {}
+        store("fold-" + key, open ? "1" : "0");
       };
       apply();
       const toggle = e => {
@@ -4275,13 +4755,13 @@ body.mode-all .navtab::after{display:none}
       bstep("tick", Object.keys(S.tickers).length + " " + T("cặp"));
       await reload();
       connectLiqWS(); renderGates();
-      applyTheme(); applyLayout(); applyLang(); setupNotes(); applyNotes(); setupCollapse();
+      applyTheme(); applyLayout(); applyLang(); setupNotes(); applyNotes(); setupCollapse(); wireWipe();
       document.body.classList.remove("boot-error");
     } catch (err) {
       setConn("down", T("Không nối được Binance"));
       document.body.classList.add("boot-error");        // desktop: mở lại coin-card chứa lời giải thích
       $("coin-list").innerHTML = `<div style="padding:var(--sp-3);font-size:13px;color:var(--text-2)">${T("Không gọi được api.binance.com.<br><br>Có thể do: không có mạng, mạng/ISP chặn Binance, hoặc bạn đang ở vùng bị chặn (Mỹ → dùng api.binance.us).<br><br><b>Trang không bịa dữ liệu thay thế</b> — thà trống còn hơn hiển thị số giả.")}</div>`;
-      applyTheme(); setupNotes(); applyNotes(); applyLang();
+      applyTheme(); setupNotes(); applyNotes(); applyLang(); wireWipe();
       document.body.classList.remove("boot");           // lỗi cũng phải HIỆN — không giấu sau màn boot
       bootEnd();                                        // gỡ màn che, nếu không lỗi nằm sau nó
       // Retry backoff THẬT — sb-off «thử lại N» đếm đúng số lần này
