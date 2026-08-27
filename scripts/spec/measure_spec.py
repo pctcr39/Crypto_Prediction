@@ -183,6 +183,7 @@ def turnover_and_drag() -> dict:
 def emit(path="docs/generated/spec_numbers.md") -> None:
     m, amr, dd, surf, slip = measure(), abs_move_ratio(), drawdown_ratio_w_scale(), barrier_surface(), None
     slip = slippage_table(m)
+    tiers = tier_table()
     be_slip = slip[-1]["breakeven_R"]
     L = []
     A = L.append
@@ -225,6 +226,24 @@ def emit(path="docs/generated/spec_numbers.md") -> None:
     fn = [v["fee_nav_pct_per_year"] for v in tv.values()]
     A(f"\n**Phí trên NAV: {min(fn):.3f} – {max(fn):.3f}% mỗi đồng mỗi năm.** Với 9 đồng: **{min(fn)*9:.2f} – {max(fn)*9:.2f}% NAV/năm**.")
     A("\n> Tần suất cao nhưng **mỗi lệnh nhỏ**. Bức tường phí của `08 §A2` tính cho lệnh **toàn vốn**; ở đây mỗi tranche là 1% NAV nên tiền phí không tỉ lệ với số lệnh theo cách đó.\n")
+    A("\n## 3c · ★ TRỤC D — phân tầng theo độ chọn lọc (ADR-018)\n")
+    A("Tập LỒNG NHAU trên cùng danh sách đã phát. Một mô hình, một hiệu chỉnh, một cổng.\n")
+    A("| Tầng | Cắt tại `level` | n | **Sự kiện/đồng/năm** | % thắng | EV/lệnh | SE | Tổng R | So với Đầy đủ |")
+    A("|---|---|---|---|---|---|---|---|---|")
+    for t in tiers[:-1]:
+        z = t["z_vs_full"]
+        v = "— (mốc)" if z is None else (f"z={z:+.2f} **KHÁC BIỆT**" if abs(z) > 1.96 else f"z={z:+.2f} không phân biệt được")
+        A(f"| **{t['tier']}** | ≥ {t['min_level']:.2f} | {t['n']:,} | **{t['per_year']}** | "
+          f"{t['win']}% | {t['ev']:+.3f}R | {t['se']:.3f} | {t['total_r']:+.1f}R | {v} |")
+    mt = tiers[-1]
+    n_sig = sum(1 for t in tiers[:-1] if t["z_vs_full"] is not None and abs(t["z_vs_full"]) > 1.96)
+    A(f"\n**Kết luận: {n_sig}/{len(tiers)-2} tầng khác biệt có ý nghĩa so với Đầy đủ.**")
+    A(f"Độ lệch chuẩn R mỗi sự kiện = **{mt['sd_per_event']}R** — rất lớn. Để phân biệt được chênh lệch "
+      f"0,15R ở mức 95% cần **≈{mt['n_needed_for_0p15']:,} sự kiện mỗi tầng**; hiện có "
+      f"**{mt['n_total']:,}** trên {mt['coin_years']} đồng-năm.\n")
+    A("> ⚠️ **Tầng KHÔNG phải thang chất lượng.** EV mỗi lệnh không phân biệt được giữa các tầng. "
+      "Tầng chỉ điều tiết **tần suất** và do đó **tổng lợi nhuận** — ít lệnh hơn nghĩa là ít tổng R hơn "
+      "ở cùng chất lượng kỳ vọng, không phải chất lượng cao hơn. Giao diện không được ngụ ý ngược lại.\n")
     A("\n## 4 · GATE 1a — tỉ số sụt giảm, thang `w`\n")
     A("| Cặp | Sụt giảm chiến lược | Mua-và-giữ | **Tỉ số** | Ngưỡng 0,60 |\n|---|---|---|---|---|")
     for k, v in dd.items():
@@ -242,6 +261,50 @@ def emit(path="docs/generated/spec_numbers.md") -> None:
     Path(path).parent.mkdir(parents=True, exist_ok=True)
     Path(path).write_text("\n".join(L), encoding="utf-8")
     print(f"đã sinh {path} — {len(L)} dòng")
+
+
+# ══ TRỤC D · phân tầng theo độ chọn lọc (ADR-018) ════════════════════
+TIERS = ((0.25, "Đầy đủ"), (0.50, "Cân bằng"), (0.75, "Chọn lọc"), (1.00, "Tối thiểu"))
+
+def tier_table() -> list[dict]:
+    """★ PHÉP THỬ TIÊN QUYẾT của trục D: EV có ĐƠN ĐIỆU theo độ chọn lọc không?
+
+    Các tầng là TẬP LỒNG NHAU trên cùng một danh sách đã phát — cùng mô hình,
+    cùng hiệu chỉnh, cùng cổng. Chúng chỉ cắt danh sách ở mức `level` khác nhau.
+    Vì vậy về thống kê đây vẫn là MỘT giả thuyết, không phải bốn.
+
+    Phí quy về R tính theo σ̂ CỦA CHÍNH tranche đó (không dùng hằng số tham
+    chiếu 3,00%) — tranche vào lúc σ̂ thấp bị phí ăn nhiều R hơn.
+    """
+    rows, years = [], 0.0
+    for s in SYMS:
+        b, sig, w = _prep(s)
+        years += len(b) / 365.25
+        for t in run_tranches(b, w, sig):
+            c_R = COST_ROUNDTRIP / (SL_MULT * t.sigma * 100)
+            rows.append((t.level, t.realized_r - c_R, t.realized_r > 0))
+    lv = np.array([r[0] for r in rows])
+    rn = np.array([r[1] for r in rows])
+    wn = np.array([r[2] for r in rows])
+    out, base = [], None
+    for lo, name in TIERS:
+        k = lv >= lo
+        n = int(k.sum())
+        ev = float(rn[k].mean())
+        se = float(rn[k].std(ddof=1) / np.sqrt(n))
+        d = {"tier": name, "min_level": lo, "n": n, "per_year": round(n / years, 1),
+             "win": round(float(wn[k].mean()) * 100, 1), "ev": round(ev, 3),
+             "se": round(se, 3), "total_r": round(float(rn[k].sum()), 1)}
+        if base is None:
+            base = (ev, se)
+            d["z_vs_full"] = None
+        else:
+            d["z_vs_full"] = round((ev - base[0]) / np.sqrt(se ** 2 + base[1] ** 2), 2)
+        out.append(d)
+    sd = float(rn.std(ddof=1))
+    return out + [{"tier": "__meta__", "sd_per_event": round(sd, 2), "n_total": len(rows),
+                   "coin_years": round(years, 1),
+                   "n_needed_for_0p15": int((1.96 * sd / 0.15) ** 2)}]
 
 
 # ══ các phép đo phụ trợ mà tài liệu cần ══════════════════════════════

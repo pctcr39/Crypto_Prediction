@@ -1070,6 +1070,10 @@ Hệ **không biết** người dùng có vào lệnh không, và **không đư�
 | 46 | **Thiếu funding ≠ không có perp** (M25) | Cặp không có hợp đồng vĩnh cửu ⇒ `f̂ is None`, KHÔNG phải `p95_expanding`; hai ca phân biệt được ở tầng kiểu |
 | 47 | **FDR trước khi xếp hạng** (M08) | Bảng xếp hạng coin theo kỹ năng ⇒ phải có trường `fdr_q` khác None, nếu không thì từ chối render |
 | 48 | **`H_DAYS` suy từ config, không hằng số cứng** (m08) | `assert H_DAYS[tf] == horizon_bars[tf] * timeframe_hours[tf] / 24` cho cả ba khung — đổi `horizon_bars` trong config mà quên sửa mã ⇒ đỏ |
+| 50 | **Tầng là TẬP LỒNG NHAU** (ADR-018) | `set(tranches(tier="Tối thiểu")) ⊆ … ⊆ set(tranches(tier="Đầy đủ"))` — tầng chặt hơn không được chứa khuyến nghị mà tầng rộng hơn không có |
+| 51 | **Tầng không đổi bất cứ thứ gì phía trước cổng** | Với mọi tầng: cùng `model_sha` · cùng bộ hiệu chỉnh · cùng `p_star`. Tầng chỉ lọc danh sách đã phát; khác đi ⇒ đỏ |
+| 52 | **Không ngôn từ chất lượng cho tầng** (ADR-018 §2) | Chuỗi hiển thị của tầng không chứa từ hàm ý thứ hạng ("cao cấp", "độ tin cao", sao). Test quét danh sách từ cấm |
+| 53 | **Đổi tầng phải nêu tần suất** | Mọi luồng đổi tầng ⇒ phản hồi chứa `events_per_year_delta` khác None; thiếu ⇒ từ chối render |
 | 49 | **Quay vòng trong ngân sách** | Quay vòng `w`/năm của backtest phải nằm trong dải đăng ký ở [`spec_numbers §3b`](generated/spec_numbers.md) ± 30%; vượt ⇒ đỏ *(thay bất biến «trần tỉ lệ phát theo % số nến» của rc1, vốn dựng trên tần suất sai 6 lần)* |
 
 **Quy tắc chọn chỗ đặt:**
@@ -1409,7 +1413,7 @@ Cổng kép có **bốn** kết cục, không phải hai. Đăng ký hành độ
 | Trần phát khung 1h · 4h | **0 tuyệt đối** — một lần phát bất kỳ ⇒ test đỏ | |
 | Trần phát khung 1d | > 2× kỳ vọng tranche-mở ⇒ **cảnh báo** | Hệ nói quá nhiều cũng là chế độ hỏng |
 
-## 9.3 · Bốn thứ bảng điều khiển BẮT BUỘC hiển thị
+## 9.3 · Bảy thứ bảng điều khiển BẮT BUỘC hiển thị
 
 1. **`p_required` ngay cạnh `p_up`, ở mọi khung** — kể cả khung không giao dịch. Người dùng thấy khoảng cách, không phải đoán. **Và `p_star` cạnh mỗi khuyến nghị** — hai ngưỡng khác nhau, xem §9.0b.
 1b. **Nhãn «HIỆU SUẤT GIẢ ĐỊNH»** trên mọi con số bảng điểm (§9.0).
@@ -1418,6 +1422,7 @@ Cổng kép có **bốn** kết cục, không phải hai. Đăng ký hành độ
 4. **Bảng điểm lịch sử** — không phải trang phụ, không ẩn sau menu. **Chấm song song hai quy ước stop** (§9.1).
 5. **Khuyến nghị THOÁT hiển thị ngang hàng khuyến nghị VÀO** — cùng vùng, cùng cỡ chữ. Với hệ khuyến nghị, tín hiệu thoát là thứ khẩn cấp nhất.
 6. **Chỉ dẫn đặt lệnh stop treo** in kèm mọi khuyến nghị vào, không thu gọn, không ẩn.
+7. **Tầng độ chọn lọc đang áp dụng**, kèm tần suất kỳ vọng của tầng đó — và lời nhắc rằng tầng điều tiết **tần suất**, không phải chất lượng (§9.5).
 
 ## 9.4 · Quy ước thị giác — không thương lượng
 
@@ -1427,6 +1432,67 @@ Cổng kép có **bốn** kết cục, không phải hai. Đăng ký hành độ
 | Hướng **không bao giờ chỉ mã hoá bằng màu** | Khả năng tiếp cận + chống đọc nhầm |
 | Dải giá in kèm **độ phủ 30 ngày đo được** | Con số trung thực nhất của cả hệ |
 | Bỏ đường nối tới q50 | q50 ≈ last_close — vẽ nó là gợi ý một dự báo không tồn tại |
+
+## 9.5 · ★ TẦNG ĐỘ CHỌN LỌC — điều người dùng ĐƯỢC chọn (ADR-018)
+
+Người dùng chọn **tầng độ chọn lọc** và **cách hiển thị**. Không chọn gì khác.
+
+```
+[dữ liệu] → [mô hình] → [hiệu chỉnh] → [CỔNG p_star] → [khuyến nghị] → [hiển thị]
+       ←── chọn ở đây NHÂN số giả thuyết ──→          ←── chọn ở đây chỉ LỌC ──→
+                     ⛔ CẤM                              ✅ §9.5 · §9.6
+```
+
+Bốn tầng là **tập lồng nhau** cắt trên `level` — trường **đã có sẵn** trong hợp đồng
+`Tranche` (Phần 2). **Không đổi hợp đồng.** Cùng mô hình, cùng hiệu chỉnh, cùng cổng ⇒ về
+thống kê vẫn là **một giả thuyết**, không cần hiệu chỉnh đa kiểm định.
+
+| Tầng | Giữ tranche có | Tần suất · EV · tổng R |
+|---|---|---|
+| **Đầy đủ** | `level ≥ 0,25` | [`spec_numbers §3c`](generated/spec_numbers.md) |
+| **Cân bằng** | `level ≥ 0,50` | ″ |
+| **Chọn lọc** | `level ≥ 0,75` | ″ |
+| **Tối thiểu** | `level = 1,00` | ″ |
+
+### ⛔ Bất biến hiển thị — tầng KHÔNG phải thang chất lượng
+
+Phép thử tiên quyết đã chạy trên toàn bộ sự kiện và cho kết quả **âm tính**: EV mỗi lệnh
+**không phân biệt được** giữa các tầng (`0/3` tầng vượt nhiễu — `ADR-018 §2`). Do đó:
+
+| Cấm | Vì sao |
+|---|---|
+| Chữ "cao cấp" · "độ tin cao" · sao · huy hiệu thứ hạng cho tầng chặt hơn | Ngụ ý một khác biệt chất lượng **chưa đo được** |
+| Sắp xếp mặc định theo tầng | Như trên |
+| Nêu "chất lượng thay đổi" khi người dùng đổi tầng | Sai sự thật |
+| **Bắt buộc** nêu **tần suất** và **tổng R kỳ vọng** thay đổi | Đó là thứ tầng thật sự điều tiết |
+
+> Ít lệnh hơn nghĩa là **ít tổng R hơn ở cùng chất lượng kỳ vọng** — không phải chất lượng
+> cao hơn. Đây là thông điệp ngược với trực giác sản phẩm thông thường, và nó phải được nói ra.
+
+### Rào chống đổi tầng theo kết quả gần đây
+
+1. **Nhật ký `user_prefs`** — dòng thời gian RIÊNG. Không nhét tầng vào `Tranche`:
+   `Prediction` bất biến và **không mang trạng thái người dùng**.
+2. **Lịch sử chấm theo tầng hiệu lực LÚC PHÁT**, không theo tầng hiện tại.
+3. **Đổi tầng có độ trễ** — hiệu lực từ chu kỳ sau.
+4. **Hiện số lần đổi tầng trong 90 ngày** cạnh bảng điểm.
+
+## 9.6 · Trục hiển thị — tự do hoàn toàn
+
+Nằm sau khuyến nghị ⇒ **không chi phí thống kê**, không cần ADR cho từng thay đổi:
+sắp xếp · lọc theo đồng · ẩn/hiện cột · gộp theo cụm · xem lịch sử · đổi ngôn ngữ · đơn vị.
+
+Ràng buộc duy nhất: mọi cách hiển thị vẫn phải tuân §9.3 (bốn thứ bắt buộc) và §9.4
+(quy ước thị giác). Lọc **không được** làm biến mất cảnh báo độ tươi hay khuyến nghị THOÁT.
+
+## 9.7 · Điều người dùng KHÔNG được chọn
+
+| Trục | Vì sao cấm / hoãn |
+|---|---|
+| **Tham số rào chắn** `sl/tp` | ⛔ **Vĩnh viễn.** `ADR-017 §2` đăng ký `1,2σ̂/6,0σ̂` là cấu hình duy nhất chấm ở GATE 1. Đưa bề mặt 16 ô lên giao diện là thuê người dùng p-hack hộ. Ô **đúng nhiều nhất** trên bề mặt (`2,0/3,0`, 41,4%) có biên **âm** — chọn theo "tỉ lệ đúng cao" là chọn đúng ô lỗ |
+| **Nguồn tín hiệu / tổ hợp tầng** | 🔒 Hoãn sau GATE 1. 5 tầng bật/tắt = 32 tổ hợp = 32 giả thuyết, mỗi cái cần bộ hiệu chỉnh riêng |
+| **Chân trời** | 🔒 `ADR-002` đang khoá 1h/4h thành đầu ra hiển thị |
+
 
 ---
 

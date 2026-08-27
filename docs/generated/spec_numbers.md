@@ -64,6 +64,23 @@ Vũ trụ đo: BTCUSDT, ETHUSDT, SOLUSDT, DOGEUSDT · rào `1.2σ̂/6.0σ̂` · 
 > Tần suất cao nhưng **mỗi lệnh nhỏ**. Bức tường phí của `08 §A2` tính cho lệnh **toàn vốn**; ở đây mỗi tranche là 1% NAV nên tiền phí không tỉ lệ với số lệnh theo cách đó.
 
 
+## 3c · ★ TRỤC D — phân tầng theo độ chọn lọc (ADR-018)
+
+Tập LỒNG NHAU trên cùng danh sách đã phát. Một mô hình, một hiệu chỉnh, một cổng.
+
+| Tầng | Cắt tại `level` | n | **Sự kiện/đồng/năm** | % thắng | EV/lệnh | SE | Tổng R | So với Đầy đủ |
+|---|---|---|---|---|---|---|---|---|
+| **Đầy đủ** | ≥ 0.25 | 1,114 | **43.4** | 29.2% | +0.649R | 0.097 | +723.0R | — (mốc) |
+| **Cân bằng** | ≥ 0.50 | 713 | **27.8** | 30.2% | +0.622R | 0.117 | +443.7R | z=-0.18 không phân biệt được |
+| **Chọn lọc** | ≥ 0.75 | 436 | **17.0** | 30.5% | +0.584R | 0.147 | +254.5R | z=-0.37 không phân biệt được |
+| **Tối thiểu** | ≥ 1.00 | 177 | **6.9** | 32.8% | +0.565R | 0.225 | +100.0R | z=-0.34 không phân biệt được |
+
+**Kết luận: 0/3 tầng khác biệt có ý nghĩa so với Đầy đủ.**
+Độ lệch chuẩn R mỗi sự kiện = **3.23R** — rất lớn. Để phân biệt được chênh lệch 0,15R ở mức 95% cần **≈1,775 sự kiện mỗi tầng**; hiện có **1,114** trên 25.7 đồng-năm.
+
+> ⚠️ **Tầng KHÔNG phải thang chất lượng.** EV mỗi lệnh không phân biệt được giữa các tầng. Tầng chỉ điều tiết **tần suất** và do đó **tổng lợi nhuận** — ít lệnh hơn nghĩa là ít tổng R hơn ở cùng chất lượng kỳ vọng, không phải chất lượng cao hơn. Giao diện không được ngụ ý ngược lại.
+
+
 ## 4 · GATE 1a — tỉ số sụt giảm, thang `w`
 
 | Cặp | Sụt giảm chiến lược | Mua-và-giữ | **Tỉ số** | Ngưỡng 0,60 |
