@@ -36,3 +36,19 @@ Dữ liệu ghi vào `data/raw/funding/symbol=<SYM>/data.parquet` (gitignored).
 ```
 
 `feature_audit.py` ghi `features_btc.parquet` cạnh nó để `feature_clusters.py` đọc lại.
+
+## Phương Pháp 4 — lượng dữ liệu cần (`docs/15_METHOD_4_DATA_REQUIREMENTS.md`)
+
+```bash
+.venv/bin/python scripts/measurements_2026_08_26/pp4_data_needs.py  # tương quan chéo thật giữa 4 cặp
+.venv/bin/python scripts/measurements_2026_08_26/pp4_stability.py   # đường ổn định theo độ dài cửa sổ
+.venv/bin/python scripts/measurements_2026_08_26/pp4_final.py       # kappa kết cục lệnh + số năm cần
+```
+
+`pp4_stability.py` và `pp4_final.py` import từ `pp4_data_needs.py` (chạy lại phần tải dữ liệu ở đầu).
+
+## Khung 4 giờ (`docs/adr/002-khoa-khung-1h-4h.md`)
+
+```bash
+.venv/bin/python scripts/measurements_2026_08_26/h4_reality.py   # Phương Pháp 4 ở khung 4h + cái gì dự báo được
+```
