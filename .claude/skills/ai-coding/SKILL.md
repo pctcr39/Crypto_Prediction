@@ -17,11 +17,11 @@ giả**. Vì vậy quy trình dưới đây không phải hình thức — nó l
 ## 1 · Trước khi viết dòng nào
 
 1. Đọc bảng **"Trạng thái hiện tại"** trong `CLAUDE.md` — biết module đang đứng đâu.
-2. Mở đúng mục detail design của module trong `docs/04_EXECUTION_STRATEGY.md §6`
-   và DoD trong `docs/03_MODULE_SPECS.md`. Code không khớp detail design → hỏi
+2. Mở đúng mục detail design của module trong `docs/Old/04_EXECUTION_STRATEGY.md §6`
+   và DoD trong `docs/Old/03_MODULE_SPECS.md`. Code không khớp detail design → hỏi
    lại trước, không tự chế.
 3. Module mới hoặc thay đổi lớn → đề xuất **Plan Mode** trước.
-4. Việc thuộc WBS nào (`docs/04 §7`)? Nếu nhảy cóc phụ thuộc (vd viết model khi
+4. Việc thuộc WBS nào (`docs/Old/04 §7`)? Nếu nhảy cóc phụ thuộc (vd viết model khi
    chưa có leakage test) → cảnh báo người dùng rồi mới làm theo quyết định của họ.
 
 ## 2 · Luật theo thư mục — tra trước khi sửa
@@ -48,7 +48,7 @@ giả**. Vì vậy quy trình dưới đây không phải hình thức — nó l
 - Stub chưa làm: `raise NotImplementedError("M<n> — xem docs/…")` — không trả giá trị giả.
 - **Không bao giờ** log/in khoá API; không commit `.env`, `data/`, `mlruns/`.
 - Thư viện cấm đề xuất: `pandas-ta` (repo bị xoá — dùng `pandas-ta-classic`),
-  `backtrader`, `mlfinlab`, `lightweight-charts-python`. Lý do: `docs/00 §3.2`.
+  `backtrader`, `mlfinlab`, `lightweight-charts-python`. Lý do: `docs/Old/00 §3.2`.
 
 ## 4 · Sau khi viết — vòng kiểm chứng, chưa xanh chưa báo xong
 
@@ -79,7 +79,7 @@ make test-leakage
 ## 6 · Khi nào dừng lại và hỏi
 
 - Yêu cầu sửa `validation/` mà không kèm test.
-- Yêu cầu mâu thuẫn với một trong 12 RULE (`docs/00 §1`) — nêu RULE bị đụng,
+- Yêu cầu mâu thuẫn với một trong 12 RULE (`docs/Old/00 §1`) — nêu RULE bị đụng,
   chờ người dùng xác nhận rồi làm theo quyết định của họ.
 - Con đường ngắn cần vi phạm ranh giới module (vd đọc Parquet trực tiếp thay
   vì qua `store`) — nêu chi phí, đề xuất đường đúng.

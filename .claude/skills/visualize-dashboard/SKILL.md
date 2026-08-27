@@ -4,13 +4,13 @@ description: Quy tắc thiết kế và dựng giao diện dashboard cho repo cr
   Dùng khi người dùng yêu cầu dựng dashboard, vẽ chart, biểu đồ nến, hiển thị
   dự đoán, component UI (badge, meter, freshness), prototype giao diện, sửa
   web/, hay bất kỳ việc visualize dữ liệu nào. Bảo đảm mọi pixel tuân
-  docs/02_DESIGN_SYSTEM.md — màu chỉ từ tokens.css, dự đoán tím nét đứt,
+  docs/Old/02_DESIGN_SYSTEM.md — màu chỉ từ tokens.css, dự đoán tím nét đứt,
   hướng không bao giờ chỉ mã hoá bằng màu, luôn hiển thị độ tươi dữ liệu.
 ---
 
 # Visualize Dashboard — luật giao diện của repo này
 
-Nguồn chân lý: `docs/02_DESIGN_SYSTEM.md` (đặc tả) + `web/tokens.css` (giá trị).
+Nguồn chân lý: `docs/Old/02_DESIGN_SYSTEM.md` (đặc tả) + `web/tokens.css` (giá trị).
 Skill này là bản checklist thao tác — khi mâu thuẫn, 02 thắng.
 
 ## 0 · Trước khi vẽ bất cứ thứ gì

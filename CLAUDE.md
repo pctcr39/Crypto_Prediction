@@ -1,7 +1,16 @@
 # CLAUDE.md — hướng dẫn làm việc trong repo này
 
 > Đọc file này trước khi sửa bất cứ thứ gì.
-> Chi tiết đầy đủ: `docs/00_MASTER_PLAN.md` · đặc tả module: `docs/03_MODULE_SPECS.md` · thứ tự làm việc + audit: `docs/04_EXECUTION_STRATEGY.md`
+>
+> ⚠️ **ĐANG TÁI CẤU TRÚC TÀI LIỆU (từ 27/08/2026).** Phạm vi sản phẩm đã đổi
+> (ADR-019): nền tảng NHIỀU người dùng, 2 mode Paper/Trading (thủ công + bot),
+> lõi dự đoán 2 tầng rule-based → ML. Toàn bộ tài liệu thế hệ 1 đã chuyển vào
+> `docs/Old/` (đọc `docs/Old/README.md` trước). Bộ tài liệu mới `docs/00–08`
+> đang được viết và duyệt từng bước — file nào đã tồn tại trong `docs/` thì file
+> đó là nguồn sự thật; chủ đề nào chưa có file mới thì tra `docs/Old/`.
+> Mọi tham chiếu `docs/XX_...` cũ trong mã nguồn đọc là `docs/Old/XX_...`.
+>
+> Chi tiết đầy đủ (bản cũ): `docs/Old/00_MASTER_PLAN.md` · đặc tả module: `docs/Old/03_MODULE_SPECS.md` · thứ tự làm việc + audit: `docs/Old/04_EXECUTION_STRATEGY.md`
 
 ---
 
