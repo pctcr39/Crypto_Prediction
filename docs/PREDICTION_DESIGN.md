@@ -634,6 +634,74 @@ một tranche 0,25     = 1% NAV                    ← trần "≤1% mỗi khuy�
 | `FUNDING_NONG` | f̂ > 0,05%/ngày *(bối cảnh: chi phí giữ vị thế trên perp — hệ khuyến nghị giao ngay)* |
 | `DU_LIEU_CHAM` | freshness ≠ live |
 
+## LV · TRỌNG TÀI — purged walk-forward (B7)
+
+> Tầng này không nằm trên đường suy luận. Nó là thứ quyết định **mọi con số của hệ nói thật hay nói dối**, nên nó có mục riêng và phải tồn tại **trước** mọi model.
+
+### LV.1 · Bộ chia fold
+
+```
+|--- train ---|  purge  |--- test ---|  embargo  |--- train ---| ...
+                (P nến)               (E nến)
+
+n_folds = 8 · mỗi fold trải ≥ 24 tháng
+P = E = ĐỘ DÀI NHÃN, không phải horizon_bars
+```
+
+> ### ⚠️ `purge = horizon_bars` là một rò rỉ chờ sẵn (B16)
+>
+> `config/model.yaml` để `purge_bars: null` ⇒ tự lấy bằng `horizon_bars["1d"] = 1`. Nhưng **nhãn của L6 là kết cục rào chắn, kéo dài tới `DEADLINE_DAYS = 60` ngày**. Purge 1 nến trong khi nhãn dài 60 nến ⇒ **59 nến chồng lấn** giữa train và test, mỗi nến mang một nhãn nhìn thẳng vào vùng test.
+>
+> ⇒ **`P = E = 60` cho khung 1d.** Và quy tắc chung: `P = E = max(độ dài nhãn của MỌI tầng dùng fold này)`.
+
+**⚠️ Một trục thời gian TOÀN CỤC duy nhất, áp cùng một mốc cho mọi symbol.** Ta gộp 40 cặp và có đặc trưng liên thị trường BTC. Chia fold riêng từng coin thì lát test của coin A trùng mốc với lát train của coin B — mà các cặp USDT tương quan rất cao trong ngày. **Rò rỉ gần như trực tiếp và rất khó phát hiện bằng các phép thử thông thường.**
+
+### LV.2 · Năm phép dò rò rỉ — chạy tự động trong `pytest`
+
+| # | Phép thử | Cách làm | Dấu hiệu rò rỉ |
+|---|---|---|---|
+| 1 | **Dịch nhãn** | Dịch toàn bộ nhãn thêm 1 bước, train lại | Điểm số **tăng** ⇒ rò rỉ chắc chắn |
+| 2 | **Xáo trộn nhãn** | Xáo ngẫu nhiên nhãn, train lại | Điểm vẫn > 50% đáng kể ⇒ rò rỉ |
+| 3 | **Tương quan đặc trưng** | `corr(feature, label)` | Bất kỳ đặc trưng nào > 0,99 ⇒ rò rỉ |
+| 4 | **Ranh giới chéo coin** | Mọi symbol dùng chung một mốc cắt fold | Mốc khác nhau giữa các coin ⇒ rò rỉ chéo |
+| 5 | **Kiểm tra ranh giới** | So mẫu cuối train và đầu test | Chồng lấn thời gian ⇒ purge sai |
+
+> **Một phép thử CỐ Ý không đưa vào:** *"train trên tương lai, test trên quá khứ"*. Nhiều hướng dẫn coi kết quả tương đương ở phép thử này là bằng chứng rò rỉ — **không đúng**. Một tín hiệu dừng hợp lệ (hiệu ứng ổn định qua nhiều năm) cũng cho kết quả tương đương. Dùng nó sẽ vứt đi những model tốt.
+
+### LV.3 · Điều kiện nghiệm thu — KHÔNG phải «test xanh»
+
+```
+Với mỗi phép thử: TIÊM một rò rỉ đã biết, xác nhận phép thử đó BẮT ĐƯỢC,
+rồi mới gỡ rò rỉ ra.
+   probe 1 ⟵ tiêm: một nhãn lệch một nến
+   probe 2 ⟵ tiêm: một đặc trưng = nhãn tương lai cộng nhiễu
+   probe 3 ⟵ tiêm: một đặc trưng sao chép nhãn
+   probe 4 ⟵ tiêm: chia fold theo từng symbol
+   probe 5 ⟵ tiêm: purge = 0
+```
+
+> **Một bộ dò chưa từng bắt được gì không phải bộ dò.**
+
+**Đối chiếu độc lập:** sau khi viết xong, chạy song song với `purgedcv` (MIT, tương thích sklearn) trên cùng dữ liệu và so ranh giới từng fold. Lệch nhau nghĩa là **một trong hai sai** — và phải biết bên nào trước khi tin bất kỳ kết quả nào.
+
+### LV.4 · Ràng buộc cỡ mẫu (B16)
+
+| Khoá | Hiện tại | Phải thành | Vì sao |
+|---|---|---|---|
+| `min_train_bars` | **5000** | **theo khung**: 1d ≈ 500 · 1h 5000 | Khung ngày chỉ có 1.095 nến (3 năm) — 8 fold × (train ≥ 5000 + purge 60 + test + embargo 60) là **bất khả**; bộ chia sẽ không sinh nổi **một fold nào** |
+| `purge_bars` / `embargo_bars` | `null` ⇒ `horizon_bars` | **60** cho khung 1d | Xem khối cảnh báo LV.1 |
+
+**Số học fold cho khung ngày, 3 năm × 40 cặp:**
+
+```
+1.095 nến ngày · 8 fold · P = E = 60
+train tối thiểu 500 + purge 60 + test 60 + embargo 60 = 680 nến cho fold đầu
+mỗi fold sau thêm ~60 nến test  ⇒  680 + 7×60 = 1.100 nến  ≈ vừa đủ
+```
+
+⇒ **Ba năm là mức SÀN, không phải mức thoải mái.** Nếu mẻ tải cho ít hơn 1.100 nến ngày ở đa số cặp, phải giảm `n_folds` xuống 6 và ghi rõ hệ quả về công suất — **không** được giảm `purge`.
+
+
 ## L8 · Sổ khuyến nghị và bảng điểm
 
 Xem Phần 5 và Phần 9 — với hệ khuyến nghị, đây là tầng **quan trọng nhất**.
@@ -909,6 +977,10 @@ Hệ **không biết** người dùng có vào lệnh không, và **không đư�
 | 35 | **Thứ tự đóng trong một nến** (B14) | Nến vừa xuyên stop vừa có `close ≥ target` ⇒ **`hit_stop`**. Nến vừa quá deadline vừa chạm target ⇒ **`hit_target`** (rào giá trước thời gian) |
 | 36 | **Chọn công cụ nhận thời gian NẮM GIỮ** (B9) | `choose_instrument_display(5,8; f̂=0,0292)` ⇒ `"spot"`; truyền nhầm `H_DAYS["1d"]=1,0` ⇒ `"perp"` ⇒ test đỏ |
 | 37 | **`stale` không do `predict()` sinh** (B10) | `DataFreshness` không chứa `"stale"` ở tầng kiểu; tầng phục vụ tính từ `valid_until` |
+| 38 | **Thang chấm cổng cố định** (B2) | Đổi `SIZE_BASE_PCT` từ 4 sang 8 ⇒ tỉ số sụt giảm của GATE 1a **không đổi** (cổng chấm ở thang `w`, không ở thang NAV) |
+| 39 | **Purge bằng độ dài NHÃN** (B16) | `assert purge_bars == embargo_bars == max(độ dài nhãn mọi tầng)`; ép `purge = horizon_bars = 1` ⇒ probe #5 (kiểm tra ranh giới) phải **đỏ** |
+| 40 | **Một trục thời gian toàn cục** (B7) | Chia fold cho 3 symbol có lịch sử khác nhau ⇒ mọi mốc cắt **giống hệt**; chia theo từng symbol ⇒ probe #4 phải **đỏ** |
+| 41 | **Probe phải tự chứng minh** (B7) | Với mỗi phép thử 1–5: tiêm rò rỉ tương ứng ⇒ **phải đỏ**; gỡ ra ⇒ **phải xanh**. Chạy trong `pytest`, chặn commit |
 
 **Quy tắc chọn chỗ đặt:**
 
@@ -949,7 +1021,7 @@ Hệ **không biết** người dùng có vào lệnh không, và **không đư�
 
 ## 7.2 · Cột B — vận hành, không chạm kết quả (9)
 
-`size_base` 4% NAV · tranche 1% NAV · ngưỡng freshness (live ≤1 chu kỳ, delayed ≤3) · staleness funding 24h · `H_DAYS` theo config · điều kiện bật L6 ≥300 sự kiện · trần cảnh báo tương quan (3 coin) · trần cảnh báo chuỗi thua (5) · phân vị cảnh báo vol (95).
+`size_base` 4% NAV · tranche 1% NAV *(gợi ý phân bổ cho người dùng — KHÔNG vào cổng, xem §8.2)* · ngưỡng freshness (live ≤1 chu kỳ, delayed ≤3) · staleness funding 24h · `H_DAYS` theo config · điều kiện bật L6 ≥300 sự kiện · trần cảnh báo tương quan (3 coin) · trần cảnh báo chuỗi thua (5) · phân vị cảnh báo vol (95).
 
 ## 7.3 · Điều KHÔNG có trong hệ
 
@@ -972,20 +1044,43 @@ Hệ **không biết** người dùng có vào lệnh không, và **không đư�
 
 Với phạm vi khuyến nghị, GATE 2–4 (giao dịch giấy, tiền thật, vận hành) **ngoài phạm vi**. **GATE 1 — hệ có kỹ năng dự báo không — là cổng duy nhất, và nó quyết định sản phẩm có được ship hay không.**
 
-## 8.2 · Cổng kép
+## 8.2 · Cổng kép — và thang đo mà nó chấm trên (B2)
 
 ```
-GATE 1a · TÁI LẬP ĐƯỢC (chỉ tiêu ổn định):
+GATE 1a · TÁI LẬP ĐƯỢC (chỉ tiêu ổn định qua chế độ)
     tỉ số sụt giảm (chiến lược / mua-và-giữ) ≤ 0,60
     ở ≥80% số ô lưới, trên MỌI fold purged walk-forward
 
-GATE 1b · KINH TẾ (so tương đối, không hằng số tuyệt đối):
+GATE 1b · KINH TẾ (so tương đối, không hằng số tuyệt đối)
     net Sharpe của TỔ HỢP ≥ net Sharpe mua-và-giữ, ở ≥6/8 fold
 ```
 
-**Vì sao không dùng ngưỡng Sharpe tuyệt đối:** Sharpe của mua-và-giữ dao động 0,52–0,96 tuỳ cửa sổ — một ngưỡng tuyệt đối đo **chế độ thị trường**, không đo **chiến lược**. Và Sharpe của chính chiến lược không tái lập giữa hai đoạn (0,07 → 0,77) trong khi tỉ số sụt giảm tái lập **54/54 quan sát** (0,39 → 0,36).
+### ⚠️ Tỉ số sụt giảm KHÔNG bất biến theo tỉ lệ — cổng phải nói rõ thang đo
 
-**Chấm trên chính máy trạng thái tranche sản xuất** — một mã, hai chế độ chạy. Không chấm trên "chiến lược tỉ trọng w" rồi ship máy tranche: mô phỏng cho thấy hai thứ đó khác nhau rất xa (một hệ đứng ngoài thị trường 85–95% số ngày-có-tín-hiệu nếu thiếu tái vũ trang).
+Cùng **một** chiến lược, cùng **một** chuỗi `w`, chỉ khác tỉ lệ triển khai *(BTC, lưới 27 ô, đã rời rạc hoá)*:
+
+| Quy ước phơi bày | Sụt giảm | **Tỉ số** | So ngưỡng 0,60 |
+|---|---|---|---|
+| **`w` trên VỐN CỦA CHIẾN LƯỢC (0–100%)** ← chấm ở đây | **−24,67%** | **0,322** | đạt, biên thật |
+| 50% NAV | −12,95% | 0,169 | đạt |
+| 20% NAV | −5,36% | 0,070 | đạt |
+| **4% NAV** *(quy ước cỡ gợi ý §L7)* | −1,09% | **0,0143** | đạt **dư 42 lần** |
+| 1% NAV | −0,27% | 0,0036 | đạt dư 167 lần |
+
+> **Tỉ số tỉ lệ gần thuận với tỉ lệ triển khai.** Chấm ở 4% NAV thì cổng đo **quy ước cỡ lệnh**, không đo **chiến lược** — nó đạt tự động và không nói lên điều gì.
+
+### Hai tỉ lệ, hai mục đích — tách bạch
+
+| | Thang đo | Ai quyết | Nằm ở đâu |
+|---|---|---|---|
+| **Tỉ lệ để CHẤM** | `w` ∈ [0; 1] = phần vốn **của chiến lược** đang triển khai. Tranche mức 0,25 = 25% vốn chiến lược | **Cố định trong mã**, pin bằng test | Cột A của bảng tham số |
+| **Tỉ lệ GỢI Ý cho người dùng** | 4% NAV cho mỗi coin · 1% NAV mỗi tranche | **Người dùng** — đây là quyết định phân bổ vốn của họ, không phải thuộc tính của model | Cột B |
+
+> Đây là hai câu hỏi khác nhau mà rc1 gộp làm một: *«chiến lược này có cắt được sụt giảm không?»* (cổng) và *«tôi nên dành bao nhiêu vốn cho nó?»* (người dùng). Với phạm vi hệ khuyến nghị, câu thứ hai **không thuộc phạm vi hệ** — nên nó càng không được lọt vào cổng.
+
+**Chấm trên CHÍNH máy trạng thái tranche sản xuất** — một mã, hai chế độ chạy. Không chấm trên «chiến lược tỉ trọng `w`» rồi ship máy tranche: mô phỏng cho thấy hai thứ đó khác nhau rất xa nếu thiếu quy tắc tái vũ trang (B1).
+
+**Vì sao không dùng ngưỡng Sharpe tuyệt đối:** Sharpe của mua-và-giữ dao động 0,52–0,96 tuỳ cửa sổ — ngưỡng tuyệt đối đo **chế độ thị trường**, không đo **chiến lược**. Và Sharpe của chính chiến lược không tái lập giữa hai đoạn (0,07 → 0,77) trong khi tỉ số sụt giảm tái lập **54/54 quan sát** (0,39 → 0,36).
 
 ## 8.3 · Giao thức khử nhiễm — bắt buộc
 
@@ -1154,7 +1249,7 @@ Dải ·  ① độ phủ [q10,q90] = 80% ± 3pp trên ≥500 dự đoán đã c
 | **0b** | Điều tra 2h: kho lưu trữ Binance có chứa cặp đã huỷ niêm yết không? | Quyết định cách tải ở bước 1; có thể mở khoá tầng cắt ngang sớm 12 tháng | — |
 | **1** | **Mẻ tải 40 cặp × 1d × ≥3 năm** + cột `taker_buy_volume` + cổng chất lượng | Điều kiện tiên quyết của GATE 1a. `ccxt.fetch_ohlcv` không trả cột 9 ⇒ cần đường tải khác | 0b |
 | **2** | **Hàm chi phí + `p_required` + `p_star`** (L4) | ~40 dòng, không cần dữ liệu mới, và **mọi tầng khác đọc nó**. Xây sau là phải sửa lại tất cả | — |
-| **3** | **Trọng tài** (`purged.py` thật) + tiêm rò rỉ, gỡ 5 probe | *Một bộ dò chưa từng bắt được gì không phải bộ dò.* Trọng tài trước cầu thủ | 1 |
+| **3** | **Trọng tài** — đặc tả đầy đủ ở **§LV**: 8 fold ≥24 tháng · `P = E = 60` (độ dài nhãn, KHÔNG phải `horizon_bars`) · một trục thời gian toàn cục · 5 probe + tiêm rò rỉ · đối chiếu `purgedcv` | *Một bộ dò chưa từng bắt được gì không phải bộ dò.* Trọng tài trước cầu thủ | 1 |
 | **4** | Lõi đặc trưng L1 + đo lại cụm trên altcoin | Đóng băng định nghĩa; phép thử rò rỉ thứ sáu | 1, 3 |
 | **5** | **σ̂ (HAR-RV) + f̂** — cùng đợt | Tầng duy nhất tự chứng minh được. **Giá trị thật đầu tiên của cả dự án** | 4 |
 | **6** | L3 phân phối + dải giá + kiểm toán độ phủ | Hoàn tất 3/4 đầu ra, chưa train cây quyết định nào | 5 |
@@ -1213,7 +1308,8 @@ Dải ·  ① độ phủ [q10,q90] = 80% ± 3pp trên ≥500 dự đoán đã c
 | p\* hình dạng 1,2σ̂/4,0σ̂ (payoff 3,33R) | **25,0% / 25,5%** | ADR-013 · `barrier_surface.py` |
 | Hoà vốn trượt giá | **1,57R** | ADR-013 |
 | Tương quan hạng tham số hai đoạn | +0,19 | `12 §2.6` |
-| Tỉ số sụt giảm tổ hợp | 0,29 / 0,29 / 0,31 | `12 §6.5` |
+| Tỉ số sụt giảm tổ hợp — **thang `w`** | 0,29 / 0,29 / 0,31 · rời rạc hoá: **0,322** | `12 §6.5` · `ens.py` |
+| *Tỉ số sụt giảm ở 4% NAV (KHÔNG dùng cho cổng)* | *0,0143 — đạt dư 42 lần* | *§8.2* |
 | Tỉ số sụt giảm tái lập | 54/54 quan sát | `12 §2.7` |
 | **Tỉ lệ chốt lời — quy ước vận hành + Parkinson** | **30,0%** (90 lệnh, 4 cặp) | `rv_estimators.py` |
 | *Tỉ lệ chốt lời — cả hai intrabar + close-to-close* | *33,7%* | `15 §1.5` đã sửa — ADR-013 |
