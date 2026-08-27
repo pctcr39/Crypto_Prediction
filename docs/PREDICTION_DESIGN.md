@@ -53,6 +53,53 @@ Khi hệ tự giao dịch, sai lầm của nó hiện ra thành lỗ — một c
 
 ---
 
+## 0.5 · Mười hai luật dưới phạm vi khuyến nghị (m01)
+
+| # | Luật | Dưới phạm vi này |
+|---|---|---|
+| 1 | Không train trên giá tuyệt đối | ✅ Ràng buộc — `assert_scale_free()` |
+| 2 | Mọi đặc trưng dịch ít nhất 1 nến | ✅ Ràng buộc — một hàm `shift_all(1)`, bất biến #33 |
+| 3 | Chỉ chia theo thời gian | ✅ Ràng buộc — §LV, bất biến #39–41 |
+| 4 | Đánh bại 3 baseline trước | ✅ Ràng buộc — mở rộng lên **7 baseline**, phép đo #11 |
+| 5 | Mọi con số đã trừ phí | 🔶 **Đổi nghĩa** — hệ **giả định** chi phí của người dùng, xem §0.6 |
+| **6** | **Xác suất phải hiệu chỉnh** | 🔶 **Chuyển đối tượng** — `p_up ≡ 0,50` theo cấu tạo (μ=0) nên hiệu chỉnh nó là **rỗng**. RULE 6 ràng buộc trên **`p_win` của L6**, và đó là **GATE 2** |
+| 7 | Dự đoán không nhìn giống dữ liệu thật | ✅ Ràng buộc — §9.4 |
+| 8 | Dashboard luôn nói thật về độ tươi | ✅ Ràng buộc — `data_freshness` + `valid_until`, bất biến #37 |
+| **9** | **Tiền thật chỉ mở qua 4 gate** | ⚠️ **Mất nghĩa một phần** — xem khối dưới |
+| 10 | Mỗi lần train ghi MLflow | ✅ Ràng buộc — §8.6.2, bước 2b |
+| 11 | Accuracy > 60% khung 1h ⇒ giả định rò rỉ | ✅ Ràng buộc — `RULE11_ACC`, và Phần 10 |
+| 12 | Foundation model đã thấy quá khứ của bạn | ✅ Không dùng foundation model nào |
+
+> ### ⚠️ RULE 9 — bốn cổng còn hai, và khoảng trống phải được lấp
+>
+> GATE 3 (chạy tiền ảo) và GATE 4 (an toàn vận hành) ngoài phạm vi vì hệ không chạm tiền. **Nhưng vai trò của GATE 3 — kiểm chứng THỜI GIAN THỰC trước khi tin — không biến mất; nó chỉ chuyển sang người dùng.** Và người dùng chịu rủi ro thật.
+>
+> **Thay GATE 3 bằng: 60 ngày phát khuyến nghị FORWARD công khai, chấm xong rồi mới được gọi là sản phẩm.**
+>
+> | | |
+> |---|---|
+> | Vì sao 60 ngày | Bằng đúng `DEADLINE_DAYS` — đủ để mọi tranche phát trong 30 ngày đầu đóng xong |
+> | Chấm gì | Cùng bộ chỉ tiêu §9.1, trên dữ liệu **hệ chưa từng thấy lúc chấm GATE 1** |
+> | Vì sao không thay được bằng backtest | Backtest không bắt được lỗi vận hành: cron chết, sổ lệch, dữ liệu trễ, `predict()` không thuần. GATE 1 chấm **mô hình**; 60 ngày forward chấm **hệ thống** |
+> | Kết quả xấu | Lệch có hệ thống so GATE 1 ⇒ **điều tra trước khi ship**, không phải "chạy thêm cho quen" |
+
+## 0.6 · RULE 5 dưới phạm vi khuyến nghị — hệ giả định, người dùng trả (m02 · m03)
+
+Hệ áp một biểu phí mà **người dùng mới là người trả**. Ba quy tắc:
+
+| # | Quy tắc |
+|---|---|
+| **1** | `cost_assumed_pct` **in trên mọi panel và ghi vào MỌI bản ghi `Tranche`** — người dùng luôn thấy hệ đang giả định gì |
+| **2** | Người dùng **được nhập biểu phí của mình** cho lớp **HIỂN THỊ** (`p_required`, `p_star` hiển thị tính lại theo đó) |
+| **3** | Biểu phí dùng để **CHẤM** thì **khoá cứng** — `0,10% taker × 2 + 0,05% trượt × 2 = 0,30%`, pin bằng test. Nếu người dùng đổi được phí chấm điểm, bảng điểm không so sánh được giữa các phiên |
+
+**Thuế giao dịch Việt Nam 0,1%/lệnh** *(Thông tư 32/2026, `09 §6.3`)*: **có trong mô hình chi phí**, mặc định `tax_pct = 0` và người dùng bật theo kênh giao dịch của mình.
+
+> Với chân trời ~6 ngày và ~9 khuyến nghị/đồng/năm, thuế 0,1%/lệnh cộng vào chi phí khứ hồi thành **0,50%** thay vì 0,30% ⇒ `c_R` tăng từ 0,083 lên **0,139**, hoà vốn từ 25,0% lên **26,3%**, biên co từ +5,0 xuống **+3,7 điểm**. Đây là con số người dùng Việt Nam phải thấy, không phải một cước chú.
+
+
+---
+
 # PHẦN 1 · KIẾN TRÚC
 
 ## 1.1 · Chín tầng
@@ -272,14 +319,28 @@ class Prediction:
 
 ## L0 · Tiếp nhận và độ tươi
 
+**Quy ước `bars` — một, dùng khắp nơi:** `index` = `open_time` **UTC** của nến đã đóng ·
+`close_time(t) = index[t] + timeframe_delta(tf)` · `timeframe_delta` = `{1h: 1h, 4h: 4h, 1d: 24h}`.
+
 ```python
-def freshness(bars, now_hint, cfg) -> Freshness:
-    """now_hint truyền VÀO — predict() không đọc đồng hồ."""
-    age = now_hint - bars.index[-1] - timeframe_delta(cfg.tf)
-    if age <= cfg.live_max:          return "live"          # ≤ 1 chu kỳ
-    if age <= cfg.delayed_max:       return "delayed"       # ≤ 3 chu kỳ
+def freshness(bars, now_hint: datetime, cfg: PredictConfig) -> DataFreshness:
+    """now_hint truyền VÀO — predict() không đọc đồng hồ (bất biến #17)."""
+    if len(bars) == 0:               return "disconnected"
+    age = now_hint - (bars.index[-1] + timeframe_delta(cfg.tf))
+    if age < timedelta(0):           return "disconnected"   # lệch đồng hồ ⇒ không đoán
+    if age <= cfg.live_max:          return "live"           # mặc định 1 × timeframe_delta
+    if age <= cfg.delayed_max:       return "delayed"        # mặc định 3 × timeframe_delta
     return "disconnected"
 ```
+
+### Dịch vụ suy luận — ai gọi `predict()` và khi nào (m05)
+
+| | |
+|---|---|
+| **Kích hoạt** | **Theo SỰ KIỆN nến đóng** (`x: true` của luồng kline), **không theo đồng hồ máy**. Một nến chưa đóng không bao giờ vào `bars` |
+| **Nguồn `now_hint`** | **Thời gian của SÀN** (`E` trong thông điệp websocket, hoặc `serverTime`), không phải giờ máy — máy lệch giờ sẽ làm mọi phán quyết độ tươi sai |
+| **Gộp nến** | 1h → 4h/1d bằng `open=first · high=max · low=min · close=last · volume=sum`, khử trùng lặp theo `open_time` |
+| **Nghiệm thu gộp nến** | So với REST Binance trên **1.000 mốc ngẫu nhiên**, khớp từng trường — trước khi tin bất kỳ con số nào tính từ nến gộp |
 
 **Bất biến:** `delayed` hoặc `disconnected` ⇒ `new_tranches == ()` và `silence_reason` được điền. Không cờ nào bật được nó.
 
@@ -615,7 +676,9 @@ Hai rào có bản chất khác nhau, và phép đo xác nhận sự bất đố
 # LightGBM năng lực thấp: depth 3 · ≤15 lá · ≤18 đặc trưng · ≤300 cây
 # trọng số mẫu theo ĐỘ DUY NHẤT NHÃN
 # isotonic: fit trên tập validation TÁCH RIÊNG trong từng fold purged walk-forward,
-#           GỘP TOÀN VŨ TRỤ (số sự kiện mỗi đồng không đủ hiệu chỉnh riêng)
+#           GỘP TOÀN VŨ TRỤ (số sự kiện mỗi đồng không đủ hiệu chỉnh riêng).
+#           ★ Lát calibration phải được PURGE + EMBARGO ở CẢ HAI BIÊN (03 M7) —
+#             nó nằm giữa train và test nên rò rỉ được về cả hai phía.
 # ĐIỀU KIỆN BẬT: ≥300 sự kiện đã chấm. Trước đó meta.predict ≡ 1,0 (hệ chạy thuần quy tắc)
 kept = [ev for ev in events if calibrate(meta.predict(feats, ev)) >= p_star + 0.02]
 ```
@@ -975,11 +1038,11 @@ Hệ **không biết** người dùng có vào lệnh không, và **không đư�
 
 | # | Bất biến | Test làm nó đỏ |
 |---|---|---|
-| 1 | Ba đầu ra từ **một** phân phối | `assert p_up > 0,5 ⟺ q50 > last_close` trên toàn lịch sử |
-| 2 | Dải giá đơn điệu | `assert q10 ≤ q50 ≤ q90` — **số lần cắt nhau = 0** |
-| 3 | Học máy chỉ **thu hẹp** | Fuzz: quét `p_win ∈ [0,1]` khi cổng đóng hoặc slot đầy ⇒ **không sự kiện nào** sinh ra |
+| 1 | Ba đầu ra từ **một** phân phối | **Tham số hoá bơm μ**: với μ ∈ {−0,01; 0; +0,01} ⇒ `assert sign(p_up − 0,5) == sign(q50 − last_close)`. *(Với μ=0 cả hai vế bằng 0 — test chỉ có nghĩa khi bơm μ, và nó bảo vệ đúng lúc ai đó bật μ)* |
+| 2 | Dải giá đơn điệu | `assert q10 ≤ q50 ≤ q90` trên **đầu ra thật của `_emit`** (không phải trên `ppf`, vốn đơn điệu theo định nghĩa); và σ̂ ≤ 0 ⇒ **phải ném lỗi**, không trả dải vô nghĩa |
+| 3 | Học máy chỉ **thu hẹp** | ① cổng đóng/slot đầy ⇒ quét `p_win ∈ [0,1]` cho **không sự kiện nào** ② **slot trống** ⇒ `set(kept) ⊆ set(events)` với **mọi** `p_win` — vế này rc1 thiếu, và nó mới là vế kiểm tính đơn điệu thật |
 | 4 | Khung không giao dịch không phát khuyến nghị | Ép phát ở `"1h"`/`"4h"` ⇒ đỏ. Không cờ cấu hình nào bật được |
-| 5 | Sàn perp | `p_required ≥ 0,5 + √(c₀·f)/A` **trên miền f̂ > 0** |
+| 5 | Sàn perp | `A = σ̂ · ABS_MOVE_RATIO · 100` (biên độ 1 ngày, %). `assert p_required ≥ 0,5 + √(c₀·f̂)/A` với **f̂ > 0** và quét `d ∈ [0,25 ; 90]` ngày |
 | 6 | Miền f̂ ≤ 0 | `cost_gate ≥ 0,20` và `p_star > 0` với **mọi** f̂ ∈ [−1,40; +1,40], ca test tại đúng biên |
 | 7 | Hai cổng hai kiểu | `PReq` và `PStar` không so sánh chéo được (kiểu) |
 | 8 | Hằng số tỉ lệ biên độ | Pin `ABS_MOVE_RATIO` = 0,685 ± 0,02 bằng phép đo lại trong test |
@@ -995,7 +1058,7 @@ Hệ **không biết** người dùng có vào lệnh không, và **không đư�
 | 18 | Độ tươi chặn trước | `delayed`/`disconnected` ⇒ `new_tranches == ()`, mọi trường hợp |
 | 19 | Im lặng tự giải thích | `new_tranches == () ⟹ silence_reason is not None` |
 | 20 | Không bán khống | Kiểu dữ liệu không chứa `"SHORT"` |
-| 21 | Sổ bất biến | Thử `UPDATE`/`DELETE` trên bản ghi cũ ⇒ đỏ |
+| 21 | Sổ bất biến | **Cơ chế thực thi, không chỉ quy ước**: SQLite trigger `BEFORE UPDATE`/`BEFORE DELETE ... RAISE(ABORT)` trên bảng tranche. Test: thử `UPDATE` ⇒ ném `IntegrityError` |
 | 22 | Cấm định danh hệ thuật ngữ | Quét `src/`: `order_block` · `fvg` · `bos` · `choch` · `liquidity_grab` · `killzone` · `elliott` · `wave_count` · `harmonic` · `gartley` · `smart_money` |
 | 23 | **Kỳ vọng tại `p_star` bằng 0** | `assert abs(EV(p_star_event(σ), sl, tp, cost)) < 1e-9` với σ ∈ {0,005 … 0,20} — tính trực tiếp từ `sl_mult`/`tp_mult`/`cost`, **không** đọc lại công thức. Bất biến này bắt lớp lỗi thứ nguyên mà bảng số không bắt được (ADR-013) |
 | 24 | **Khoảng cách null → hoà vốn** | `assert p_star − sl/(sl+tp) == c_R/(1 + tp/sl)` và luôn **dương** — hình dạng cược không tạo ra edge |
@@ -1022,6 +1085,7 @@ Hệ **không biết** người dùng có vào lệnh không, và **không đư�
 | 45 | **Nhãn giả định luôn hiện** (M03) | Mọi phản hồi chứa số bảng điểm ⇒ có trường `disclaimer` khác rỗng |
 | 46 | **Thiếu funding ≠ không có perp** (M25) | Cặp không có hợp đồng vĩnh cửu ⇒ `f̂ is None`, KHÔNG phải `p95_expanding`; hai ca phân biệt được ở tầng kiểu |
 | 47 | **FDR trước khi xếp hạng** (M08) | Bảng xếp hạng coin theo kỹ năng ⇒ phải có trường `fdr_q` khác None, nếu không thì từ chối render |
+| 48 | **`H_DAYS` suy từ config, không hằng số cứng** (m08) | `assert H_DAYS[tf] == horizon_bars[tf] * timeframe_hours[tf] / 24` cho cả ba khung — đổi `horizon_bars` trong config mà quên sửa mã ⇒ đỏ |
 
 **Quy tắc chọn chỗ đặt:**
 
@@ -1442,23 +1506,39 @@ Bước 5 (*σ̂ + f̂ cùng đợt*) **không có đầu vào**: `data/raw/fund
 | `lightgbm` | `model` | Chỉ L6 — bước 9, có thể không bao giờ cần |
 
 
-## 11.1 · Thứ tự có lý do nhân quả
+## 11.1 · Thứ tự có lý do nhân quả — kèm ước lượng công sức (m09)
 
-| # | Việc | Vì sao ở vị trí này | Chặn bởi |
-|---|---|---|---|
-| **0** | Cron: Open Interest · ảnh chụp vũ trụ · sổ lệnh (spread/độ sâu) | **Thứ duy nhất mất vĩnh viễn nếu hoãn** (OI chỉ 30 ngày lịch sử) | — |
-| **0b** | Điều tra 2h: kho lưu trữ Binance có chứa cặp đã huỷ niêm yết không? | Quyết định cách tải ở bước 1; có thể mở khoá tầng cắt ngang sớm 12 tháng | — |
-| **1** | **Mẻ tải 40 cặp × 1d × ≥3 năm** + cột `taker_buy_volume` + cổng chất lượng | Điều kiện tiên quyết của GATE 1a. `ccxt.fetch_ohlcv` không trả cột 9 ⇒ cần đường tải khác | 0b |
-| **2** | **Hàm chi phí + `p_required` + `p_star`** (L4) | ~40 dòng, không cần dữ liệu mới, và **mọi tầng khác đọc nó**. Xây sau là phải sửa lại tất cả | — |
-| **3** | **Trọng tài** — đặc tả đầy đủ ở **§LV**: 8 fold ≥24 tháng · `P = E = 60` (độ dài nhãn, KHÔNG phải `horizon_bars`) · một trục thời gian toàn cục · 5 probe + tiêm rò rỉ · đối chiếu `purgedcv` | *Một bộ dò chưa từng bắt được gì không phải bộ dò.* Trọng tài trước cầu thủ | 1 |
-| **4** | Lõi đặc trưng L1 + đo lại cụm trên altcoin | Đóng băng định nghĩa; phép thử rò rỉ thứ sáu | 1, 3 |
-| **5** | **σ̂ (HAR-RV) + f̂** — cùng đợt | Tầng duy nhất tự chứng minh được. **Giá trị thật đầu tiên của cả dự án** | 4 |
-| **6** | L3 phân phối + dải giá + kiểm toán độ phủ | Hoàn tất 3/4 đầu ra, chưa train cây quyết định nào | 5 |
-| **7** | L5 tổ hợp + máy trạng thái tranche + sổ | Quy tắc, không học. Sinh sự kiện cho bước 8 | 6 |
-| **8** | **Bộ 11 phép đo + chấm GATE 1** | Điểm rẽ nhánh | 7 |
-| **9** | *(chỉ khi qua cổng)* L6 lọc bỏ + L7 cỡ gợi ý | Tầng đắt nhất, xây cuối, **có thể không bao giờ xây** | 8 |
+| # | Việc | Ngày công | Vì sao ở vị trí này | Chặn bởi |
+|---|---|---|---|---|
+| **0** | Cron: khối lượng hợp đồng mở · ảnh chụp vũ trụ · **sổ lệnh** (spread/độ sâu) | **1,0** | **Thứ duy nhất mất vĩnh viễn nếu hoãn** — OI chỉ 30 ngày lịch sử | — |
+| **0b** | ★ Điều tra: kho lưu trữ Binance có cặp đã huỷ niêm yết không? | **0,25** | Quyết định cách tải ở bước 1; có thể mở khoá tầng cắt ngang sớm 12 tháng | — |
+| **1** | **Mẻ tải 40 cặp × 1d × ≥3 năm** + `taker_buy_volume` + cổng chất lượng | **1,5** | Điều kiện tiên quyết của GATE 1a | 0b |
+| **1b** | Module `cryptopred.data.funding` — funding 8h toàn vũ trụ | **0,5** | Bước 5 không có đầu vào nếu thiếu | 1 |
+| **2** | **Hàm chi phí + `p_required` + `p_star`** (L4) | **0,5** | ~40 dòng, **mọi tầng khác đọc nó**. Xây sau là phải sửa lại tất cả | — |
+| **2b** | MLflow tracking + `log_run(...)` | **0,5** | RULE 10; bước 3 đã là phép đo chặn cửa | — |
+| **3** | **Trọng tài §LV** + tiêm rò rỉ, gỡ 5 probe, đối chiếu `purgedcv` | **5,0** | *Một bộ dò chưa từng bắt được gì không phải bộ dò* | 1 |
+| **4** | Lõi đặc trưng L1 + đo lại cụm trên altcoin | **3,0** | Đóng băng định nghĩa; phép thử rò rỉ thứ sáu | 1, 3 |
+| **5** | **σ̂ (HAR-Parkinson) + f̂** — cùng đợt | **3,0** | Tầng duy nhất tự chứng minh được | 4, 1b |
+| **6** | L3 phân phối + dải giá + kiểm toán độ phủ | **2,0** | ✅ **Mốc M-A** — sản phẩm thật đầu tiên | 5 |
+| **7** | L5 tổ hợp + máy trạng thái tranche + sổ bất biến | **4,0** | Quy tắc, không học. Sinh sự kiện cho bước 8 | 6 |
+| **8** | **Bộ 11 phép đo + chấm GATE 1** | **3,0** | ✅ **Mốc M-B** — điểm rẽ nhánh | 7 |
+| **9** | *(chỉ khi qua cổng)* L6 lọc bỏ + GATE 2 hiệu chỉnh + L7 | **6,0** | ✅ Mốc M-C. **Tầng đắt nhất, có thể không bao giờ xây** | 8 |
+| **10** | *(trước khi gọi là sản phẩm)* **60 ngày forward công khai** | *60 ngày lịch* | Thay vai trò GATE 3 — §0.5 | 6 hoặc 9 |
+| | **Tới M-A (sản phẩm thật đầu tiên)** | **≈ 17 ngày** | | |
+| | **Tới M-B (chấm cổng)** | **≈ 24 ngày** | | |
+| | **Tới M-C (đầy đủ)** | **≈ 30 ngày** | | |
 
-> **Đảo thứ tự 2 và 5 là sai lầm tốn kém nhất có thể mắc**: xây mô hình trước hàm chi phí thì mọi chỉ tiêu đánh giá trong nhiều tuần đều thiếu mẫu số, và bạn tối ưu vào một mục tiêu sai.
+> **Bước 9 tốn 6 ngày và có thể không bao giờ cần** — trong khi bước 6 (17 ngày) đã cho một sản phẩm ship được. Đó là lý do thứ tự này, và là con số người duyệt cần để quyết định.
+
+**Bước 1 — hai phương án tải, tiêu chí chọn do bước 0b quyết:**
+
+| Phương án | Ưu | Nhược |
+|---|---|---|
+| **REST `/api/v3/klines` trực tiếp** (httpx) | Đủ 12 trường kể cả `taker_buy_volume`; đơn giản | Chậm hơn ~50 lần; **không** lấy được cặp đã huỷ niêm yết |
+| **Kho `data.binance.vision`** (dump tháng) | Nhanh; **có thể có** cặp đã huỷ niêm yết ⇒ giải luôn bẫy sống sót | Phải xác minh phạm vi (chính là bước 0b) |
+
+> ⚠️ Cả hai đều là **client HTTP thô**, không phải `ccxt`. Luật repo hiện chỉ nói *«chỉ `cryptopred.data.exchange` được tạo client ccxt»* — **cần thêm một dòng vào `CLAUDE.md`**: `cryptopred.data.klines_raw` được phép dùng `httpx`, và **chỉ module đó**.
+
 
 ## 11.2 · Mốc ship
 
@@ -1472,10 +1552,10 @@ Bước 5 (*σ̂ + f̂ cùng đợt*) **không có đầu vào**: `data/raw/fund
 
 | Tệp | Thay đổi |
 |---|---|
-| `config/model.yaml` | **Xoá** `decision.p_up_threshold` / `p_down_threshold` (thay bằng `TRADE_TF` + `p_required` trong mã) · **xoá** khối `quantile` · `classifier` → `meta_label` (depth 3 · ≤15 lá · ≤300 cây) · `drop_flat_from_train: false` · `tuning.n_trials: 20` · `baselines` += `tsmom_grid_median`, `dca_hold`, `naive_rw` · `costs.funding_rate_8h_pct` giữ làm tham chiếu hiển thị, **cấm** dùng trong cổng |
+| `config/model.yaml` | **Xoá** `decision.p_up_threshold` / `p_down_threshold` (thay bằng `TRADE_TF` + `p_required` trong mã) · **xoá** khối `quantile` · `classifier` → `meta_label` (depth 3 · ≤15 lá · ≤300 cây) · `drop_flat_from_train: false` · `tuning.n_trials: 20` · **`tuning.objective` → `mean_oos_drawdown_ratio`** *(hiện là `mean_oos_sharpe_after_costs` — tối ưu vào đúng đại lượng mà §8.2 vừa loại khỏi cổng)* · **xoá khối `label.dead_zone`** *(nhãn ba lớp đã bị ADR-005 loại)* · `baselines` += `tsmom_grid_median`, `dca_hold`, `naive_rw` · `costs.funding_rate_8h_pct` giữ làm tham chiếu hiển thị, **cấm** dùng trong cổng |
 | `config/features.yaml` | **Theo bảng Phụ lục B.3** — làm ở bước 4, **cùng lúc** viết `build_features` |
 | `config/symbols.yaml` | Mở rộng exclude: neo pháp định (EUR…) · vàng/hàng hoá (XAUT, PAXG) · RLUSD · cổ phiếu token hoá |
-| **`CLAUDE.md`** | Bảng trạng thái + dòng «prototype dashboard v6 là hợp đồng UI» — **đầu ra thứ 4 (khuyến nghị vào/ra) là SỬA HỢP ĐỒNG UI**, phải khai báo, không để lệch âm thầm |
+| **`CLAUDE.md`** | Thêm dòng cho `data.klines_raw` dùng `httpx` (m09) · bảng trạng thái + dòng «prototype dashboard v6 là hợp đồng UI» — **đầu ra thứ 4 (khuyến nghị vào/ra) là SỬA HỢP ĐỒNG UI**, phải khai báo, không để lệch âm thầm |
 | **`docs/00_MASTER_PLAN.md §5`** | Hợp đồng ba đầu ra → **bốn** (thêm khuyến nghị vào/ra). Cần **ADR-015** |
 | `serving/schemas.py` | Theo Phần 2 — kèm khôi phục `last_close` · `valid_until` · `in_training_universe` mà rc1 làm rơi |
 | `config/model.yaml` *(bổ sung)* | `validation.min_train_bars`: **theo khung** (1d ≈ 500, 1h 5000) — hiện 5000 khiến purged WF không sinh nổi fold nào ở khung ngày · `validation.purge_bars`/`embargo_bars`: **60** cho khung 1d *(nhãn L6 là kết cục rào chắn kéo dài tới 60 ngày, không phải `horizon_bars`=1)* · `tuning.objective` → `mean_oos_drawdown_ratio` · xoá `label.dead_zone` |
