@@ -1,0 +1,262 @@
+"""THỰC THI ĐẶC TẢ — nguồn duy nhất của mọi con số định lượng trong PREDICTION_DESIGN.
+
+Nguyên tắc: tài liệu KHÔNG chép số. Nó trỏ tới docs/generated/spec_numbers.md,
+do chính script này sinh ra bằng cách CHẠY đúng đặc tả:
+  · σ̂  = HAR-RV trên log(Parkinson RV), mục tiêu TB RV 5 ngày tới, walk-forward
+  · w  = tổ hợp 27 ô, rời rạc hoá 5 mức
+  · sự kiện = máy trạng thái TRANCHE (mở theo bước tăng vào slot trống · LIFO ·
+    tái vũ trang · stop soi INTRABAR · target soi tại CLOSE · hạn 60 ngày)
+  · vào tại OPEN nến t+1 · phí 0,30% khứ hồi
+
+Số nào script này không sinh được thì KHÔNG được xuất hiện trong tài liệu.
+"""
+from __future__ import annotations
+import itertools, json, sys
+from dataclasses import dataclass, replace
+from pathlib import Path
+import numpy as np, pandas as pd
+
+LN2 = np.log(2)
+COST_ROUNDTRIP = 0.30          # % — taker 0,10×2 + trượt 0,05×2
+SL_MULT, TP_MULT, DEADLINE = 1.2, 4.0, 60
+LEVELS = (0.25, 0.50, 0.75, 1.00)
+GRID_27 = tuple(itertools.product((10, 20, 50), (100, 150, 200), (20, 55, 100)))
+HAR_TARGET_DAYS, HAR_REFIT_EVERY, HAR_MIN_TRAIN = 5, 7, 250
+SYMS = ("BTCUSDT", "ETHUSDT", "SOLUSDT", "DOGEUSDT")
+
+# ══ L1 · biến động ═══════════════════════════════════════════════════
+def realized_variance(b: pd.DataFrame) -> pd.Series:
+    """Parkinson (1980) — phương sai NGÀY từ high/low."""
+    return (np.log(b.high / b.low) ** 2) / (4 * LN2)
+
+def har_sigma_daily(b: pd.DataFrame) -> pd.Series:
+    """σ̂ NGÀY — đường DUY NHẤT sinh σ̂. HAR ba thang trên log(RV Parkinson),
+    mục tiêu TB RV 5 ngày TỚI, khớp lại mỗi 7 ngày trên cửa sổ mở rộng.
+    Không nhìn trước: hệ số tại t chỉ dùng dữ liệu tới t−1."""
+    rv = realized_variance(b)
+    lx = np.log(rv.clip(lower=1e-12))
+    X = pd.concat([lx.rolling(1).mean(), lx.rolling(5).mean(), lx.rolling(22).mean()], axis=1)
+    y = np.log(rv.rolling(HAR_TARGET_DAYS).mean().shift(-HAR_TARGET_DAYS).clip(lower=1e-12))
+    out = pd.Series(index=b.index, dtype=float)
+    beta = None
+    for i in range(len(b)):
+        if i >= HAR_MIN_TRAIN and (beta is None or i % HAR_REFIT_EVERY == 0):
+            # nhãn của mẫu j nhìn tới j+H ⇒ chỉ dùng j ≤ i−H−1 (purge)
+            cut = i - HAR_TARGET_DAYS - 1
+            d = pd.concat([y.iloc[:cut].rename("y"), X.iloc[:cut]], axis=1).dropna()
+            if len(d) >= HAR_MIN_TRAIN:
+                A = np.c_[np.ones(len(d)), d.iloc[:, 1:].values]
+                beta = np.linalg.lstsq(A, d.y.values, rcond=None)[0]
+        if beta is not None and i >= 1 and X.iloc[i - 1].notna().all():
+            pred = float(np.exp(np.r_[1.0, X.iloc[i - 1].values] @ beta))
+            out.iloc[i] = np.sqrt(max(pred, 1e-12))
+    return out
+
+def ewma_sigma_daily(b: pd.DataFrame, lam: float = 0.94) -> pd.Series:
+    """Dự phòng TẤT ĐỊNH."""
+    return np.sqrt(realized_variance(b).ewm(alpha=1 - lam).mean()).shift(1)
+
+# ══ L5 · hướng ═══════════════════════════════════════════════════════
+def cell_signal(b: pd.DataFrame, ef: int, es: int, dn: int) -> pd.Series:
+    c = b.close
+    fast, slow = c.ewm(span=ef, adjust=False).mean(), c.ewm(span=es, adjust=False).mean()
+    don = b.high.rolling(dn).max().shift(1)
+    entry, exit_ = (c > slow) & (c > don), c < fast
+    pos, out = 0, []
+    for i in range(len(c)):
+        if pos == 0 and bool(entry.iloc[i]): pos = 1
+        elif pos == 1 and bool(exit_.iloc[i]): pos = 0
+        out.append(pos)
+    return pd.Series(out, index=c.index)
+
+def ensemble_weight(b: pd.DataFrame, grid=GRID_27) -> pd.Series:
+    raw = pd.concat([cell_signal(b, *g) for g in grid], axis=1).mean(axis=1)
+    return (raw * 4).round() / 4          # {0 · ,25 · ,5 · ,75 · 1}
+
+# ══ L5 · máy trạng thái TRANCHE ══════════════════════════════════════
+@dataclass
+class Tr:
+    level: float; i_entry: int; entry: float; sigma: float
+    stop: float; target: float; deadline_i: int
+    i_exit: int | None = None; exit_px: float | None = None
+    reason: str | None = None; realized_r: float | None = None
+
+def run_tranches(b: pd.DataFrame, w: pd.Series, sig: pd.Series,
+                 sl=SL_MULT, tp=TP_MULT, dl=DEADLINE) -> list[Tr]:
+    """Máy trạng thái đúng §L5. Thứ tự trong một nến: STOP → TARGET → DEADLINE → LIFO → MỞ."""
+    o, hi, lo, c = b.open.values, b.high.values, b.low.values, b.close.values
+    wv, sv = w.values, sig.values
+    open_slots: dict[float, Tr] = {}
+    closed: list[Tr] = []
+    for i in range(len(b) - 1):
+        # ① STOP (intrabar) ② TARGET (close) ③ DEADLINE
+        for lv in sorted(open_slots, reverse=True):
+            t = open_slots[lv]
+            if i <= t.i_entry: continue
+            if lo[i] <= t.stop:      px, rs = t.stop, "hit_stop"
+            elif c[i] >= t.target:   px, rs = c[i], "hit_target"
+            elif i >= t.deadline_i:  px, rs = c[i], "expired"
+            else: continue
+            t.i_exit, t.exit_px, t.reason = i, px, rs
+            t.realized_r = (px - t.entry) / (t.entry * sl * t.sigma)
+            closed.append(t); del open_slots[lv]
+        # ④ LIFO — w tụt dưới mức slot
+        for lv in sorted(open_slots, reverse=True):
+            if wv[i] < lv:
+                t = open_slots[lv]
+                t.i_exit, t.exit_px, t.reason = i, c[i], "superseded"
+                t.realized_r = (c[i] - t.entry) / (t.entry * sl * t.sigma)
+                closed.append(t); del open_slots[lv]
+        # ⑤ MỞ — bước tăng vào slot TRỐNG (bao gồm tái vũ trang), vào tại open[i+1]
+        s = sv[i]
+        if np.isfinite(s) and s > 0:
+            for lv in LEVELS:
+                if wv[i] >= lv and lv not in open_slots:
+                    e = o[i + 1]
+                    open_slots[lv] = Tr(lv, i, e, s, e * (1 - sl * s), e * (1 + tp * s),
+                                        min(i + dl, len(b) - 1))
+    for lv, t in open_slots.items():          # còn mở cuối mẫu ⇒ chấm theo giá cuối
+        j = len(b) - 1
+        t.i_exit, t.exit_px, t.reason = j, c[j], "open_at_end"
+        t.realized_r = (c[j] - t.entry) / (t.entry * sl * t.sigma)
+        closed.append(t)
+    return closed
+
+# ══ chấm ═════════════════════════════════════════════════════════════
+def load(sym: str) -> pd.DataFrame:
+    import glob
+    fs = sorted(glob.glob(f"data/raw/ohlcv/symbol={sym}/timeframe=1d/**/*.parquet", recursive=True))
+    if fs:
+        d = pd.concat([pd.read_parquet(f) for f in fs]).sort_index()
+        return d[~d.index.duplicated()]
+    fs = sorted(glob.glob(f"data/raw/ohlcv/symbol={sym}/timeframe=1h/**/*.parquet", recursive=True))
+    d = pd.concat([pd.read_parquet(f) for f in fs]).sort_index(); d = d[~d.index.duplicated()]
+    return pd.DataFrame({"open": d.open.resample("1D").first(), "high": d.high.resample("1D").max(),
+                         "low": d.low.resample("1D").min(), "close": d.close.resample("1D").last()}).dropna()
+
+_CACHE: dict = {}
+def _prep(s: str):
+    if s not in _CACHE:
+        b = load(s)
+        _CACHE[s] = (b, har_sigma_daily(b).fillna(ewma_sigma_daily(b)), ensemble_weight(b))
+    return _CACHE[s]
+
+def measure(sl=SL_MULT, tp=TP_MULT) -> dict:
+    rows, per = [], {}
+    for s in SYMS:
+        b, sig, w = _prep(s)
+        tr = run_tranches(b, w, sig, sl, tp)
+        yrs = len(b) / 365.25
+        per[s] = dict(n=len(tr), years=round(yrs, 1), per_year=round(len(tr) / yrs, 1))
+        rows += [(s, t) for t in tr]
+    R = np.array([t.realized_r for _, t in rows])
+    reason = pd.Series([t.reason for _, t in rows]).value_counts().to_dict()
+    win = R > 0
+    c_R = COST_ROUNDTRIP / (sl * 3.00)                   # đơn vị R, σ̂ tham chiếu 3,00%
+    payoff = tp / sl
+    return dict(n=len(R), win_rate=float(win.mean()), r_win=float(R[win].mean()),
+                r_loss=float(R[~win].mean()), ev_gross=float(R.mean()), c_R=float(c_R),
+                ev_net=float(R.mean() - c_R), breakeven=float((1 + c_R) / (payoff + 1)),
+                payoff=float(payoff), reasons=reason, per_symbol=per,
+                hold_days=float(np.mean([t.i_exit - t.i_entry for _, t in rows])))
+
+def emit(path="docs/generated/spec_numbers.md") -> None:
+    m, amr, dd, surf, slip = measure(), abs_move_ratio(), drawdown_ratio_w_scale(), barrier_surface(), None
+    slip = slippage_table(m)
+    be_slip = slip[-1]["breakeven_R"]
+    L = []
+    A = L.append
+    A("# SỐ LIỆU CỦA ĐẶC TẢ — SINH TỰ ĐỘNG, KHÔNG SỬA TAY\n")
+    A("> Sinh bởi `scripts/spec/measure_spec.py`, chạy lại được từ gốc repo.")
+    A("> `docs/PREDICTION_DESIGN.md` **không chép** số nào từ đây — nó trỏ tới.")
+    A("> Số nào script này không sinh ra được thì **không được xuất hiện** trong tài liệu.\n")
+    A(f"Vũ trụ đo: {', '.join(SYMS)} · rào `{SL_MULT}σ̂/{TP_MULT}σ̂` · hạn {DEADLINE} ngày · phí {COST_ROUNDTRIP}% khứ hồi\n")
+    A("---\n\n## 1 · Kinh tế học của khuyến nghị\n")
+    A("| Đại lượng | Giá trị |\n|---|---|")
+    A(f"| Số sự kiện tranche | **{m['n']:,}** |")
+    A(f"| Tỉ lệ chốt lời | **{m['win_rate']*100:.1f}%** |")
+    A(f"| Hoà vốn (payoff hợp đồng {m['payoff']:.2f}R) | **{m['breakeven']*100:.1f}%** |")
+    A(f"| Biên trên điều kiện cổng | **{(m['win_rate']-m['breakeven'])*100:+.1f} điểm** |")
+    A(f"| R trung bình lệnh thắng | **{m['r_win']:.2f}R** |")
+    A(f"| R trung bình lệnh thua | {m['r_loss']:.2f}R |")
+    A(f"| **EV ròng mỗi sự kiện** | **{m['ev_net']:+.3f}R** |")
+    A(f"| Thời gian nắm giữ trung bình | **{m['hold_days']:.1f} ngày** |")
+    A(f"\n**Kết cục:** " + " · ".join(f"`{k}` {v:,}" for k, v in m["reasons"].items()) + "\n")
+    A("## 2 · ★ Ngân sách im lặng — sự kiện mỗi đồng mỗi năm\n")
+    A("| Cặp | Số sự kiện | Số năm | **Sự kiện/năm** |\n|---|---|---|---|")
+    for k, v in m["per_symbol"].items():
+        A(f"| {k} | {v['n']:,} | {v['years']} | **{v['per_year']}** |")
+    pys = [v["per_year"] for v in m["per_symbol"].values()]
+    A(f"\n**Dải: {min(pys):.0f} – {max(pys):.0f} sự kiện/đồng/năm.** Với vũ trụ khuyến nghị 8–10 đồng: **{min(pys)*8:.0f} – {max(pys)*10:.0f} khuyến nghị/năm**.\n")
+    A("## 3 · Hằng số dẫn xuất\n")
+    A("| Hằng số | Giá trị | Đo thế nào |\n|---|---|---|")
+    A(f"| `ABS_MOVE_RATIO` | **{amr['mean']:.4f}** | E\\|move\\| / σ̂ **HAR** (không phải σ close-to-close) |")
+    A(f"| `c_R` (σ̂ tham chiếu 3,00%) | {m['c_R']:.4f} | {COST_ROUNDTRIP}% / ({SL_MULT}·σ̂·100) |")
+    A(f"| Hoà vốn trượt giá dừng lỗ | **{be_slip}R** | từ chính (p={m['win_rate']*100:.1f}%, W={m['r_win']:.2f}R) |")
+    A(f"\n| Lỗ thực nhận | EV |\n|---|---|")
+    for r in slip[:-1]:
+        A(f"| {r['loss_R']}R | {r['ev']:+.3f}R |")
+    A("\n## 4 · GATE 1a — tỉ số sụt giảm, thang `w`\n")
+    A("| Cặp | Sụt giảm chiến lược | Mua-và-giữ | **Tỉ số** | Ngưỡng 0,60 |\n|---|---|---|---|---|")
+    for k, v in dd.items():
+        A(f"| {k} | {v['dd_strategy']}% | {v['dd_buyhold']}% | **{v['ratio']}** | {'đạt' if v['ratio'] <= 0.60 else '**TRƯỢT**'} |")
+    n_pass = sum(1 for v in dd.values() if v["ratio"] <= 0.60)
+    A(f"\n**{n_pass}/{len(dd)} cặp đạt.** Cổng đòi ≥80% ⇒ với 4 cặp hiệu chuẩn, ngưỡng chưa đạt.\n")
+    A("## 5 · Độ bền qua bề mặt rào chắn — chạy TRÊN CHÍNH máy tranche\n")
+    A("| stop | target | payoff | n | % thắng | hoà vốn | biên | R TB thắng | EV |\n|---|---|---|---|---|---|---|---|---|")
+    for r in surf:
+        star = " ←" if (r["sl"], r["tp"]) == (SL_MULT, TP_MULT) else ""
+        A(f"| {r['sl']} | {r['tp']} | {r['payoff']}R | {r['n']:,} | {r['win']}% | {r['be']}% | {r['margin']:+.1f} | {r['r_win']}R | {r['ev']:+.3f}R{star} |")
+    mg = [r["margin"] for r in surf]; ev = [r["ev"] for r in surf]
+    A(f"\n**Biên: trung vị {np.median(mg):+.1f} · min {min(mg):+.1f} · max {max(mg):+.1f}** · "
+      f"{sum(1 for x in mg if x>0)}/{len(mg)} ô biên dương · {sum(1 for x in ev if x>0)}/{len(ev)} ô EV dương\n")
+    Path(path).parent.mkdir(parents=True, exist_ok=True)
+    Path(path).write_text("\n".join(L), encoding="utf-8")
+    print(f"đã sinh {path} — {len(L)} dòng")
+
+
+# ══ các phép đo phụ trợ mà tài liệu cần ══════════════════════════════
+def drawdown_ratio_w_scale() -> dict:
+    """GATE 1a — chấm ở thang `w` (vốn CỦA CHIẾN LƯỢC), không theo % NAV."""
+    out = {}
+    for s in SYMS:
+        b = load(s); w = ensemble_weight(b)
+        oo = b.open.shift(-1) / b.open - 1
+        p = w.shift(1).fillna(0)
+        r = (p * oo).fillna(0) - (p - p.shift(1).fillna(0)).abs() * (COST_ROUNDTRIP / 200)
+        bh = oo.fillna(0).copy(); bh.iloc[0] -= COST_ROUNDTRIP / 200
+        dd = lambda x: float(((1 + x).cumprod() / (1 + x).cumprod().cummax() - 1).min())
+        out[s] = dict(dd_strategy=round(dd(r) * 100, 2), dd_buyhold=round(dd(bh) * 100, 2),
+                      ratio=round(dd(r) / dd(bh), 4))
+    return out
+
+def barrier_surface() -> list[dict]:
+    """Độ bền qua lưới rào — chạy TRÊN CHÍNH máy tranche."""
+    rows = []
+    for sl, tp in itertools.product((1.0, 1.2, 1.5, 2.0), (3.0, 4.0, 4.8, 6.0)):
+        m = measure(sl, tp)
+        rows.append(dict(sl=sl, tp=tp, payoff=round(m["payoff"], 2), n=m["n"],
+                         win=round(m["win_rate"] * 100, 1), be=round(m["breakeven"] * 100, 1),
+                         margin=round((m["win_rate"] - m["breakeven"]) * 100, 1),
+                         r_win=round(m["r_win"], 2), ev=round(m["ev_net"], 3)))
+    return rows
+
+def slippage_table(m: dict) -> list[dict]:
+    """EV theo lỗ thực nhận, tính từ CHÍNH cặp (p, W) đang vận hành."""
+    p, W, c = m["win_rate"], m["r_win"], m["c_R"]
+    be = (p * W - c) / (1 - p)
+    return [dict(loss_R=L, ev=round(p * W - (1 - p) * L - c, 3)) for L in (1.0, 1.3, 1.4, 1.5, round(be, 2))] + [dict(breakeven_R=round(be, 2))]
+
+def abs_move_ratio() -> dict:
+    """E|move| / σ̂ — phải đo với CHÍNH σ̂ mà hệ dùng (HAR), không phải σ close-to-close."""
+    out = {}
+    for s in SYMS:
+        b = load(s); sig = har_sigma_daily(b).fillna(ewma_sigma_daily(b))
+        em = np.log(b.close).diff().abs()
+        d = pd.concat([em.rename("e"), sig.rename("s")], axis=1).dropna()
+        out[s] = round(float((d.e / d.s).mean()), 4)
+    out["mean"] = round(float(np.mean([v for k, v in out.items() if k != "mean"])), 4)
+    return out
+
+if __name__ == "__main__":
+    emit()
