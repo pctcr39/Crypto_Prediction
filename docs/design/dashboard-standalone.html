@@ -16,20 +16,22 @@
    DS-RULE 8: không mã màu trực tiếp ngoài khối :root này.
    ══════════════════════════════════════════════════════════════════ */
 :root{
-  --surface-0:#05070A; --surface-1:#0B0D12; --surface-2:#12151C;
-  --border:#1C2028; --border-active:#333A46;
-  --text-1:#E6E8EC; --text-2:#9AA1AD; --text-3:#565D6A;
+  /* V14 «AURORA» — nền xanh thẳm + mint/hồng/tím rực. Kiểm ΔE mù màu 27/08/2026:
+     up/down deutan 16,8 · protan 39,6 (ngưỡng 8) · thường 124,6 (ngưỡng 15) — ĐẠT. */
+  --surface-0:#04060E; --surface-1:#0A0F1E; --surface-2:#111A30;
+  --border:#1B2743; --border-active:#31497C;
+  --text-1:#EAF1FF; --text-2:#8FA3C8; --text-3:#4F6084;
   /* CẤM VẬN HUE (V11): trang trí chỉ dùng xám thép trên; tím --pred độc quyền
      cho dự đoán, vàng --accent độc quyền cho chrome UI (DS-RULE 5). */
-  --future-bg:#0D0C15;  /* nền vùng tương lai — pha 4% tím: tương lai khác vật liệu */
-  --chart-shadow:rgba(0,0,0,.40);   /* bóng vách «bây giờ» đổ sang phía tương lai */
-  --hatch-a:.07;                    /* độ đậm lưới chéo 45° của trường tương lai */
-  --up:#26a69a; --down:#ef5350; --pred:#8b7be8;
+  --future-bg:#0E0B22;  /* nền vùng tương lai — pha 4% tím: tương lai khác vật liệu */
+  --chart-shadow:rgba(0,0,0,.45);   /* bóng vách «bây giờ» đổ sang phía tương lai */
+  --hatch-a:.08;                    /* độ đậm lưới chéo 45° của trường tương lai */
+  --up:#00E0A4; --down:#FF5C7A; --pred:#A78BFF;
   --up-bg:color-mix(in srgb,var(--up) 12%,transparent);
   --down-bg:color-mix(in srgb,var(--down) 12%,transparent);
   --pred-band:color-mix(in srgb,var(--pred) 14%,transparent);
-  --status-live:#26a69a; --status-slow:#f5a524; --status-down:#ef5350; --status-stale:#868993;
-  --accent:#f0b90b;
+  --status-live:#00E0A4; --status-slow:#FFB224; --status-down:#FF5C7A; --status-stale:#66738F;
+  --accent:#F0B90B;
   --font-ui:'IBM Plex Mono',ui-monospace,'SF Mono',monospace;
   --font-num:'IBM Plex Mono',ui-monospace,'SF Mono',monospace;
   --font-cond:'IBM Plex Sans Condensed','Arial Narrow',sans-serif;
@@ -38,7 +40,7 @@
   --dur-flash:150ms; --dur-fast:120ms; --dur-base:220ms; --ease:cubic-bezier(.16,1,.3,1);
 }
 @media (prefers-color-scheme:light){
-  :root:not([data-theme="dark"]){
+  :root:not([data-theme="dark"]):not([data-theme="steel"]):not([data-theme="ember"]){
     --surface-0:#E9EBEE; --surface-1:#F7F8FA; --surface-2:#EDEFF3;
     --border:#D4D8DF; --border-active:#A9B0BC; --future-bg:#F0EEF9;
     --chart-shadow:rgba(0,0,0,.10); --hatch-a:.11;
@@ -58,8 +60,36 @@
   --accent:#b8860b;
 }
 
+/* ═ V14 · BỐN BẢNG MÀU — cùng ngữ nghĩa up/down/pred, tất cả đã kiểm ΔE mù màu
+   (validate_palettes: deutan ≥15,7 · protan ≥22,6 · thường ≥77 — vượt ngưỡng 8/15 docs/02 §2.4).
+   dark = «Aurora» (mặc định) · steel = V13 cổ điển · ember = tối ấm · light giữ nguyên. */
+:root[data-theme="steel"]{
+  --surface-0:#05070A; --surface-1:#0B0D12; --surface-2:#12151C;
+  --border:#1C2028; --border-active:#333A46;
+  --text-1:#E6E8EC; --text-2:#9AA1AD; --text-3:#565D6A;
+  --future-bg:#0D0C15; --chart-shadow:rgba(0,0,0,.40); --hatch-a:.07;
+  --up:#26a69a; --down:#ef5350; --pred:#8b7be8;
+  --status-live:#26a69a; --status-slow:#f5a524; --status-down:#ef5350; --status-stale:#868993;
+  --accent:#f0b90b;
+}
+:root[data-theme="ember"]{
+  --surface-0:#0A0605; --surface-1:#140D0A; --surface-2:#1F1510;
+  --border:#2E2018; --border-active:#54402E;
+  --text-1:#F5EDE4; --text-2:#B39C8C; --text-3:#75604F;
+  --future-bg:#170E20; --chart-shadow:rgba(0,0,0,.45); --hatch-a:.08;
+  --up:#2BD98C; --down:#FF5A68; --pred:#B08DFF;
+  --status-live:#2BD98C; --status-slow:#FFAF3C; --status-down:#FF5A68; --status-stale:#8A7666;
+  --accent:#FFA928;
+}
+
 *,*::before,*::after{box-sizing:border-box}
-body{margin:0;background:var(--surface-0);color:var(--text-1);font:400 12.5px/19px var(--font-ui);counter-reset:panel}
+body{margin:0;color:var(--text-1);font:400 12.5px/19px var(--font-ui);counter-reset:panel;
+  /* V14: hai vệt cực quang TĨNH lấy màu từ token (không hoạt cảnh, không tốn GPU) */
+  background:
+    radial-gradient(1000px 540px at 88% -12%,color-mix(in srgb,var(--pred) 7%,transparent),transparent 68%),
+    radial-gradient(820px 480px at -12% 112%,color-mix(in srgb,var(--up) 5%,transparent),transparent 70%),
+    var(--surface-0);
+  background-attachment:fixed}
 button{font:inherit;color:inherit;background:none;border:none;cursor:pointer;padding:0}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:var(--radius-sm)}
 .num{font-family:var(--font-num);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
@@ -725,6 +755,82 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 @media (max-width:900px) and (orientation:landscape){
   .chart-wrap{height:min(62vh,260px)}
 }
+
+/* ══════════════════ V14 · LỚP CHUYỂN ĐỘNG ══════════════════
+   Kỷ luật: KHÔNG hoạt cảnh vị trí của giá (DS-RULE 2) — chỉ nền, viền, chrome,
+   tiến trình THỜI GIAN và hoạt cảnh vào-trang một lần. Vùng dự đoán giữ TĨNH:
+   minh hoạ không được lộng lẫy hơn dữ liệu thật (RULE 7). Mọi thứ tự tắt
+   theo prefers-reduced-motion nhờ luật toàn cục ở đầu file. */
+
+/* Đèn nguồn đang SỐNG: vòng radar lan toả — thấy nhịp sống từ xa */
+@keyframes sb-ring{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--status-live) 55%,transparent)}
+  100%{box-shadow:0 0 0 7px transparent}}
+body[data-conn="live"] .sb-src i.on::before{animation:sb-ring 2.2s var(--ease) infinite}
+
+/* Vạch tiến trình nến 2px chạy đáy status bar — đo THỜI GIAN, không phải giá */
+.statusbar::before{content:"";position:absolute;left:0;bottom:0;height:2px;width:100%;
+  transform-origin:left;transform:scaleX(var(--cdp,0));
+  background:linear-gradient(90deg,color-mix(in srgb,var(--accent) 45%,transparent),var(--accent));
+  transition:transform .95s linear;pointer-events:none}
+#cd.urgent{color:var(--accent);animation:cd-tick 1s step-end infinite}
+@keyframes cd-tick{50%{opacity:.45}}
+
+/* Vào trang theo tầng khi chuyển tab — chạy MỘT lần, ngắn, không lặp */
+@keyframes pane-in{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+.tabpane.enter :is(.card,.pcard,section.sec){animation:pane-in .4s var(--ease) both}
+.tabpane.enter :is(.card,.pcard,section.sec):nth-child(2){animation-delay:50ms}
+.tabpane.enter :is(.card,.pcard,section.sec):nth-child(3){animation-delay:100ms}
+.tabpane.enter :is(.card,.pcard,section.sec):nth-child(n+4){animation-delay:150ms}
+
+/* Tape: CHỈ dòng mới nhất trượt vào — mỗi khớp lệnh một nhịp */
+@keyframes tape-in{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}}
+.tape-row:first-child{animation:tape-in .26s var(--ease)}
+
+/* Thanh dòng lệnh mua/bán: đổi tỉ lệ mượt (phần tử bền, không rebuild) */
+.fb-buy{transition:width .4s var(--ease)}
+
+/* Thẻ: viền sáng dần khi rê — không transform, không glow lên dữ liệu */
+.card,.pcard{transition:border-color var(--dur-base) var(--ease),box-shadow var(--dur-base) var(--ease)}
+.card:hover,.pcard:hover{border-color:var(--border-active)}
+
+/* Nút: phản hồi lún nhẹ khi bấm */
+.ord-buy:active,.ord-sell:active,.ghost-btn:active,.pct-btn:active,.navtab:active{transform:scale(.97)}
+.ord-buy,.ord-sell,.ghost-btn,.pct-btn,.navtab{transition:background var(--dur-fast) var(--ease),
+  color var(--dur-fast) var(--ease),border-color var(--dur-fast) var(--ease),
+  transform var(--dur-fast) var(--ease)}
+
+/* Hero: quét gradient + gáy màu thay nền phẳng — vẫn CHỈ nền/viền (DS-RULE 2) */
+.price-hero{border-left:3px solid transparent;padding-left:10px;
+  transition:border-color .35s var(--ease)}
+.price-hero.flash-up{background:linear-gradient(90deg,var(--up-bg),transparent 78%);
+  border-left-color:var(--up)}
+.price-hero.flash-down{background:linear-gradient(90deg,var(--down-bg),transparent 78%);
+  border-left-color:var(--down)}
+
+/* Tab đang chọn: gạch chân mọc ra từ giữa */
+.navtab{position:relative}
+.navtab::after{content:"";position:absolute;left:50%;right:50%;bottom:0;height:2px;
+  background:var(--accent);transition:left .22s var(--ease),right .22s var(--ease)}
+.navtab[aria-selected="true"]::after{left:10%;right:10%}
+body.mode-all .navtab::after{display:none}
+
+/* Thương hiệu: ánh kim chạy trên chữ «Prediction» — vẫn tím --pred, không thêm hue */
+@supports ((-webkit-background-clip:text) or (background-clip:text)){
+  @keyframes brand-sheen{from{background-position:200% 0}to{background-position:-200% 0}}
+  .brand em{background:linear-gradient(100deg,var(--pred) 42%,
+      color-mix(in srgb,var(--pred) 35%,white) 50%,var(--pred) 58%);
+    background-size:220% 100%;-webkit-background-clip:text;background-clip:text;
+    -webkit-text-fill-color:transparent;animation:brand-sheen 7s linear infinite}
+}
+
+/* Màn boot: cực quang trôi chậm sau bảng kiểm — chrome thuần */
+.boot-veil{overflow:hidden}
+.boot-veil::before{content:"";position:absolute;inset:-40px;pointer-events:none;
+  background:radial-gradient(560px 300px at 18% 8%,color-mix(in srgb,var(--pred) 9%,transparent),transparent 70%),
+             radial-gradient(520px 280px at 84% 92%,color-mix(in srgb,var(--up) 7%,transparent),transparent 70%);
+  animation:aurora-drift 12s ease-in-out infinite alternate}
+@keyframes aurora-drift{from{transform:translate3d(0,-10px,0)}to{transform:translate3d(0,12px,0)}}
+.bootcon{position:relative}
 </style>
 </head>
 <body class="boot">
@@ -752,10 +858,11 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 <div class="shell">
   <header class="topbar">
     <div class="brand">Crypto <em>Prediction</em><button class="ver-chip" id="ver-btn"
-      aria-expanded="false" title="Lịch sử phiên bản">v13</button></div>
+      aria-expanded="false" title="Lịch sử phiên bản">v14</button></div>
     <div class="verpop" id="verpop" hidden>
       <div class="vp-head"><b>Lịch sử phiên bản</b><span class="num" id="vp-build">—</span></div>
       <ol class="vp-list">
+        <li><b>v14</b> <span data-i="ver14">ba bảng màu tối Aurora/Ember/Steel đã kiểm ΔE mù màu + lớp chuyển động: radar nguồn sống, vạch tiến trình nến, quét lộ chart, vào trang theo tầng</span></li>
         <li><b>v13</b> <span data-i="ver13">lớp WOW: khởi động theo WebSocket thật, chiều sâu không blur, chart thành nhân vật chính</span></li>
         <li><b>v12</b> <span data-i="ver12">gọn hoá: 41% chữ vào nút ⓘ, ô bối cảnh bấm nhảy panel, sổ lệnh bấm điền lệnh</span></li>
         <li><b>v11</b> <span data-i="ver11">vỏ terminal «Thép &amp; Mực», status bar đo độ trễ thật, đèn GO/NO-GO 4 cổng</span></li>
@@ -780,6 +887,8 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
       <button class="ghost-btn" id="pal-btn" title="Mở bảng chọn cặp — phím /"><span class="num">/</span> <span data-i="v04">Cặp</span></button>
       <button class="ghost-btn" id="lang-btn" aria-pressed="false"
         title="Ngôn ngữ / Language">EN</button>
+      <button class="ghost-btn" id="theme-btn"
+        title="Bảng màu — phím t">◐ <span data-i="v07">Màu</span></button>
       <button class="ghost-btn" id="mode-btn" aria-pressed="false"
         title="Bố cục: tách tab / gộp 1 trang">
         ⊞ Gộp 1 trang</button>
@@ -1108,7 +1217,7 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 
 <footer data-i="m26">
   Dữ liệu thị trường: Binance public REST + WebSocket (không cần API key, chỉ đọc).
-  Trang này không gửi dữ liệu đi đâu; trên máy bạn chỉ lưu ba lựa chọn giao diện: bố cục, ngôn ngữ và phần giải thích.
+  Trang này không gửi dữ liệu đi đâu; trên máy bạn chỉ lưu bốn lựa chọn giao diện: bố cục, ngôn ngữ, bảng màu và phần giải thích.
   · Mã nguồn dự án: <span class="num">cryptopred</span> · docs 00–05.
 </footer>
 
@@ -1371,6 +1480,23 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
   // Model thật cũng sẽ chạy đúng nhịp này: nến đang hình thành là dữ liệu
   // out-of-distribution (volume mới đi 1/3, high/low chưa xong), và 44/45
   // feature vốn đứng yên suốt cả nến — chạy lại chỉ sinh số rung lắc.
+  /* ══════════════ NGUỒN DỰ ĐOÁN — CHỖ CẮM MODEL THẬT ══════════════
+     MVP dùng nguồn "dummy": tính ngay trong trình duyệt từ động lượng thô.
+     Khi M5–M7 xong, chỉ cần đổi PRED_SOURCE = "api" và cài PRED.api trả về
+     CÙNG hình dạng — không tầng UI nào phải sửa, vì tất cả chỉ đọc S.locked.
+
+     HỢP ĐỒNG (mọi nguồn phải trả đủ):
+       px        giá neo, đóng băng lúc nến đóng
+       score     0–100, KHÔNG phải xác suất đã hiệu chỉnh khi source="dummy"
+       mid/lo/hi q50 / q10 / q90 — dải giá
+       sig       biến động kỳ vọng cho horizon (log-scale)
+       anchor    mốc bắt đầu · target mốc đích · step độ dài nến · lockedAt lúc khoá
+       atrPct    ATR14 theo % giá — dùng cho thiết lập lệnh
+       source    ★ nhãn nguồn, HIỂN THỊ trên giao diện (RULE 8: nói thật gốc số)
+       model     tên+phiên bản model, null khi chưa có model
+     ══════════════════════════════════════════════════════════════════ */
+  const PRED_SOURCE = "dummy";
+
   function computeOutlook() {
     // chỉ lấy tới nến đã đóng cuối cùng — bỏ nến đang chạy
     const all = S.candles;
@@ -1392,13 +1518,25 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
       anchor: lastClosed + step, target: lastClosed + step + HORIZON_BARS * step, step,
       lockedAt: lastClosed + step,                 // thời điểm nến đóng = lúc khoá
       atrPct: c.slice(-14).reduce((a, x) => a + (x.high - x.low), 0) / 14 / px * 100,
+      source: "dummy-momentum",      // ★ nguồn: baseline động lượng thô trong trình duyệt
+      model: null,                   // ★ chưa có model nào được huấn luyện
+      generatedAt: Date.now(),
     };
   }
+
+  /* Bảng nguồn — thêm "api" ở đây khi model thật sẵn sàng, không sửa chỗ nào khác */
+  const PRED = {
+    dummy: computeOutlook,
+    // api: () => { /* GET /api/predictions?symbol=&tf= → cùng hình dạng trên */ },
+  };
 
   // Đọc dự đoán đang khoá. KHÔNG tính lại — mọi nơi dùng chung một bản.
   const outlook = () => S.locked;
 
-  function relock() { S.locked = computeOutlook(); }
+  function relock() {
+    const src = PRED[PRED_SOURCE];
+    S.locked = src ? src() : null;
+  }
 
   // ── LỚP BÁM SÁT — cập nhật từng tick, thuần SỐ HỌC trên dự đoán đã khoá ──
   function renderTracking() {
@@ -1492,7 +1630,10 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
     f.style.background = dir === "up" ? "var(--up)" : dir === "down" ? "var(--down)" : "var(--text-3)";
     $("meter-num").innerHTML = `<b class="num">${o.score}%</b> · ${T("chưa hiệu chỉnh")}`;
     $("pred-title").textContent = T("Dự đoán · {n} nến {tf}", { n: HORIZON_BARS, tf: S.tf });
-    $("model-chip").textContent = T("khoá {t} · chưa có model", { t: fmtT(o.lockedAt, o.step) });
+    // Chip nói thật GỐC của con số: có model thì in tên model, không thì nói thẳng
+    $("model-chip").textContent = o.model
+      ? T("khoá {t} · {m}", { t: fmtT(o.lockedAt, o.step), m: o.model })
+      : T("khoá {t} · chưa có model", { t: fmtT(o.lockedAt, o.step) });
     // Hai dòng này CHỈ đổi khi khoá lại — thuộc về đây, không phải lớp bám sát
     $("trk-countdown").textContent = T("đích") + " " + fmtT(o.target, o.step);
     $("trk-lock").textContent = T("Khoá lúc {a} UTC · giá neo {b} · đích {c}",
@@ -2143,10 +2284,18 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
       c.fillText((v * 100).toFixed(2) + "%", cx + Math.cos(a) * (R + 10), cy + Math.sin(a) * (R + 10) + 3);
     });
     c.textAlign = "left";
-    const a = toAng(r);                                  // kim — màu trung tính, hướng không mã hoá bằng màu
+    if (P.fundShown == null) P.fundShown = r;            // V14: kim quay mượt — tween thuần hiển thị
+    const a = toAng(P.fundShown);                        // kim — màu trung tính, hướng không mã hoá bằng màu
     c.strokeStyle = V("--text-1"); c.lineWidth = 2;
     c.beginPath(); c.moveTo(cx, cy); c.lineTo(cx + Math.cos(a) * (R - 18), cy + Math.sin(a) * (R - 18)); c.stroke();
     c.beginPath(); c.arc(cx, cy, 4, 0, 7); c.fillStyle = V("--text-1"); c.fill();
+    // V14: bước tween kế tiếp — chỉ khi panel đang hiện và không giảm chuyển động
+    if (Math.abs(P.fundShown - r) > 1e-7 && cv.clientWidth > 0
+        && !matchMedia("(prefers-reduced-motion:reduce)").matches) {
+      P.fundShown += (r - P.fundShown) * 0.18;
+      if (Math.abs(P.fundShown - r) < 1e-7) P.fundShown = r;
+      if (!P._fundRaf) P._fundRaf = requestAnimationFrame(() => { P._fundRaf = 0; drawFunding(); });
+    } else P.fundShown = r;
 
     const pct = r * 100;
     const el = $("fund-val");
@@ -2739,6 +2888,22 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
     applyLayout();
   });
 
+  /* ── V14 · Bảng màu: dark(Aurora) → ember → steel → light — nhớ trên máy.
+     MutationObserver data-theme (bên dưới) tự vẽ lại mọi canvas khi đổi. ── */
+  const THEMES = ["dark", "ember", "steel", "light"];
+  const THEME_NAME = { dark: "Aurora", ember: "Ember", steel: "Steel", light: "Light" };
+  S.theme = "dark";
+  try { const t = localStorage.getItem("cryptopred-theme"); if (THEMES.includes(t)) S.theme = t; } catch (e) {}
+  function applyTheme() {
+    document.documentElement.setAttribute("data-theme", S.theme);
+    $("theme-btn").title = T("Bảng màu: {n} — bấm để đổi", { n: THEME_NAME[S.theme] });
+    try { localStorage.setItem("cryptopred-theme", S.theme); } catch (e) {}
+  }
+  $("theme-btn").addEventListener("click", () => {
+    S.theme = THEMES[(THEMES.indexOf(S.theme) + 1) % THEMES.length];
+    applyTheme();
+  });
+
   $("lang-btn").addEventListener("click", () => {
     S.lang = S.lang === "vi" ? "en" : "vi";
     applyLang();
@@ -2759,6 +2924,8 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
     document.querySelectorAll(".navtab").forEach(t => t.setAttribute("aria-selected", "false"));
     b.setAttribute("aria-selected", "true");
     document.querySelectorAll(".tabpane").forEach(pn => pn.hidden = pn.id !== b.dataset.pane);
+    const pnEl = $(b.dataset.pane);                                   // V14: hoạt cảnh vào trang
+    pnEl.classList.add("enter"); setTimeout(() => pnEl.classList.remove("enter"), 750);
     requestAnimationFrame(() => drawPane(b.dataset.pane));
   }));
   $("btn-resample").addEventListener("click", () => { resample(); drawSpaghetti(); });
@@ -2782,6 +2949,20 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
     } catch (err) { e.target.value = ""; e.target.placeholder = T("Không thấy {s} — thử mã khác", { s: sym }); }
   });
 
+  /* V14: quét lộ biểu đồ khi đổi coin/khung — tái dùng cơ chế bootClip.
+     Chỉ vùng dữ liệu THẬT được quét; vùng minh hoạ hiện nguyên (không chung động từ). */
+  function chartWipe() {
+    if (matchMedia("(prefers-reduced-motion:reduce)").matches) { S.bootClip = 1; requestDraw(); return; }
+    S.bootClip = 0;
+    const t0 = performance.now(), D = 420; let last = 0;
+    const step = nw => {
+      const t = Math.min(1, (nw - t0) / D);
+      if (nw - last >= 33 || t === 1) { last = nw; S.bootClip = t === 1 ? 1 : 1 - Math.pow(1 - t, 3); draw(); }
+      if (t < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
+
   async function reload() {
     document.body.dataset.loading = "1";              // mờ vùng số cũ + thanh chạy dưới statusbar
     try {
@@ -2790,9 +2971,11 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
       updHeader(); renderPrediction(); renderTracking(); updWallet(); draw();
       renderCtx(); renderSharpness(); renderIndicators(); renderMethods();
       connectWS(); loadDerivs();
-      if (!BOOT.ended) bootScan();
+      if (!BOOT.ended) bootScan(); else chartWipe();
       delete document.body.dataset.loading;
       document.body.classList.remove("boot");           // V11: panel chỉ hiện khi dữ liệu THẬT đã đổ
+      const vis = document.querySelector(".tabpane:not([hidden])");   // V14: vào trang theo tầng
+      if (vis) { vis.classList.add("enter"); setTimeout(() => vis.classList.remove("enter"), 750); }
     } catch (err) { setConn("down", T("Không tải được dữ liệu")); document.body.classList.remove("boot");
       delete document.body.dataset.loading; }
   }
@@ -2802,7 +2985,11 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
     if (S.candles.length) {
       const step = TF_MS[S.tf];
       const rem = (Math.floor(now() / step) + 1) * step - now();
-      $("cd").textContent = fmtCd(rem);
+      const cdEl = $("cd");
+      cdEl.textContent = fmtCd(rem);
+      cdEl.classList.toggle("urgent", rem <= 10e3);       // V14: 10 giây cuối nhấp nháy
+      // V14: vạch tiến trình nến — số học thời gian trên nến đã khoá, không phải model
+      document.querySelector(".statusbar").style.setProperty("--cdp", (1 - rem / step).toFixed(4));
     }
     renderTracking();   // thời gian vẫn trôi kể cả khi giá đứng im
     const pane = document.querySelector('.navtab[aria-selected="true"]');
@@ -2908,6 +3095,7 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
   "chưa hiệu chỉnh": "uncalibrated",
   "Dự đoán · {n} nến {tf}": "Forecast · {n} {tf} candles",
   "khoá {t} · chưa có model": "locked {t} · no model yet",
+  "khoá {t} · {m}": "locked {t} · {m}",
   "đích": "target",
   "Khoá lúc {a} UTC · giá neo {b} · đích {c}": "Locked at {a} UTC · anchor {b} · target {c}",
   "Dải ±1σ tại": "±1σ range at",
@@ -3157,7 +3345,7 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
   "m23": "<i style=\"border-top:2px dashed var(--pred);height:0\"></i>3 paths nearest q10 / q50 / q90",
   "m24": "OI vs Price",
   "m25": "Price↑ OI↑ = new money in · Price↑ OI↓ = short covering.",
-  "m26": "Market data: Binance public REST + WebSocket (no API key, read-only). This page sends nothing anywhere; it stores only three UI choices on your device: layout, language and notes. · Project source: <span class=\"num\">cryptopred</span> · docs 00–05."
+  "m26": "Market data: Binance public REST + WebSocket (no API key, read-only). This page sends nothing anywhere; it stores only four UI choices on your device: layout, language, palette and notes. · Project source: <span class=\"num\">cryptopred</span> · docs 00–05."
 });
   const ATTR_I18N = {
   "Khu vực dashboard": "Dashboard sections",
@@ -3239,6 +3427,7 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
     if (tag === "INPUT" || tag === "TEXTAREA" || e.metaKey || e.ctrlKey || e.altKey) return;
     if (e.key === "/") { e.preventDefault(); palOpen(); }
     else if (e.key === "i") { S.notes = !S.notes; applyNotes(); }
+    else if (e.key === "t") { $("theme-btn").click(); }
     else if (e.key === "1" || e.key === "2" || e.key === "3") {
       const b = document.querySelectorAll(".navtab")[+e.key - 1]; if (b) b.click();
     }
@@ -3253,12 +3442,14 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
     "model dự đoán": "prediction model", "— KHÔNG CÓ": "— ABSENT",
     "cặp": "pairs", "nến": "candles", "mức": "levels", "tick đầu": "first tick", "đã nối": "connected",
     "Đã điền {v} USDT từ sổ lệnh": "Filled {v} USDT from the order book",
+    "Bảng màu: {n} — bấm để đổi": "Palette: {n} — click to switch",
   });
   Object.assign(DOM_I18N.en, {
     v01: "WS latency", v02: "trades/s",
     v03: "«/» opens this panel · 1/2/3 switch sections · Enter picks the highlighted row",
-    v04: "Pairs", v05: "Connecting…", v06: "Notes",
+    v04: "Pairs", v05: "Connecting…", v06: "Notes", v07: "Theme",
     b00: "CRYPTOPRED · COLD START", b09: "press any key to skip",
+    ver14: "Three dark palettes Aurora/Ember/Steel (CVD ΔE-checked) + motion layer: live-source radar, candle progress bar, chart wipe, staggered pane entrance",
     ver13: "WOW layer: boot tied to the real WebSocket, depth without blur, chart as the hero",
     ver12: "Compaction: 41% of prose behind ⓘ, context cells jump to panels, click the book to fill an order",
     ver11: "«Steel & Ink» terminal skin, real WS latency in the status bar, 4 GO/NO-GO gate lamps",
@@ -3273,6 +3464,7 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
     "Danh sách theo dõi": "Watchlist", "Lịch sử phiên bản": "Version history", "Bấm để thử lại": "Click to retry",
     "Bấm để điền giá trị lệnh": "Click to fill order size",
     "Bật/tắt phần giải thích của mọi panel": "Toggle explanatory notes on every panel",
+    "Bảng màu — phím t": "Color palette — press t",
     "Xem giải thích": "Show notes", "Mở panel chi tiết": "Open detail panel",
   });
 
@@ -3381,7 +3573,7 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 
 
   /* ── V13 · Phiên bản: một nguồn sự thật duy nhất ── */
-  const VERSION = "v13", BUILD = "2026-08-26";
+  const VERSION = "v14", BUILD = "2026-08-27";
   document.title = `Crypto Prediction ${VERSION} — Dashboard`;
   $("ver-btn").textContent = VERSION;
   $("vp-build").textContent = `${VERSION} · build ${BUILD}`;
@@ -3481,13 +3673,13 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
       bstep("tick", Object.keys(S.tickers).length + " " + T("cặp"));
       await reload();
       connectLiqWS(); renderGates();
-      applyLayout(); applyLang(); setupNotes(); applyNotes();
+      applyTheme(); applyLayout(); applyLang(); setupNotes(); applyNotes();
       document.body.classList.remove("boot-error");
     } catch (err) {
       setConn("down", T("Không nối được Binance"));
       document.body.classList.add("boot-error");        // desktop: mở lại coin-card chứa lời giải thích
       $("coin-list").innerHTML = `<div style="padding:var(--sp-3);font-size:13px;color:var(--text-2)">${T("Không gọi được api.binance.com.<br><br>Có thể do: không có mạng, mạng/ISP chặn Binance, hoặc bạn đang ở vùng bị chặn (Mỹ → dùng api.binance.us).<br><br><b>Trang không bịa dữ liệu thay thế</b> — thà trống còn hơn hiển thị số giả.")}</div>`;
-      setupNotes(); applyNotes(); applyLang();
+      applyTheme(); setupNotes(); applyNotes(); applyLang();
       document.body.classList.remove("boot");           // lỗi cũng phải HIỆN — không giấu sau màn boot
       bootEnd();                                        // gỡ màn che, nếu không lỗi nằm sau nó
       // Retry backoff THẬT — sb-off «thử lại N» đếm đúng số lần này
