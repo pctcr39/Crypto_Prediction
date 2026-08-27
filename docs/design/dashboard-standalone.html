@@ -831,6 +831,15 @@ body.mode-all .navtab::after{display:none}
   animation:aurora-drift 12s ease-in-out infinite alternate}
 @keyframes aurora-drift{from{transform:translate3d(0,-10px,0)}to{transform:translate3d(0,12px,0)}}
 .bootcon{position:relative}
+
+/* Luật toàn cục * không chạm được pseudo-element — tắt tay từng cái (RULE: reduced-motion) */
+@media (prefers-reduced-motion:reduce){
+  body[data-conn="live"] .sb-src i.on::before{animation:none}
+  .boot-veil::before{animation:none}
+  .statusbar::before{transition:none}
+  .navtab::after{transition:none}
+  .brand em{animation:none;background:none;-webkit-text-fill-color:var(--pred)}
+}
 </style>
 </head>
 <body class="boot">
@@ -2535,6 +2544,62 @@ body.mode-all .navtab::after{display:none}
            <small style="margin-top:6px">${T("Không cổng nào được chấm vì chưa có model để chấm.")}</small></div>`;
     el.dataset.built = "1";
   }
+
+
+  /* ══════════ V14 · BỘ CÔNG CỤ VẼ MỀM ══════════════════════════════
+     Dùng chung cho MỌI panel không-phải-nến. Chart nến KHÔNG dùng bộ này —
+     nó giữ chất terminal sắc cạnh, vì nó là dữ liệu ĐO ĐƯỢC.
+     Nguyên tắc chi phí: mọi thứ ở đây là O(n) trên số điểm, không blur,
+     không shadowBlur, gradient được CACHE theo kích thước. ══════════ */
+
+  /* Đường cong mượt đi qua ĐÚNG các điểm dữ liệu (Catmull-Rom → bezier).
+     Không làm tròn số liệu — chỉ nối chúng bằng đường cong thay vì gãy khúc. */
+  function smoothPath(c, pts, t = 0.5) {
+    if (pts.length < 2) return;
+    c.moveTo(pts[0][0], pts[0][1]);
+    if (pts.length === 2) { c.lineTo(pts[1][0], pts[1][1]); return; }
+    for (let i = 0; i < pts.length - 1; i++) {
+      const p0 = pts[i - 1] || pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] || p2;
+      c.bezierCurveTo(
+        p1[0] + (p2[0] - p0[0]) / 6 * t, p1[1] + (p2[1] - p0[1]) / 6 * t,
+        p2[0] - (p3[0] - p1[0]) / 6 * t, p2[1] - (p3[1] - p1[1]) / 6 * t,
+        p2[0], p2[1]);
+    }
+  }
+
+  /* Gradient dọc có CACHE — tạo lại chỉ khi đổi kích thước hoặc đổi theme.
+     Tạo gradient mỗi frame là chi phí thật; ở đây nó gần như bằng 0. */
+  const _grad = new Map();
+  function vGrad(c, y0, y1, stops, key) {
+    const k = key + "|" + Math.round(y0) + "|" + Math.round(y1) + "|" + (document.documentElement.dataset.theme || "");
+    let g = _grad.get(k);
+    if (!g) {
+      g = c.createLinearGradient(0, y0, 0, y1);
+      stops.forEach(([at, col]) => g.addColorStop(at, col));
+      _grad.set(k, g);
+      if (_grad.size > 60) _grad.delete(_grad.keys().next().value);
+    }
+    return g;
+  }
+  /* Đổi theme ⇒ mọi gradient đã cache hết hạn */
+  new MutationObserver(() => _grad.clear())
+    .observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+
+  /* Vùng tô mềm dưới một đường: đậm sát đường, tan dần xuống đáy. */
+  function softArea(c, pts, yBase, colorVar, a0 = .28) {
+    if (pts.length < 2) return;
+    const top = Math.min(...pts.map(p => p[1]));
+    c.save(); c.beginPath(); smoothPath(c, pts);
+    c.lineTo(pts[pts.length - 1][0], yBase); c.lineTo(pts[0][0], yBase); c.closePath();
+    c.fillStyle = vGrad(c, top, yBase, [
+      [0, `color-mix(in srgb, ${V(colorVar)} ${Math.round(a0 * 100)}%, transparent)`],
+      [1, `color-mix(in srgb, ${V(colorVar)} 0%, transparent)`],
+    ], "area" + colorVar);
+    c.fill(); c.restore();
+  }
+
+  /* Nét mềm: đầu và khớp bo tròn. Dùng cho MỌI đường của panel phụ. */
+  function softStroke(c, w = 1.5) { c.lineWidth = w; c.lineCap = "round"; c.lineJoin = "round"; }
 
   /* ── Chart ────────────────────────────────────────────────── */
   const canvas = $("chart"), wrap = $("chart-wrap"), tt = $("tt"), ctx = canvas.getContext("2d");
