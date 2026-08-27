@@ -88,6 +88,10 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer;pad
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:var(--radius-sm)}
 .num{font-family:var(--font-num);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
 .pos{color:var(--up)} .neg{color:var(--down)}
+/* RULE 7 — .pos/.neg dành cho SỐ ĐO. Phát biểu về hướng TƯƠNG LAI dùng cặp này:
+   một sắc tím, hai độ đậm; hướng do ▲/▼ mang, không do màu. */
+.p-up{color:var(--pred)}
+.p-dn{color:color-mix(in srgb,var(--pred) 70%,var(--text-2))}
 @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 
 /* ── Banner cảnh báo (bắt buộc khi gửi ra ngoài) ──────────────── */
@@ -152,7 +156,10 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer;pad
 .ph-right{display:flex;flex-direction:column;align-items:flex-end;gap:var(--sp-2)}
 .status{display:inline-flex;align-items:center;gap:var(--sp-2);font:400 12px/16px var(--font-ui);color:var(--text-2)}
 .status::before{content:"";width:8px;height:8px;border-radius:var(--radius-pill);flex:none}
-.status--live::before{background:var(--status-live)}
+/* RULE 8 có hình: CHỈ trạng thái live được đeo quầng. Hỏng thì BỚT sáng, không
+   thêm sáng. Quầng là box-shadow SPREAD, blur-radius = 0 — glow-budget vẫn 0. */
+.status--live::before{background:var(--status-live);
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--status-live) 20%,transparent)}
 .status--slow::before{background:var(--status-slow)}
 .status--down::before{background:var(--status-down)}
 .status--stale::before{background:var(--status-stale)}
@@ -227,7 +234,29 @@ canvas{display:block;width:100%;height:100%}
 .consensus{display:flex;height:10px;border-radius:var(--radius-pill);overflow:hidden;
   margin:var(--sp-3) 0 var(--sp-1)}
 .consensus i{height:100%}
-.cons-lbl{display:flex;justify-content:space-between;font:500 12px/18px var(--font-ui);color:var(--text-2)}
+/* Gốc thanh không mang thông tin (mọi thanh đều bắt đầu từ 0) nên được phép
+   tan dần; ĐẦU thanh là con số nên giữ đặc tuyệt đối. Mask chạy trên
+   compositor: chi phí bố cục bằng 0. */
+.meter-fill,.trk-fill,.gbar i,.consensus i,.sharp-bar>i:not(.ref){
+  -webkit-mask-image:linear-gradient(90deg,
+    rgba(0,0,0,.34) 0,rgba(0,0,0,.86) 42%,#000 78%,#000 100%);
+  mask-image:linear-gradient(90deg,
+    rgba(0,0,0,.34) 0,rgba(0,0,0,.86) 42%,#000 78%,#000 100%)}
+/* Thanh của DỰ ĐOÁN tan mạnh hơn thanh của số đo — cùng một chiều dài nhưng ít
+   mực hơn. RULE 7 đo bằng tương phản, và ở đây nó đo được. */
+.sharp-bar.pred>i:not(.ref){
+  -webkit-mask-image:linear-gradient(90deg,
+    rgba(0,0,0,.12) 0,rgba(0,0,0,.55) 46%,rgba(0,0,0,.92) 86%,rgba(0,0,0,.92) 100%);
+  mask-image:linear-gradient(90deg,
+    rgba(0,0,0,.12) 0,rgba(0,0,0,.55) 46%,rgba(0,0,0,.92) 86%,rgba(0,0,0,.92) 100%)}
+/* Mốc baseline in trên thanh model: thấy ngay model hẹp hơn hay rộng hơn mà
+   không phải trừ hai con số. */
+.sharp-bar .ref{position:absolute;top:-3px;bottom:-3px;width:1px;
+  background:var(--text-2);opacity:.75}
+/* gap: trước đây ba nhãn khác màu nên tự tách nhau; nay cùng một sắc tím thì
+   phải có khoảng cách thật, nếu không chúng dính thành một chuỗi khó đọc. */
+.cons-lbl{display:flex;justify-content:space-between;gap:var(--sp-3);flex-wrap:wrap;
+  font:500 12px/18px var(--font-ui);color:var(--text-2)}
 
 /* ── Nowcast nhịp tick ────────────────────────────────────────── */
 .nc-gauge{position:relative;height:14px;border-radius:var(--radius-pill);
@@ -238,8 +267,14 @@ canvas{display:block;width:100%;height:100%}
     color-mix(in srgb,var(--up) 30%,transparent));
   margin:var(--sp-3) 0 4px}
 .nc-mid{position:absolute;left:50%;top:-3px;bottom:-3px;width:1px;background:var(--text-3)}
-.nc-needle{position:absolute;top:-4px;bottom:-4px;width:3px;border-radius:2px;
-  background:var(--text-1);transition:left var(--dur-base) var(--ease)}
+/* Kim là một LỚP rộng bằng khung: translateX theo % ăn theo bề rộng khung, nên
+   dịch được bằng transform (chỉ compositor) thay vì `left` (bắt tính lại bố cục
+   ở mỗi tick WebSocket, 5–15 lần/giây). */
+.nc-needle{position:absolute;left:0;right:0;top:-4px;bottom:-4px;pointer-events:none;
+  transition:transform var(--dur-base) var(--ease)}
+.nc-needle::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;
+  margin-left:-1.5px;border-radius:2px;background:var(--text-1);
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--text-1) 10%,transparent)}
 .nc-ends{display:flex;justify-content:space-between;font:500 10px/14px var(--font-ui);color:var(--text-3)}
 .nc-vs{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-3);margin-top:var(--sp-3)}
 .nc-cell{border:1px solid var(--border);border-radius:var(--radius-md);padding:var(--sp-2) var(--sp-3)}
@@ -1135,7 +1170,7 @@ body.mode-all .navtab::after{display:none}
         <div style="font:600 13px/18px var(--font-ui)" id="nc-label">—</div>
       </div></div>
       <div class="nc-gauge"><span class="nc-mid"></span>
-        <span class="nc-needle" id="nc-needle" style="left:50%"></span></div>
+        <span class="nc-needle" id="nc-needle" style="transform:translateX(50%)"></span></div>
       <div class="nc-ends" data-i="k018"><span>−100 · nghiêng giảm</span><span>0 · cân bằng</span>
         <span>+100 · nghiêng tăng</span></div>
       <canvas id="cv-nc" height="56" style="margin-top:var(--sp-3)"></canvas>
@@ -1701,7 +1736,10 @@ body.mode-all .navtab::after{display:none}
       : `● ${T("KHÔNG RÕ")} <span class="num">${o.score}%</span>`;
     const f = $("meter-fill");
     f.style.width = o.score + "%";
-    f.style.background = dir === "up" ? "var(--up)" : dir === "down" ? "var(--down)" : "var(--text-3)";
+    // RULE 7: o.score là p_up của dự đoán khoá — phát biểu về TƯƠNG LAI, không
+    // phải số đo. Nó không được mặc màu xanh/đỏ của nến thật. Hướng vẫn đọc
+    // được từ ▲/▼ trên badge ngay bên trên.
+    f.style.background = dir === "unclear" ? "var(--text-3)" : "var(--pred)";
     $("meter-num").innerHTML = `<b class="num">${o.score}%</b> · ${T("chưa hiệu chỉnh")}`;
     $("pred-title").textContent = T("Dự đoán · {n} nến {tf}", { n: HORIZON_BARS, tf: S.tf });
     // Chip nói thật GỐC của con số: có model thì in tên model, không thì nói thẳng
@@ -1813,7 +1851,8 @@ body.mode-all .navtab::after{display:none}
      PANEL MỞ RỘNG — mọi thứ dưới đây chạy bằng dữ liệu Binance
      công khai, không cần model. Màu chỉ lấy từ token (DS-RULE 8).
      ══════════════════════════════════════════════════════════════ */
-  const P = { fund: null, fundHist: [], oi: [], liq: [], hb: [], spa: null, ctxTick: 0 };
+  const P = { fund: null, fundHist: [], oi: [], liq: [], hb: [], spa: null, ctxTick: 0,
+              _bg: {} };   // _bg: các lớp NƯỚNG SẴN offscreen, hết hạn qua redrawAll
 
   /* ══ i18n — VI mặc định, EN theo thuật ngữ Binance ══════════════
      Chuỗi TĨNH: phần tử mang data-i (innerHTML tra từ điển DOM_I18N).
@@ -1861,14 +1900,39 @@ body.mode-all .navtab::after{display:none}
     // cv.height thì layout height chạy theo attribute → canvas phình gấp đôi mỗi
     // lần vẽ. Ghim bằng style.height để bitmap và layout độc lập nhau.
     if (!cv.dataset.h) cv.dataset.h = String(+cv.getAttribute("height") || 150);
-    const h = +cv.dataset.h, w = cv.clientWidth || 300;
+    const h = +cv.dataset.h, w = cv.clientWidth || 300, d = dpr();
     cv.style.height = h + "px";
-    cv.width = w * dpr(); cv.height = h * dpr();
-    const c = cv.getContext("2d"); c.setTransform(dpr(), 0, 0, dpr(), 0, 0);
+    const c = cv.getContext("2d");
+    // Chỉ CẤP LẠI bitmap khi kích thước thật đổi. Gán cv.width mỗi lần vẽ là vứt
+    // và xin lại vài MB mỗi giây — và nó xoá luôn mọi lớp cache offscreen.
+    const bw = Math.round(w * d), bh = Math.round(h * d);
+    if (cv.width !== bw || cv.height !== bh) { cv.width = bw; cv.height = bh; }
+    // Không cấp lại ⇒ trạng thái vẽ của lần trước CÒN NGUYÊN. Phải tự dọn, nếu
+    // không lineDash/alpha của panel vẽ trước sẽ rò sang panel vẽ sau — lỗi câm.
+    c.setTransform(d, 0, 0, d, 0, 0);
+    c.globalAlpha = 1; c.globalCompositeOperation = "source-over";
+    c.setLineDash([]); c.lineWidth = 1; c.lineCap = "butt"; c.lineJoin = "miter";
+    c.textAlign = "left"; c.textBaseline = "alphabetic";
     c.clearRect(0, 0, w, h);
     return { c, w, h };
   }
-  const V = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  // Token màu đọc RẤT nhiều lần mỗi frame (drawLiq gọi 4 lần cho mỗi bong bóng).
+  // getComputedStyle buộc trình duyệt tính lại style đồng bộ ⇒ memo hoá, xoá khi
+  // đổi theme hoặc đổi kích thước qua flushTokens().
+  const _vc = new Map(), _grad = new Map();
+  let _vGen = 0;
+  const V = n => {
+    let v = _vc.get(n);
+    if (v === undefined) { v = getComputedStyle(document.documentElement).getPropertyValue(n).trim(); _vc.set(n, v); }
+    return v;
+  };
+  function flushTokens() { _vGen++; _vc.clear(); _grad.clear(); }
+
+  // Nét tóc 1px sắc ở dpr chẵn nhưng NHOÈ ở dpr lẻ (dpr=3 trên nhiều điện thoại).
+  // Đưa tâm nét về đúng lưới điểm ảnh thiết bị. CHỈ dùng cho đường thẳng —
+  // snap toạ độ đường cong chỉ làm dời đường và thêm khấc gãy.
+  const crisp = v => { const d = dpr(); return (Math.round(v * d - d / 2) + d / 2) / d; };
+
   const quantile = (sorted, q) => {             // phân vị thực nghiệm, không giả định chuẩn
     if (!sorted.length) return 0;
     const i = (sorted.length - 1) * q, lo = Math.floor(i), hi = Math.ceil(i);
@@ -1942,24 +2006,31 @@ body.mode-all .navtab::after{display:none}
     c.fillStyle = V("--text-3"); c.font = "500 10px 'IBM Plex Mono',monospace";
     c.fillText(T("giá neo") + " " + fmt(px), 10, Y(px) - 5);
 
-    c.strokeStyle = V("--pred"); c.lineWidth = 1; c.globalAlpha = .16;
+    // 24 sợi vẽ RIÊNG LẺ, không bao giờ gộp thành một path. Vùng đậm ở giữa
+    // phải tiếp tục là HỆ QUẢ của các nét chồng nhau thật — trong một lần
+    // stroke, các đoạn chồng nhau KHÔNG cộng alpha, nên gộp path sẽ biến chú
+    // thích chân panel thành lời nói dối. Chỉ hạ .16 → .12 và bo đầu nét.
+    c.save(); c.strokeStyle = V("--pred"); c.lineCap = "round"; c.lineJoin = "round";
+    c.lineWidth = 1; c.globalAlpha = .12;
     paths.forEach((p, i) => {
       if (i === mark.lo || i === mark.mid || i === mark.hi) return;
-      c.beginPath(); p.forEach((v, k) => k ? c.lineTo(X(k), Y(v)) : c.moveTo(X(k), Y(v))); c.stroke();
+      c.beginPath(); smoothPath(c, p.map((v, k) => [X(k), Y(v)])); c.stroke();
     });
-    c.globalAlpha = .9; c.lineWidth = 1.5; c.setLineDash([5, 4]);
+    c.restore();
+
+    c.save(); c.lineCap = "round"; c.setLineDash([5, 4]);
     const tags = [[mark.lo, T("bi quan · q10")], [mark.mid, T("trung vị · q50")], [mark.hi, T("lạc quan · q90")]];
     tags.forEach(([i, label]) => {
       const p = paths[i];
-      c.beginPath(); p.forEach((v, k) => k ? c.lineTo(X(k), Y(v)) : c.moveTo(X(k), Y(v))); c.stroke();
+      c.globalAlpha = .9; c.lineWidth = 1.5; c.strokeStyle = V("--pred"); c.setLineDash([5, 4]);
+      c.beginPath(); smoothPath(c, p.map((v, k) => [X(k), Y(v)])); c.stroke();
       c.setLineDash([]); c.globalAlpha = 1;
-      c.beginPath(); c.arc(X(HORIZON_BARS), Y(p[p.length - 1]), 3, 0, 7);
-      c.fillStyle = V("--pred"); c.fill();
+      // vòng RỖNG, không đĩa đặc — RULE 7
+      softTip(c, X(HORIZON_BARS), Y(p[p.length - 1]), "--pred", false, 2.5);
       c.fillStyle = V("--text-2"); c.font = "500 10px 'IBM Plex Mono',monospace";
-      c.fillText(label, X(HORIZON_BARS) + 7, Y(p[p.length - 1]) + 3);
-      c.setLineDash([5, 4]); c.globalAlpha = .9; c.lineWidth = 1.5; c.strokeStyle = V("--pred");
+      c.fillText(label, X(HORIZON_BARS) + 8, Y(p[p.length - 1]) + 3);
     });
-    c.setLineDash([]); c.globalAlpha = 1;
+    c.restore();
     const spread = ((Math.max(...paths.map(p => p[p.length - 1])) / Math.min(...paths.map(p => p[p.length - 1])) - 1) * 100);
     $("spa-note").textContent = `${T("biên độ 24 kịch bản:")} ${spread.toFixed(2)}%`;
   }
@@ -1984,32 +2055,59 @@ body.mode-all .navtab::after{display:none}
     const Y = v => 8 + (1 - (v - lo) / (hi - lo)) * (h - padB - 8);
 
     // dải chế độ ở đáy: thấp · thường · bão (chữ trực tiếp, không cần chú giải màu)
-    const bands = [[0, p33, T("thấp"), .10], [p33, p67, T("thường"), .18], [p67, hi, T("bão"), .28]];
-    bands.forEach(([a, b, lb, al]) => {
-      c.globalAlpha = al; c.fillStyle = V("--text-3");
-      c.fillRect(padL, Y(b), w - padL - padR, Y(a) - Y(b)); c.globalAlpha = 1;
-      c.fillStyle = V("--text-3"); c.font = "500 9px 'IBM Plex Mono',monospace";
+    // Ba dải chế độ gộp thành MỘT gradient dọc: độ đậm tăng dần theo mức biến
+    // động, không còn bậc thang giả ở p33/p67. Nhưng p33 và p67 là NGƯỠNG ĐO
+    // ĐƯỢC thật, nên chúng vẫn được đánh dấu bằng nét tóc 1px — mềm đi mà
+    // không mất con số.
+    const pw = w - padL - padR;
+    c.fillStyle = vGrad(c, Y(hi), Y(0), [
+      [0, mix("--text-3", .30)],
+      [Math.max(0, (Y(p67) - Y(hi)) / (Y(0) - Y(hi))), mix("--text-3", .19)],
+      [Math.min(1, (Y(p33) - Y(hi)) / (Y(0) - Y(hi))), mix("--text-3", .12)],
+      [1, mix("--text-3", .06)],
+    ], "volband");
+    c.fillRect(padL, Y(hi), pw, Y(0) - Y(hi));
+    c.strokeStyle = mix("--text-3", .45); c.lineWidth = 1;
+    [p33, p67].forEach(v => { c.beginPath(); c.moveTo(padL, crisp(Y(v))); c.lineTo(padL + pw, crisp(Y(v))); c.stroke(); });
+    c.fillStyle = V("--text-3"); c.font = "500 9px 'IBM Plex Mono',monospace";
+    [[0, p33, T("thấp")], [p33, p67, T("thường")], [p67, hi, T("bão")]].forEach(([a, b, lb]) => {
       if (Y(a) - Y(b) > 12) c.fillText(lb, w - padR + 5, (Y(a) + Y(b)) / 2 + 3);
     });
-    // đường đo được
-    c.strokeStyle = V("--text-1"); c.lineWidth = 1.5; c.beginPath();
-    show.forEach((v, i) => i ? c.lineTo(X(i), Y(v)) : c.moveTo(X(i), Y(v))); c.stroke();
+
+    // Đường ĐO ĐƯỢC — được nâng cấp đầy đủ: vùng tô + nét dày hơn. RULE 7 đo
+    // bằng tương phản, nên làm số đo nổi hơn cũng là một cách bảo vệ luật.
+    const mp = thin(show.map((v, i) => [X(i), Y(v)]), 2);
+    softArea(c, mp, Y(0), "--text-1", .14, "vol");
+    c.save(); c.beginPath(); smoothPath(c, mp);
+    softStroke(c, 1.75); c.strokeStyle = V("--text-1"); c.stroke(); c.restore();
+
     // ranh giới Bây giờ
     const xb = X(show.length - 1);
     c.strokeStyle = V("--border"); c.lineWidth = 1;
-    c.beginPath(); c.moveTo(xb, 4); c.lineTo(xb, h - padB); c.stroke();
+    c.beginPath(); c.moveTo(crisp(xb), 4); c.lineTo(crisp(xb), h - padB); c.stroke();
     c.fillStyle = V("--text-3"); c.font = "500 9px 'IBM Plex Mono',monospace";
     c.fillText(T("Bây giờ"), xb + 3, 12);
-    // dự báo tím nét đứt + dải
-    const xe = X(show.length + HORIZON_BARS - 1);
-    c.fillStyle = V("--pred-band");
-    c.beginPath(); c.moveTo(xb, Y(show[show.length - 1]));
+
+    // ── Dự báo ─────────────────────────────────────────────────────────────
+    // Nón tô PHẲNG theo chiều dọc — mép trên và mép dưới CHÍNH LÀ con số, tan
+    // mép dọc là xoá con số. Chỉ nhận đúng một gradient NGANG: càng xa chân
+    // trời càng nhạt, tức là làm mềm bằng cách TRỪ ĐI sự quả quyết.
+    const xe = X(show.length + HORIZON_BARS - 1), y0 = Y(show[show.length - 1]);
+    c.fillStyle = hGrad(c, xb, xe, [[0, mix("--pred", .17)], [1, mix("--pred", .05)]], "volcone");
+    c.beginPath(); c.moveTo(xb, y0);
     c.lineTo(xe, Y(ew * 1.25)); c.lineTo(xe, Y(ew * 0.8)); c.closePath(); c.fill();
-    c.setLineDash([5, 4]); c.strokeStyle = V("--pred"); c.lineWidth = 2;
-    c.beginPath(); c.moveTo(xb, Y(show[show.length - 1])); c.lineTo(xe, Y(ew)); c.stroke();
-    c.setLineDash([]);
-    c.beginPath(); c.arc(xe, Y(ew), 4, 0, 7); c.fillStyle = V("--pred"); c.fill();
-    c.lineWidth = 2; c.strokeStyle = V("--surface-1"); c.stroke();
+    // biên khoảng ở chân trời vẫn phải đọc được kể cả khi nền đã nhạt
+    c.strokeStyle = mix("--pred", .5); c.lineWidth = 1;
+    c.beginPath(); c.moveTo(crisp(xe), Y(ew * 1.25)); c.lineTo(crisp(xe), Y(ew * 0.8)); c.stroke();
+    // Nét đứt dự báo LUÔN mảnh hơn đường đo được: 1,5 < 1,75, kiểm được bằng
+    // mắt trong cùng một khung hình. lineCap round làm nét đứt mềm mà ĐỨT rõ
+    // hơn — tăng khoảng cách thị giác với đường liền.
+    c.save(); c.setLineDash([5, 4]); c.lineCap = "round";
+    c.strokeStyle = V("--pred"); c.lineWidth = 1.5; c.globalAlpha = .9;
+    c.beginPath(); c.moveTo(xb, y0); c.lineTo(xe, Y(ew)); c.stroke(); c.restore();
+    // Điểm cuối: VÒNG RỖNG. Đĩa đặc có viền là vật thể hoàn thiện nhất canvas —
+    // nó không được thuộc về phần dự đoán.
+    softTip(c, xe, Y(ew), "--pred", false, 3);
     // trục y
     c.fillStyle = V("--text-2"); c.font = "500 10px 'IBM Plex Mono',monospace";
     [hi * .25, hi * .5, hi * .75].forEach(v => c.fillText(v.toFixed(2) + "%", w - padR + 5, Y(v) + 3));
@@ -2026,20 +2124,24 @@ body.mode-all .navtab::after{display:none}
     const wModel = (last[5] - last[0]) / o.px * 100, wBase = (cl.hi - cl.lo) / o.px * 100;
     const rel = (wModel / wBase - 1) * 100;
     const sharper = rel < -2;
-    const bar = (lbl, wPct, color, val) =>
+    const bar = (lbl, wPct, color, val, cls, refPct) =>
       `<div style="display:grid;grid-template-columns:120px 1fr 96px;gap:var(--sp-3);align-items:center;
         margin-bottom:var(--sp-2);font:400 12px/18px var(--font-ui);color:var(--text-2)">
         <span>${lbl}</span>
-        <span style="height:10px;border-radius:var(--radius-pill);background:var(--surface-2);position:relative">
+        <span class="sharp-bar${cls}" style="height:10px;border-radius:var(--radius-pill);
+          background:var(--surface-2);position:relative">
           <i style="position:absolute;inset:0 auto 0 0;width:${wPct}%;border-radius:var(--radius-pill);
-             background:${color}"></i></span>
+             background:${color}"></i>${refPct == null ? "" :
+          `<i class="ref" style="left:${refPct.toFixed(1)}%" title="${T("mốc baseline")}"></i>`}</span>
         <b class="num" style="color:var(--text-1);text-align:right">${val}</b></div>`;
     const mx = Math.max(wModel, wBase);
     el.innerHTML =
       bar(`${T("Baseline lịch sử · q10–q90")} <small style="color:var(--text-3)">n=${cl.n}</small>`,
-          wBase / mx * 100, "color-mix(in srgb,var(--text-3) 55%,transparent)", wBase.toFixed(2) + "%")
+          wBase / mx * 100, "color-mix(in srgb,var(--text-3) 55%,transparent)", wBase.toFixed(2) + "%", "")
+      // mốc baseline in thẳng lên thanh model: hẹp hơn hay rộng hơn đọc được
+      // bằng một liếc mắt, không phải trừ hai con số
       + bar(`${T("Minh hoạ hiện tại · q10–q90")} <small style="color:var(--text-3)">n=${fq.n}</small>`,
-            wModel / mx * 100, "var(--pred)", wModel.toFixed(2) + "%")
+            wModel / mx * 100, "var(--pred)", wModel.toFixed(2) + "%", " pred", wBase / mx * 100)
       + `<p style="margin:var(--sp-2) 0 0;font:500 13px/20px var(--font-ui);color:${
            sharper ? "var(--up)" : "var(--status-slow)"}">${
            sharper ? T("✓ hẹp hơn baseline {x}%", { x: Math.abs(rel).toFixed(0) })
@@ -2283,12 +2385,12 @@ body.mode-all .navtab::after{display:none}
     }).join("");
     const t = tally(M), d = Math.max(1, t.on);
     $("cons-bar").innerHTML =
-      `<i style="width:${t.up / d * 100}%;background:var(--up)"></i>` +
+      `<i style="width:${t.up / d * 100}%;background:var(--pred)"></i>` +
       `<i style="width:${t.nt / d * 100}%;background:var(--surface-2)"></i>` +
-      `<i style="width:${t.dn / d * 100}%;background:var(--down)"></i>`;
+      `<i style="width:${t.dn / d * 100}%;background:color-mix(in srgb,var(--pred) 38%,transparent)"></i>`;
     $("cons-lbl").innerHTML =
-      `<span class="pos">▲ ${t.up} ${T("tăng")}</span><span>■ ${t.nt} ${T("trung tính")}</span>` +
-      `<span class="neg">▼ ${t.dn} ${T("giảm")}</span>` +
+      `<span class="p-up">▲ ${t.up} ${T("tăng")}</span><span>■ ${t.nt} ${T("trung tính")}</span>` +
+      `<span class="p-dn">▼ ${t.dn} ${T("giảm")}</span>` +
       `<span style="margin-left:auto;color:var(--text-3)">${t.on}/${t.total} ${T("đang bật")}</span>`;
     renderSelected();
   }
@@ -2310,13 +2412,13 @@ body.mode-all .navtab::after{display:none}
       ? `● ${T("CHƯA CHỌN PHƯƠNG PHÁP NÀO")}`
       : (dir > 0 ? `▲ ${T("NGHIÊNG TĂNG")}` : dir < 0 ? `▼ ${T("NGHIÊNG GIẢM")}` : `● ${T("KHÔNG RÕ")}`);
     $("sel-tally").innerHTML =
-      `<span class="pos">${t.up} ${T("thuận")}</span> · <span class="neg">${t.dn} ${T("ngược")}</span>` +
+      `<span class="p-up">▲ ${t.up} ${T("thuận")}</span> · <span class="p-dn">▼ ${t.dn} ${T("ngược")}</span>` +
       ` · <span>${t.nt} ${T("trung tính")}</span>`;
     const d = Math.max(1, t.on);
     $("sel-bar").innerHTML =
-      `<i style="width:${t.up / d * 100}%;background:var(--up)"></i>` +
+      `<i style="width:${t.up / d * 100}%;background:var(--pred)"></i>` +
       `<i style="width:${t.nt / d * 100}%;background:var(--surface-2)"></i>` +
-      `<i style="width:${t.dn / d * 100}%;background:var(--down)"></i>`;
+      `<i style="width:${t.dn / d * 100}%;background:color-mix(in srgb,var(--pred) 38%,transparent)"></i>`;
     host.innerHTML = t.v.length
       ? t.v.map(m => `<span class="selchip">${m.name.split(" · ")[0]} ${stChip(m.dir, "")}</span>`).join("")
       : `<span class="pfoot">${T("Bật ít nhất một phương pháp ở bàn phương pháp bên dưới.")}</span>`;
@@ -2356,7 +2458,7 @@ body.mode-all .navtab::after{display:none}
     lbl.textContent = dir > 0 ? T("▲ nghiêng tăng") : dir < 0 ? T("▼ nghiêng giảm") : T("■ cân bằng");
     // RULE 7: nowcast là phát biểu hướng, không phải số đo ⇒ tím, không xanh/đỏ
     lbl.style.color = dir ? "var(--pred)" : "var(--text-2)";
-    $("nc-needle").style.left = (50 + score / 2) + "%";
+    $("nc-needle").style.transform = "translateX(" + (50 + score / 2).toFixed(2) + "%)";
     $("nc-vs-now").innerHTML = lbl.textContent + ` <small style="color:var(--text-3)">${(score > 0 ? "+" : "") + score}</small>`;
     const o = S.locked;
     if (o) {
@@ -2366,20 +2468,28 @@ body.mode-all .navtab::after{display:none}
         + ` · ${T("khoá")} ${fmtT(o.lockedAt, o.step)}`;
       vl.style.color = d ? "var(--pred)" : "var(--text-2)";   // RULE 7: hướng dự đoán khoá mặc màu tím
     }
-    // sparkline 300 điểm gần nhất
-    const cv = $("cv-nc"); if (!cv || P.nc.length < 3) return;
+    // Canvas gộp về TỐI ĐA một lần mỗi khung hình. Nowcast đổi 5–15 lần/giây;
+    // số trên mặt panel vẫn cập nhật từng tick (ở trên), chỉ hình là gộp lại.
+    if (!P._ncRaf) P._ncRaf = requestAnimationFrame(() => { P._ncRaf = 0; paintNowcast(); });
+  }
+
+  function paintNowcast() {
+    const cv = $("cv-nc"); if (!cv || !cv.clientWidth || P.nc.length < 3) return;
     const { c, w, h } = fitCanvas(cv);
-    c.strokeStyle = V("--text-3"); c.globalAlpha = .4; c.lineWidth = 1;
-    c.beginPath(); c.moveTo(0, h / 2); c.lineTo(w, h / 2); c.stroke(); c.globalAlpha = 1;
-    c.beginPath();
-    P.nc.forEach((p, i) => {
-      const X = i / (P.nc.length - 1) * w, Y = h / 2 - p.s / 100 * (h / 2 - 3);
-      i ? c.lineTo(X, Y) : c.moveTo(X, Y);
-    });
-    c.strokeStyle = V("--text-1"); c.lineWidth = 1.5; c.stroke();
-    const lastP = P.nc[P.nc.length - 1];
-    c.beginPath(); c.arc(w - 2, h / 2 - lastP.s / 100 * (h / 2 - 3), 2.5, 0, 7);
-    c.fillStyle = lastP.s > 20 ? V("--up") : lastP.s < -20 ? V("--down") : V("--text-2"); c.fill();
+    const mid = h / 2, amp = mid - 4;
+    const p = thin(P.nc.map((q, i) => [1 + i / (P.nc.length - 1) * (w - 6), mid - q.s / 100 * amp]), 2);
+
+    // Vùng tô TRUNG TÍNH quanh trục 0 — không phản chiếu xanh/đỏ. Hướng vẫn đọc
+    // được bằng VỊ TRÍ so với trục, nên không cần mượn màu của nến thật.
+    softArea(c, p, mid, "--text-2", .16, "nc");
+    c.strokeStyle = V("--text-3"); c.globalAlpha = .45; c.lineWidth = 1;
+    c.beginPath(); c.moveTo(0, crisp(mid)); c.lineTo(w, crisp(mid)); c.stroke(); c.globalAlpha = 1;
+
+    c.save(); c.beginPath(); smoothPath(c, p);
+    softStroke(c, 1.5); c.strokeStyle = V("--text-1"); c.stroke(); c.restore();
+
+    const s = P.nc[P.nc.length - 1].s;
+    softTip(c, 1 + (w - 6), mid - s / 100 * amp, s > 20 ? "--up" : s < -20 ? "--down" : "--text-2", true, 2.4);
   }
 
   /* ══ PANEL THỊ TRƯỜNG — dữ liệu phái sinh Binance, miễn phí ══ */
@@ -2407,45 +2517,90 @@ body.mode-all .navtab::after{display:none}
     } catch (e) { /* mạng chặn fapi — panel tự để trống, không bịa số */ }
   }
 
+  const FUND_MX = 0.0015, FUND_K = Math.asinh(FUND_MX / 0.0001);
+  // thang PHI TUYẾN để vừa thấy vùng ±0,01% vừa chứa cực trị
+  const fundAng = x => {
+    const t = Math.max(-1, Math.min(1, Math.asinh(x / 0.0001) / FUND_K));
+    return Math.PI + (t + 1) / 2 * Math.PI;
+  };
+
+  /* Mặt đồng hồ NƯỚNG MỘT LẦN ra lớp ngoài màn hình. Nó tốn ~4ms (72 cung +
+     vạch + nhãn) mà không đổi giữa các frame — vẽ lại mỗi frame trong lúc kim
+     tween là chi phí thuần. Hết hạn qua redrawAll (đổi theme / đổi kích thước). */
+  function fundFace(w, h, cx, cy, R) {
+    const d = dpr(), key = w + "x" + h + "|" + _vGen;
+    if (P._bg.fundKey === key) return P._bg.fund;
+    const t = document.createElement("canvas");
+    t.width = Math.round(w * d); t.height = Math.round(h * d);
+    const g = t.getContext("2d"); g.setTransform(d, 0, 0, d, 0, 0);
+
+    // Vành KHẮC VẠCH thay cho 5 cung rời. Funding là đại lượng LIÊN TỤC — chia
+    // nó thành 5 bậc là bịa ra ngưỡng không có thật. 60 vạch cách đều với khe hở
+    // ĐỀU NHAU (khe lộn xộn mới là lỗi, khe đều là mặt số của một thiết bị đo),
+    // màu và độ đậm chạy mượt từ tâm ra hai biên.
+    const N = 60, lw = 13, aTot = Math.PI, gap = aTot / N * 0.30;
+    g.lineWidth = lw; g.lineCap = "butt";
+    for (let i = 0; i < N; i++) {
+      const um = -1 + (2 * i + 1) / N;               // tâm lát, trong thang phi tuyến
+      const a0 = Math.PI + (i / N) * aTot + gap / 2;
+      const a1 = Math.PI + ((i + 1) / N) * aTot - gap / 2;
+      const tok = um > 0.05 ? "--up" : um < -0.05 ? "--down" : "--text-3";
+      g.strokeStyle = mix(tok, .10 + .26 * Math.abs(um) ** 0.8);
+      g.beginPath(); g.arc(cx, cy, R - 7, a0, a1); g.stroke();
+    }
+    g.strokeStyle = V("--text-3"); g.lineWidth = 1;
+    g.font = "500 9px 'IBM Plex Mono',monospace"; g.fillStyle = V("--text-3"); g.textAlign = "center";
+    [-0.001, -0.0001, 0, 0.0001, 0.001].forEach(v => {
+      const a = fundAng(v);
+      g.globalAlpha = .7;
+      g.beginPath();
+      g.moveTo(cx + Math.cos(a) * (R - 15), cy + Math.sin(a) * (R - 15));
+      g.lineTo(cx + Math.cos(a) * (R + 1), cy + Math.sin(a) * (R + 1));
+      g.stroke(); g.globalAlpha = 1;
+      g.fillText((v * 100).toFixed(2) + "%", cx + Math.cos(a) * (R + 10), cy + Math.sin(a) * (R + 10) + 3);
+    });
+    P._bg.fund = t; P._bg.fundKey = key;
+    return t;
+  }
+
+  /* Chỉ phần ĐỘNG: blit mặt số đã nướng rồi vẽ kim. Đây là hàm duy nhất chạy
+     lại ở mỗi khung hình tween — không ghi DOM, không vẽ histogram. */
+  function paintFundGauge() {
+    const cv = $("cv-fund"); if (!cv || !cv.clientWidth || !P.fund) return;
+    const { c, w, h } = fitCanvas(cv);
+    const r = P.fund.rate, cx = w / 2, cy = h - 12, R = Math.min(w / 2 - 14, h - 34);
+    c.drawImage(fundFace(w, h, cx, cy, R), 0, 0, w, h);
+
+    if (P.fundShown == null) P.fundShown = r;      // kim quay mượt — tween thuần hiển thị
+    const a = fundAng(P.fundShown), L = R - 18;
+    // Kim thon: đáy rộng ở trục, mũi nhọn ở vành. Màu TRUNG TÍNH — hướng đã đọc
+    // được bằng vị trí, không cần mượn thêm màu của nến.
+    const nx = Math.cos(a), ny = Math.sin(a), px = -ny, py = nx;
+    c.save(); c.fillStyle = V("--text-1"); c.globalAlpha = .92;
+    c.beginPath();
+    c.moveTo(cx + nx * L, cy + ny * L);
+    c.lineTo(cx + px * 2.4, cy + py * 2.4);
+    c.lineTo(cx - px * 2.4, cy - py * 2.4);
+    c.closePath(); c.fill(); c.restore();
+    c.beginPath(); c.arc(cx, cy, 6, 0, 7); c.fillStyle = mix("--text-1", .14); c.fill();
+    c.beginPath(); c.arc(cx, cy, 3.5, 0, 7); c.fillStyle = V("--text-1"); c.fill();
+
+    // bước tween kế tiếp — chỉ khi panel đang hiện và người dùng không giảm chuyển động
+    if (Math.abs(P.fundShown - r) > 1e-7 && !matchMedia("(prefers-reduced-motion:reduce)").matches) {
+      P.fundShown += (r - P.fundShown) * 0.18;
+      if (Math.abs(P.fundShown - r) < 1e-7) P.fundShown = r;
+      if (!P._fundRaf) P._fundRaf = requestAnimationFrame(() => { P._fundRaf = 0; paintFundGauge(); });
+    } else P.fundShown = r;
+  }
+
   function drawFunding() {
     const cv = $("cv-fund"); if (!cv || !P.fund) return;
-    const { c, w, h } = fitCanvas(cv);
-    const r = P.fund.rate, cx = w / 2, cy = h - 12, R = Math.min(w / 2 - 14, h - 24);
-    // thang PHI TUYẾN để vừa thấy vùng ±0,01% vừa chứa cực trị
-    const MX = 0.0015, K = Math.asinh(MX / 0.0001);
-    const toAng = x => { const t = Math.max(-1, Math.min(1, Math.asinh(x / 0.0001) / K));
-                         return Math.PI + (t + 1) / 2 * Math.PI; };
+    const r = P.fund.rate;
     const m = P.fundHist.length ? P.fundHist.reduce((a, b) => a + b, 0) / P.fundHist.length : 0;
     const sd = P.fundHist.length > 1
       ? Math.sqrt(P.fundHist.reduce((a, b) => a + (b - m) ** 2, 0) / P.fundHist.length) : 1e-9;
     const z = (r - m) / (sd || 1e-9);
-
-    const arc = (a, b, col, al) => { c.beginPath(); c.arc(cx, cy, R - 7, toAng(a), toAng(b));
-      c.lineWidth = 13; c.strokeStyle = col; c.globalAlpha = al; c.stroke(); c.globalAlpha = 1; };
-    arc(-MX, -0.0004, V("--down"), .16); arc(-0.0004, -0.00005, V("--text-3"), .22);
-    arc(-0.00005, 0.00005, V("--text-3"), .12); arc(0.00005, 0.0004, V("--text-3"), .22);
-    arc(0.0004, MX, V("--up"), .16);
-    c.strokeStyle = V("--text-3"); c.lineWidth = 1; c.font = "500 9px 'IBM Plex Mono',monospace";
-    c.fillStyle = V("--text-3"); c.textAlign = "center";
-    [-0.001, -0.0001, 0, 0.0001, 0.001].forEach(v => {
-      const a = toAng(v), x1 = cx + Math.cos(a) * (R - 15), y1 = cy + Math.sin(a) * (R - 15);
-      const x2 = cx + Math.cos(a) * (R + 1), y2 = cy + Math.sin(a) * (R + 1);
-      c.beginPath(); c.moveTo(x1, y1); c.lineTo(x2, y2); c.stroke();
-      c.fillText((v * 100).toFixed(2) + "%", cx + Math.cos(a) * (R + 10), cy + Math.sin(a) * (R + 10) + 3);
-    });
-    c.textAlign = "left";
-    if (P.fundShown == null) P.fundShown = r;            // V14: kim quay mượt — tween thuần hiển thị
-    const a = toAng(P.fundShown);                        // kim — màu trung tính, hướng không mã hoá bằng màu
-    c.strokeStyle = V("--text-1"); c.lineWidth = 2;
-    c.beginPath(); c.moveTo(cx, cy); c.lineTo(cx + Math.cos(a) * (R - 18), cy + Math.sin(a) * (R - 18)); c.stroke();
-    c.beginPath(); c.arc(cx, cy, 4, 0, 7); c.fillStyle = V("--text-1"); c.fill();
-    // V14: bước tween kế tiếp — chỉ khi panel đang hiện và không giảm chuyển động
-    if (Math.abs(P.fundShown - r) > 1e-7 && cv.clientWidth > 0
-        && !matchMedia("(prefers-reduced-motion:reduce)").matches) {
-      P.fundShown += (r - P.fundShown) * 0.18;
-      if (Math.abs(P.fundShown - r) < 1e-7) P.fundShown = r;
-      if (!P._fundRaf) P._fundRaf = requestAnimationFrame(() => { P._fundRaf = 0; drawFunding(); });
-    } else P.fundShown = r;
+    paintFundGauge();
 
     const pct = r * 100;
     const el = $("fund-val");
@@ -2456,17 +2611,39 @@ body.mode-all .navtab::after{display:none}
       + ` <span style="color:var(--text-3)">(n=${P.fundHist.length})</span>`
       + ` · ~${(pct * 3 * 365).toFixed(1)}% APR`;
     // histogram 96 kỳ
-    const cv2 = $("cv-fundhist"); if (cv2) {
+    // Histogram 96 kỳ — GIỮ dạng CỘT. Funding là đại lượng RỜI RẠC theo kỳ 8h;
+    // nối chúng thành đường liền là bịa ra những giá trị chưa từng tồn tại.
+    // Chỉ làm mềm phần KHÔNG mang nghĩa: bo đỉnh và cho chân cột tan vào nền.
+    const cv2 = $("cv-fundhist");
+    if (cv2 && cv2.clientWidth) {
       const g = fitCanvas(cv2), mx = Math.max(...P.fundHist.map(Math.abs), 1e-9);
-      const bw = g.w / P.fundHist.length;
-      P.fundHist.forEach((v, i) => {
-        const bh = Math.abs(v) / mx * (g.h / 2 - 2);
-        g.c.fillStyle = v >= 0 ? V("--up") : V("--down");
-        g.c.globalAlpha = i === P.fundHist.length - 1 ? 1 : .5;
-        g.c.fillRect(i * bw, v >= 0 ? g.h / 2 - bh : g.h / 2, Math.max(1, bw - .6), bh);
+      const bw = g.w / P.fundHist.length, mid = g.h / 2, amp = mid - 2, last = P.fundHist.length - 1;
+      // Gộp path chỉ áp cho hình CHỮ NHẬT — đo được là nhanh hơn; với đường cong
+      // thì ngược lại, nên không bao giờ gộp path cong ở chỗ khác trong file này.
+      [["--up", v => v >= 0], ["--down", v => v < 0]].forEach(([tok, keep]) => {
+        g.c.beginPath();
+        P.fundHist.forEach((v, i) => {
+          if (!keep(v) || i === last) return;
+          const bh = Math.abs(v) / mx * amp, x = i * bw, bwid = Math.max(1, bw - .8);
+          // bán kính bo KHÔNG được vượt nửa chiều cao cột, nếu không cột thấp
+          // bị bo tròn hết và đọc sai giá trị.
+          const rr = Math.min(bwid / 2, 2, bh / 2);
+          const y = v >= 0 ? mid - bh : mid;
+          g.c.roundRect(x, y, bwid, bh, v >= 0 ? [rr, rr, 0, 0] : [0, 0, rr, rr]);
+        });
+        g.c.fillStyle = vGrad(g.c, 0, g.h,
+          [[0, mix(tok, .62)], [.5, mix(tok, .30)], [1, mix(tok, .62)]], "fh" + tok);
+        g.c.fill();
       });
-      g.c.globalAlpha = 1; g.c.strokeStyle = V("--text-3"); g.c.lineWidth = 1;
-      g.c.beginPath(); g.c.moveTo(0, g.h / 2); g.c.lineTo(g.w, g.h / 2); g.c.stroke();
+      // kỳ gần nhất: đặc, để mắt bắt được ngay đâu là "bây giờ"
+      const v = P.fundHist[last], bh = Math.abs(v) / mx * amp, bwid = Math.max(1.5, bw - .8);
+      g.c.fillStyle = V(v >= 0 ? "--up" : "--down");
+      g.c.beginPath();
+      g.c.roundRect(last * bw, v >= 0 ? mid - bh : mid, bwid, bh,
+                    Math.min(bwid / 2, 2, bh / 2));
+      g.c.fill();
+      g.c.strokeStyle = V("--text-3"); g.c.globalAlpha = .55; g.c.lineWidth = 1;
+      g.c.beginPath(); g.c.moveTo(0, crisp(mid)); g.c.lineTo(g.w, crisp(mid)); g.c.stroke();
     }
     const rem = P.fund.next - now();
     $("fund-next").textContent = T("Funding tiếp theo sau {t} · lịch sử {k} kỳ (~{d} ngày). Mức 0.0100%/8h là giá trị NỀN mặc định khi premium ≈ 0.",
@@ -2487,25 +2664,55 @@ body.mode-all .navtab::after{display:none}
     const my = Math.max(...pts.map(p => Math.abs(p.y)), 0.3) * 1.3;
     const X = v => w / 2 + v / mx * (w / 2 - 16), Y = v => h / 2 - v / my * (h / 2 - 16);
 
-    c.fillStyle = V("--surface-2"); c.globalAlpha = .45;
-    c.fillRect(w / 2, 0, w / 2, h / 2); c.fillRect(0, h / 2, w / 2, h / 2); c.globalAlpha = 1;
-    c.strokeStyle = V("--text-2"); c.lineWidth = 1;
-    c.beginPath(); c.moveTo(0, h / 2); c.lineTo(w, h / 2); c.moveTo(w / 2, 0); c.lineTo(w / 2, h); c.stroke();
+    // Nền hai góc phần tư "tiền mới vào": ánh sáng toả từ góc ngoài rồi tan về
+    // tâm — đọc như một vùng nhấn, không như khối chữ nhật dán lên. Panel này
+    // chỉ vẽ lại mỗi 60 giây nên gradient tạo tại chỗ là đủ rẻ.
+    // Bán kính phải TẮT HẲN trước khi chạm trục, nếu không fillRect cắt ngang
+    // gradient và để lộ đúng cái cạnh thẳng mà ta đang muốn bỏ đi.
+    const dg = Math.min(w, h) / 2;
+    const corner = (x0, y0) => {
+      const g = c.createRadialGradient(x0, y0, 0, x0, y0, dg);
+      g.addColorStop(0, mix("--surface-2", 1)); g.addColorStop(.55, mix("--surface-2", .45));
+      g.addColorStop(1, mix("--surface-2", 0));
+      return g;
+    };
+    c.fillStyle = corner(w, 0); c.fillRect(w / 2, 0, w / 2, h / 2);
+    c.fillStyle = corner(0, h); c.fillRect(0, h / 2, w / 2, h / 2);
+
+    // Trục tan dần ra biên: đậm ở tâm (nơi mang nghĩa "không đổi"), nhạt ở mép
+    // để không đâm vào bốn nhãn góc.
+    c.lineWidth = 1;
+    c.strokeStyle = hGrad(c, 0, w, [[0, mix("--text-2", .06)], [.5, mix("--text-2", .5)],
+                                    [1, mix("--text-2", .06)]], "oix");
+    c.beginPath(); c.moveTo(0, crisp(h / 2)); c.lineTo(w, crisp(h / 2)); c.stroke();
+    c.strokeStyle = vGrad(c, 0, h, [[0, mix("--text-2", .06)], [.5, mix("--text-2", .5)],
+                                    [1, mix("--text-2", .06)]], "oiy");
+    c.beginPath(); c.moveTo(crisp(w / 2), 0); c.lineTo(crisp(w / 2), h); c.stroke();
     c.fillStyle = V("--text-3"); c.font = "500 9.5px 'IBM Plex Mono',monospace";
     c.fillText(T("Giá↑ OI↑ · tiền mới vào long"), w / 2 + 6, 14);
     c.fillText(T("Giá↑ OI↓ · short đóng"), 6, 14);
     c.fillText(T("Giá↓ OI↓ · long đóng"), 6, h - 6);
     c.fillText(T("Giá↓ OI↑ · tiền mới vào short"), w / 2 + 6, h - 6);
 
-    c.strokeStyle = V("--text-3"); c.lineWidth = 1; c.beginPath();
-    pts.forEach((p, i) => i ? c.lineTo(X(p.x), Y(p.y)) : c.moveTo(X(p.x), Y(p.y))); c.stroke();
-    pts.forEach((p, i) => {
-      const last = i === pts.length - 1;
-      c.globalAlpha = last ? 1 : .15 + .6 * (i / pts.length);
-      c.beginPath(); c.arc(X(p.x), Y(p.y), last ? 5 : 2.5, 0, 7);
-      c.fillStyle = last ? (p.y >= 0 ? V("--up") : V("--down")) : V("--text-2"); c.fill();
-      if (last) { c.lineWidth = 2; c.strokeStyle = V("--text-1"); c.stroke(); }
-    });
+    // Vệt 12 điểm thành SAO CHỔI: mỗi đoạn một bề dày và một độ đậm — đuôi mảnh
+    // và mờ, đầu dày và rõ. Chiều thời gian đọc được bằng chính hình dáng vệt,
+    // thay cho chuỗi hạt tròn đều nhau trước đây.
+    const PT = pts.map(p => [X(p.x), Y(p.y)]);
+    c.save(); c.lineCap = "round"; c.lineJoin = "round";
+    for (let i = 1; i < PT.length; i++) {
+      const u = i / (PT.length - 1);
+      c.beginPath(); c.moveTo(PT[i - 1][0], PT[i - 1][1]);
+      smoothSeg(c, PT[i - 2] || PT[i - 1], PT[i - 1], PT[i], PT[i + 1] || PT[i]);
+      c.lineWidth = 1 + 2.6 * u;
+      c.strokeStyle = mix("--text-2", .22 + .72 * u * u);
+      c.stroke();
+    }
+    c.restore();
+    // Đầu vệt là "bây giờ" — số ĐO ĐƯỢC ⇒ giữ cạnh cứng, không làm mềm.
+    const pl = pts[pts.length - 1], tokl = pl.y >= 0 ? "--up" : "--down";
+    c.beginPath(); c.arc(X(pl.x), Y(pl.y), 9, 0, 7); c.fillStyle = mix(tokl, .16); c.fill();
+    c.beginPath(); c.arc(X(pl.x), Y(pl.y), 4.5, 0, 7); c.fillStyle = V(tokl); c.fill();
+    c.lineWidth = 1.75; c.strokeStyle = V("--text-1"); c.stroke();
     c.globalAlpha = 1;
     const p = pts[pts.length - 1];
     const quad = p.y >= 0 ? (p.x >= 0 ? T("▲ tiền mới vào long") : T("▲ short đóng vị thế"))
@@ -2528,20 +2735,42 @@ body.mode-all .navtab::after{display:none}
     const { c, w, h } = fitCanvas(cv);
     const nowSec = Math.floor(now() / 1000), mx = Math.max(...P.hb.map(x => x.n), 1);
     const bw = w / 120;
+    const cells = new Map();                       // dựng MỘT lần thay vì find() 120 lần
+    for (const x of P.hb) cells.set(x.s, x);
+    const mid = h / 2, amp = mid - 1;
+    const buy = [], sell = [], live = [];
     for (let i = 0; i < 120; i++) {
-      const sec = nowSec - 119 + i, cell = P.hb.find(x => x.s === sec);
-      const x = i * bw;
-      if (!cell) {                                     // giây im lặng: sọc chéo, không để trống
-        c.globalAlpha = .18; c.strokeStyle = V("--text-3"); c.lineWidth = 1;
-        c.beginPath(); c.moveTo(x, h); c.lineTo(x + bw, h - 4); c.stroke(); c.globalAlpha = 1; continue;
-      }
-      const up = cell.b, dn = cell.n - cell.b;
-      const hu = up / mx * (h / 2 - 1), hd = dn / mx * (h / 2 - 1);
-      c.fillStyle = V("--up"); c.fillRect(x, h / 2 - hu, Math.max(1, bw - .5), hu);
-      c.fillStyle = V("--down"); c.fillRect(x, h / 2, Math.max(1, bw - .5), hd);
+      const cell = cells.get(nowSec - 119 + i);
+      buy.push(cell ? cell.b : 0);
+      sell.push(cell ? cell.n - cell.b : 0);
+      live.push(!!cell);
     }
+
+    // RULE 8 — giây im lặng phải đọc được thành MẢNG TRỐNG LIỀN: một chuỗi 30
+    // giây chết chính là tín hiệu mất kết nối mà panel này sinh ra để nói. Tô
+    // theo CỤM bằng sọc chéo (1 fillRect mỗi cụm), không phải chấm mờ mỗi giây.
+    c.save(); c.fillStyle = stripePattern(c);
+    for (let i = 0; i < 120;) {
+      if (live[i]) { i++; continue; }
+      let j = i; while (j < 120 && !live[j]) j++;
+      c.fillRect(i * bw, 2, (j - i) * bw, h - 4);
+      i = j;
+    }
+    c.restore();
+
+    // Hai vùng đối xứng quanh trục: mua phía trên, bán phía dưới. Nhịp giao dịch
+    // là đại lượng DẪN XUẤT (đếm/giây) — vẽ bằng đường cong thì trung thực hơn
+    // cột gãy khúc. smoothPath có KẸP nên đỉnh không bao giờ cao hơn số thật.
+    const pts = (arr, sign) => arr.map((v, i) => [i * bw + bw / 2, mid - sign * v / mx * amp]);
+    [[buy, 1, "--up"], [sell, -1, "--down"]].forEach(([arr, sign, tok]) => {
+      const p = pts(arr, sign);
+      softArea(c, p, mid, tok, .30, "hb" + sign);
+      c.save(); c.beginPath(); smoothPath(c, p);
+      softStroke(c, 1.25); c.strokeStyle = V(tok); c.globalAlpha = .82; c.stroke(); c.restore();
+    });
+
     c.strokeStyle = V("--border"); c.lineWidth = 1;
-    c.beginPath(); c.moveTo(0, h / 2); c.lineTo(w, h / 2); c.stroke();
+    c.beginPath(); c.moveTo(0, crisp(mid)); c.lineTo(w, crisp(mid)); c.stroke();
     const recent = P.hb.filter(x => x.s > nowSec - 6);
     const tps = recent.reduce((a, x) => a + x.n, 0) / Math.max(1, recent.length);
     const vps = recent.reduce((a, x) => a + x.v, 0) / Math.max(1, recent.length);
@@ -2567,18 +2796,24 @@ body.mode-all .navtab::after{display:none}
       const r = Math.max(3, Math.min(26, 3 + Math.sqrt(x.usd / 1000)));
       const buy = x.side === "BUY";                    // BUY = short bị thanh lý
       buy ? sumUp += x.usd : sumDn += x.usd;
+      // Toàn bộ độ mềm nằm SẴN trong bitmap 64px (tâm đậm, mép tan, vành 1px).
+      // Mỗi frame chỉ còn một drawImage thay cho arc+fill+arc+stroke ×4 lần V().
       c.globalAlpha = 0.75 * (1 - age * 0.7);
-      c.beginPath(); c.arc(X(x.ms), Y(Math.max(lo, Math.min(hi, x.px))), r, 0, 7);
-      c.fillStyle = buy ? V("--up") : V("--down"); c.globalAlpha *= .45; c.fill();
-      c.globalAlpha = 0.75 * (1 - age * 0.7); c.lineWidth = 1;
-      c.strokeStyle = buy ? V("--up") : V("--down"); c.stroke();
+      const yy = Y(Math.max(lo, Math.min(hi, x.px)));
+      c.drawImage(bubbleSprite(buy ? "--up" : "--down"), X(x.ms) - r, yy - r, r * 2, r * 2);
+      // Glyph là NHÃN, phải sắc — không làm mềm.
       if (r >= 10) { c.fillStyle = V("--text-1"); c.font = "600 9px 'IBM Plex Mono',monospace";
-        c.textAlign = "center"; c.fillText(buy ? "▲" : "▼", X(x.ms), Y(x.px) + 3); c.textAlign = "left"; }
+        c.textAlign = "center"; c.fillText(buy ? "▲" : "▼", X(x.ms), yy + 3); c.textAlign = "left"; }
     });
     c.globalAlpha = 1;
     const tot = sumUp + sumDn, mxs = Math.max(sumUp, sumDn, 1);
-    c.fillStyle = V("--up"); c.fillRect(w - 62, h / 2 - sumUp / mxs * (h / 2 - 16), 22, sumUp / mxs * (h / 2 - 16));
-    c.fillStyle = V("--down"); c.fillRect(w - 62, h / 2, 22, sumDn / mxs * (h / 2 - 16));
+    const bh1 = sumUp / mxs * (h / 2 - 16), bh2 = sumDn / mxs * (h / 2 - 16);
+    c.fillStyle = vGrad(c, 0, h, [[0, mix("--up", .85)], [.5, mix("--up", .35)],
+                                  [1, mix("--up", .85)]], "liqu");
+    c.beginPath(); c.roundRect(w - 62, h / 2 - bh1, 22, bh1, [3, 3, 0, 0]); c.fill();
+    c.fillStyle = vGrad(c, 0, h, [[0, mix("--down", .85)], [.5, mix("--down", .35)],
+                                  [1, mix("--down", .85)]], "liqd");
+    c.beginPath(); c.roundRect(w - 62, h / 2, 22, bh2, [0, 0, 3, 3]); c.fill();
     c.fillStyle = V("--text-2"); c.font = "500 10px 'IBM Plex Mono',monospace";
     c.textAlign = "right"; c.fillText(T("short bị thanh lý"), w - 66, h / 2 - 6);
     c.fillText(T("long bị thanh lý"), w - 66, h / 2 + 14); c.textAlign = "left";
@@ -2591,13 +2826,15 @@ body.mode-all .navtab::after{display:none}
   function spark(cv, arr, up) {
     const { c, w, h } = fitCanvas(cv); if (arr.length < 2) return;
     const lo = Math.min(...arr), hi = Math.max(...arr), rg = hi - lo || 1;
-    const X = i => i / (arr.length - 1) * w, Y = v => 2 + (1 - (v - lo) / rg) * (h - 4);
-    c.beginPath(); c.moveTo(0, h); arr.forEach((v, i) => c.lineTo(X(i), Y(v))); c.lineTo(w, h); c.closePath();
-    c.fillStyle = V("--text-3"); c.globalAlpha = .10; c.fill(); c.globalAlpha = 1;
-    c.beginPath(); arr.forEach((v, i) => i ? c.lineTo(X(i), Y(v)) : c.moveTo(X(i), Y(v)));
-    c.strokeStyle = V("--text-2"); c.lineWidth = 1; c.stroke();
-    c.beginPath(); c.arc(w - 2, Y(arr[arr.length - 1]), 2.5, 0, 7);
-    c.fillStyle = up ? V("--up") : V("--down"); c.fill();
+    const X = i => 1 + i / (arr.length - 1) * (w - 6), Y = v => 3 + (1 - (v - lo) / rg) * (h - 8);
+    const tok = up ? "--up" : "--down";
+    // Giản lược TRƯỚC khi làm mềm: gộp các điểm cùng cột điểm ảnh nhưng giữ cả
+    // hai cực trị, nên đỉnh nhọn còn nguyên mà spline lại rẻ hơn đường gãy.
+    const p = thin(arr.map((v, i) => [X(i), Y(v)]), 2);
+    softArea(c, p, h, tok, .22, cv.id || "spk");
+    c.save(); c.beginPath(); smoothPath(c, p);
+    softStroke(c, 1.25); c.strokeStyle = V(tok); c.globalAlpha = .9; c.stroke(); c.restore();
+    softTip(c, X(arr.length - 1), Y(arr[arr.length - 1]), tok, true, 2.2);
   }
 
   function renderCtx() {
@@ -2694,57 +2931,142 @@ body.mode-all .navtab::after{display:none}
      không shadowBlur, gradient được CACHE theo kích thước. ══════════ */
 
   /* Đường cong mượt đi qua ĐÚNG các điểm dữ liệu (Catmull-Rom → bezier).
-     Không làm tròn số liệu — chỉ nối chúng bằng đường cong thay vì gãy khúc. */
-  function smoothPath(c, pts, t = 0.5) {
+     KẸP điểm điều khiển vào hộp của từng đoạn: một cubic bezier luôn nằm trong
+     bao lồi của 4 điểm điều khiển, nên kẹp ⇒ đường cong KHÔNG BAO GIỜ vọt cao
+     hơn giá trị thật đo được. Đường mềm mà nói dối còn tệ hơn đường gãy khúc. */
+  const _cl = (v, a, b) => v < Math.min(a, b) ? Math.min(a, b) : v > Math.max(a, b) ? Math.max(a, b) : v;
+  /* MỘT đoạn cong p1→p2 (p0, p3 chỉ để lấy hướng tiếp tuyến). Tách riêng vì
+     lineWidth không đổi được giữa chừng một path — vệt sao chổi cần từng đoạn
+     một bề dày khác nhau. */
+  function smoothSeg(c, p0, p1, p2, p3, t = 0.35) {
+    c.bezierCurveTo(
+      _cl(p1[0] + (p2[0] - p0[0]) / 6 * t, p1[0], p2[0]),
+      _cl(p1[1] + (p2[1] - p0[1]) / 6 * t, p1[1], p2[1]),
+      _cl(p2[0] - (p3[0] - p1[0]) / 6 * t, p1[0], p2[0]),
+      _cl(p2[1] - (p3[1] - p1[1]) / 6 * t, p1[1], p2[1]),
+      p2[0], p2[1]);
+  }
+  function smoothPath(c, pts, t = 0.35) {
     if (pts.length < 2) return;
     c.moveTo(pts[0][0], pts[0][1]);
     if (pts.length === 2) { c.lineTo(pts[1][0], pts[1][1]); return; }
-    for (let i = 0; i < pts.length - 1; i++) {
-      const p0 = pts[i - 1] || pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] || p2;
-      c.bezierCurveTo(
-        p1[0] + (p2[0] - p0[0]) / 6 * t, p1[1] + (p2[1] - p0[1]) / 6 * t,
-        p2[0] - (p3[0] - p1[0]) / 6 * t, p2[1] - (p3[1] - p1[1]) / 6 * t,
-        p2[0], p2[1]);
-    }
+    for (let i = 0; i < pts.length - 1; i++)
+      smoothSeg(c, pts[i - 1] || pts[i], pts[i], pts[i + 1], pts[i + 2] || pts[i + 1], t);
   }
 
-  /* Gradient dọc có CACHE — tạo lại chỉ khi đổi kích thước hoặc đổi theme.
-     Tạo gradient mỗi frame là chi phí thật; ở đây nó gần như bằng 0. */
-  const _grad = new Map();
-  function vGrad(c, y0, y1, stops, key) {
-    const k = key + "|" + Math.round(y0) + "|" + Math.round(y1) + "|" + (document.documentElement.dataset.theme || "");
+  /* Giản lược theo min/max: gộp các điểm rơi vào cùng một cột điểm ảnh nhưng
+     GIỮ cả cực tiểu lẫn cực đại của cột đó — nên đỉnh nhọn không bị nuốt.
+     Làm TRƯỚC khi làm mềm: ít điểm thì spline còn rẻ hơn đường gãy 300 điểm. */
+  function thin(pts, step = 2) {
+    if (pts.length < 3) return pts;
+    const out = []; let i = 0;
+    while (i < pts.length) {
+      const x0 = pts[i][0]; let lo = pts[i], hi = pts[i], j = i;
+      while (j < pts.length && pts[j][0] - x0 < step) {
+        if (pts[j][1] < hi[1]) hi = pts[j];
+        if (pts[j][1] > lo[1]) lo = pts[j];
+        j++;
+      }
+      if (j === i) j = i + 1;
+      const a = hi[0] <= lo[0] ? hi : lo, b = a === hi ? lo : hi;
+      out.push(a); if (b !== a) out.push(b);
+      i = j;
+    }
+    if (out[out.length - 1] !== pts[pts.length - 1]) out.push(pts[pts.length - 1]);
+    return out;
+  }
+
+  /* Gradient CÓ CACHE. Khoá phải gồm KÍCH THƯỚC BITMAP (6 ô sparkline khác bề
+     rộng nhau) và thế hệ token (_vGen) — thiếu một trong hai là dùng nhầm
+     gradient của canvas khác hoặc của theme cũ. Xoá qua flushTokens(). */
+  function _mkGrad(c, kind, a, b, stops, key) {
+    const k = key + "|" + kind + "|" + c.canvas.width + "x" + c.canvas.height
+            + "|" + Math.round(a) + "|" + Math.round(b) + "|" + _vGen;
     let g = _grad.get(k);
     if (!g) {
-      g = c.createLinearGradient(0, y0, 0, y1);
+      g = kind === "v" ? c.createLinearGradient(0, a, 0, b) : c.createLinearGradient(a, 0, b, 0);
       stops.forEach(([at, col]) => g.addColorStop(at, col));
       _grad.set(k, g);
-      if (_grad.size > 60) _grad.delete(_grad.keys().next().value);
+      if (_grad.size > 80) _grad.delete(_grad.keys().next().value);
     }
     return g;
   }
-  /* Đổi theme ⇒ mọi gradient đã cache hết hạn */
-  new MutationObserver(() => _grad.clear())
-    .observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+  const vGrad = (c, y0, y1, stops, key) => _mkGrad(c, "v", y0, y1, stops, key);
+  const hGrad = (c, x0, x1, stops, key) => _mkGrad(c, "h", x0, x1, stops, key);
 
-  /* Vùng tô mềm dưới một đường: đậm sát đường, tan dần xuống đáy. */
-  function softArea(c, pts, yBase, colorVar, a0 = .28) {
+  /* Pha màu theo token, an toàn với token KHÔNG phải hex (--pred-band là một
+     color-mix(), parse hex sẽ ra NaN và hỏng im lặng). */
+  const mix = (tok, a) => `color-mix(in srgb, ${V(tok)} ${Math.round(a * 100)}%, transparent)`;
+
+  /* Vùng tô mềm dưới (hoặc trên) một đường: đậm sát đường, tan hết ở đáy.
+     Toàn bộ độ mềm đến từ ALPHA THẤP TRÊN DIỆN RỘNG — không blur, không
+     shadowBlur, không một pixel nào sáng thêm. Glow-budget vẫn bằng 0. */
+  function softArea(c, pts, yBase, colorVar, a0 = .28, key) {
     if (pts.length < 2) return;
-    const top = Math.min(...pts.map(p => p[1]));
+    let top = pts[0][1], bot = pts[0][1];
+    for (const p of pts) { if (p[1] < top) top = p[1]; if (p[1] > bot) bot = p[1]; }
+    const far = Math.abs(yBase - top) >= Math.abs(yBase - bot) ? top : bot;
     c.save(); c.beginPath(); smoothPath(c, pts);
     c.lineTo(pts[pts.length - 1][0], yBase); c.lineTo(pts[0][0], yBase); c.closePath();
-    c.fillStyle = vGrad(c, top, yBase, [
-      [0, `color-mix(in srgb, ${V(colorVar)} ${Math.round(a0 * 100)}%, transparent)`],
-      [1, `color-mix(in srgb, ${V(colorVar)} 0%, transparent)`],
-    ], "area" + colorVar);
+    c.fillStyle = vGrad(c, far, yBase, [[0, mix(colorVar, a0)], [1, mix(colorVar, 0)]],
+                        (key || "area") + colorVar);
     c.fill(); c.restore();
+  }
+
+  /* Sọc chéo cho vùng "không có dữ liệu". Tile 6×6 nướng MỘT lần rồi lặp —
+     rẻ hơn một lệnh stroke cho mỗi giây, và quan trọng hơn: một cụm im lặng
+     dài trở thành MỘT mảng liền nhìn thấy rõ, đúng tinh thần RULE 8. */
+  function stripePattern(c) {
+    if (!P._bg.stripe) {
+      const t = document.createElement("canvas"); t.width = t.height = 6;
+      const g = t.getContext("2d");
+      g.strokeStyle = V("--text-3"); g.globalAlpha = .17; g.lineWidth = 1;
+      [[-2, 4], [4, 10]].forEach(([a, b]) => { g.beginPath(); g.moveTo(a, 6); g.lineTo(b, 0); g.stroke(); });
+      g.beginPath(); g.moveTo(1, 7); g.lineTo(7, 1); g.stroke();
+      P._bg.stripe = t;
+    }
+    return c.createPattern(P._bg.stripe, "repeat");
+  }
+
+  /* Bong bóng thanh lý: một bitmap cho mỗi màu, dựng ở khổ 64 CSS px nên mọi
+     lần dùng đều là THU NHỎ (bán kính lớn nhất là 26) — không bao giờ phóng to
+     nên không bị nhoè. Vẽ 40 quả chỉ còn 40 lệnh drawImage. */
+  function bubbleSprite(tok) {
+    const k = "bub" + tok;
+    if (P._bg[k]) return P._bg[k];
+    const d = dpr(), S = 64;
+    const t = document.createElement("canvas");
+    t.width = t.height = Math.round(S * d);
+    const g = t.getContext("2d"); g.setTransform(d, 0, 0, d, 0, 0);
+    const rg = g.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S / 2 - 1);
+    rg.addColorStop(0, mix(tok, .34)); rg.addColorStop(.7, mix(tok, .20)); rg.addColorStop(1, mix(tok, .02));
+    g.beginPath(); g.arc(S / 2, S / 2, S / 2 - 1, 0, 7); g.fillStyle = rg; g.fill();
+    g.lineWidth = 1.4; g.strokeStyle = mix(tok, .6); g.stroke();
+    P._bg[k] = t;
+    return t;
   }
 
   /* Nét mềm: đầu và khớp bo tròn. Dùng cho MỌI đường của panel phụ. */
   function softStroke(c, w = 1.5) { c.lineWidth = w; c.lineCap = "round"; c.lineJoin = "round"; }
 
+  /* Đầu mút một chuỗi. solid = số ĐO ĐƯỢC (chấm đặc + quầng alpha thấp);
+     rỗng = DỰ ĐOÁN (vòng mảnh, không quầng, không đĩa đặc) — RULE 7 nói
+     dự đoán không được trông giống dữ liệu thật, mà "đặc" chính là trông thật. */
+  function softTip(c, x, y, colorVar, solid = true, r = 2.5) {
+    c.save();
+    if (solid) {
+      c.beginPath(); c.arc(x, y, r * 2.6, 0, 7); c.fillStyle = mix(colorVar, .13); c.fill();
+      c.beginPath(); c.arc(x, y, r, 0, 7); c.fillStyle = V(colorVar); c.fill();
+    } else {
+      c.beginPath(); c.arc(x, y, r + .5, 0, 7);
+      c.lineWidth = 1.25; c.globalAlpha = .85; c.strokeStyle = V(colorVar); c.stroke();
+    }
+    c.restore();
+  }
+
   /* ── Chart ────────────────────────────────────────────────── */
   const canvas = $("chart"), wrap = $("chart-wrap"), tt = $("tt"), ctx = canvas.getContext("2d");
-  const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const cssVar = V;   // chart nến dùng chung bộ nhớ đệm token với các panel
   const VIEW = 80;   // số nến hiển thị
 
   let drawPending = 0;
@@ -3268,7 +3590,8 @@ body.mode-all .navtab::after{display:none}
   });
 
   new ResizeObserver(requestDraw).observe(wrap);
-  const redrawAll = () => { draw(); drawSpaghetti(); drawVol(); drawFunding(); drawOI();
+  const redrawAll = () => { flushTokens(); P._bg = {};   // token + gradient + lớp nướng sẵn hết hạn
+    draw(); drawSpaghetti(); drawVol(); drawFunding(); drawOI(); paintNowcast();
                             drawHeartbeat(); drawLiq(); renderCtx(); renderSharpness();
                             renderIndicators(); renderMethods();
                             if (P.nc.length) renderNowcast(P.nc[P.nc.length - 1].s); };
@@ -3348,6 +3671,7 @@ body.mode-all .navtab::after{display:none}
   "Baseline lịch sử · q10–q90": "Historical baseline · q10–q90",
   "Minh hoạ hiện tại · q10–q90": "Current illustration · q10–q90",
   "✓ hẹp hơn baseline {x}%": "✓ {x}% narrower than baseline",
+  "mốc baseline": "baseline mark",
   "⚠ chưa sắc nét hơn baseline ({d}%)": "⚠ not sharper than baseline ({d}%)",
   "rộng hơn": "wider by",
   "chỉ hẹp": "only narrower by",
