@@ -39,3 +39,6 @@ reports/
 
 # ── Khoá của harness — không đưa vào git ────────────────────────
 .claude/scheduled_tasks.lock
+
+# ── Sản phẩm trung gian của script đo — tái tạo bằng chính script ────
+scripts/measurements_*/*.parquet

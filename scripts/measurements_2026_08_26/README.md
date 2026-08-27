@@ -27,3 +27,12 @@ Dữ liệu: `data/raw/ohlcv/symbol=BTCUSDT/timeframe=1h` — 2.062 nến ngày,
 ```
 
 Dữ liệu ghi vào `data/raw/funding/symbol=<SYM>/data.parquet` (gitignored).
+
+## Sổ đăng ký đặc trưng (`docs/14_FEATURE_REGISTRY.md`)
+
+```bash
+.venv/bin/python scripts/measurements_2026_08_26/feature_audit.py     # dựng 38 đặc trưng + đo trùng lặp
+.venv/bin/python scripts/measurements_2026_08_26/feature_clusters.py  # gom 13 cụm + kiểm Levine-Pedersen
+```
+
+`feature_audit.py` ghi `features_btc.parquet` cạnh nó để `feature_clusters.py` đọc lại.
