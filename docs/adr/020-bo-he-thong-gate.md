@@ -10,12 +10,17 @@
 > phải chạy bot Paper một kỳ" trước khi bật bot tiền thật.
 >
 > **Hệ quả phải ghi rõ:** bảo đảm về tính đúng đắn của đường lệnh nay dựa **hoàn
-> toàn vào test tự động** (`SAFE-05` và các test cố-tình-vi-phạm của `SAFE-01`…`09`),
-> không còn bằng chứng vận hành thật nào trước lần đặt lệnh tiền thật đầu tiên.
-> Các lỗi chỉ lộ ra khi chạy dài — rò rỉ bộ nhớ, trôi trạng thái sau nhiều ngày,
-> hành vi của sàn ở biên, tắc nghẽn hàng đợi — sẽ được phát hiện **trên tiền thật
-> của người dùng** thay vì trong kỳ chạy thử. Đổi lại, `SAFE-05` được siết: bộ test
-> tiêm lỗi phải phủ tối thiểu 5 kịch bản mạng/sàn liệt kê trong REQ.
+> toàn vào test tự động**, không còn bằng chứng vận hành thật nào trước lần đặt
+> lệnh tiền thật đầu tiên. Các lỗi chỉ lộ ra khi chạy dài — rò rỉ bộ nhớ, trôi
+> trạng thái sau nhiều ngày, hành vi của sàn ở biên, tắc nghẽn hàng đợi — sẽ được
+> phát hiện **trên tiền thật của người dùng** thay vì trong kỳ chạy thử.
+>
+> **Đổi lại, vòng rà soát 28/08 siết bù bốn lớp** (chi tiết ở `01_REQUIREMENTS §8`):
+> `SAFE-05a` bộ giả lập sàn nằm trên đúng đường mã sản xuất, sinh từ phản hồi thật ·
+> `SAFE-05b` mỗi kịch bản hỏng có một bất biến viết thành assert · `SAFE-05c` bộ đột
+> biến bắt chính test phải tự chứng minh · `SAFE-05d` bài chạy dài nén thời gian
+> chạy trong CI. Cộng thêm `SAFE-12` giám sát lúc chạy, luôn bật — nhắm đúng bốn
+> lớp lỗi nêu ở đoạn trên.
 >
 > Bảng ở §Quyết định bên dưới giữ nguyên văn làm sử liệu; dòng "GATE 3 → SAFE-06"
 > nay đọc là **"GATE 3 → đã bỏ hẳn"**.
