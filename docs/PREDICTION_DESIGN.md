@@ -34,7 +34,8 @@ Kèm theo mọi lúc, không bao giờ ẩn: **`p_required`** (ngưỡng thắng
 | Lệnh dừng lỗ | Lệnh stop-limit **treo trên sàn** | **Khuyến nghị BẮT BUỘC kèm chỉ dẫn đặt lệnh stop-limit treo ngay lúc vào** — xem §L5 «Vì sao lệnh treo là bắt buộc» |
 | Đối soát (L8) | Đối soát vị thế với sàn mỗi 5 phút | **Theo dõi kết cục của khuyến nghị đã phát** |
 | Khoá API | Cần khoá giao dịch từ GATE 4 | **Không cần khoá giao dịch. Chỉ đọc dữ liệu công khai** |
-| GATE 2–4 (tiền thật) | Trong phạm vi | **Ngoài phạm vi hiện tại** |
+| **GATE 2** — hiệu chỉnh xác suất (Brier + reliability) | Trong phạm vi | **VẪN TRONG PHẠM VI** — RULE 6 bắt buộc, và hệ khuyến nghị phát ra `p_win`; xác suất chưa hiệu chỉnh là con số gây hiểu lầm |
+| **GATE 3** (chạy tiền ảo) · **GATE 4** (an toàn vận hành tiền thật) | Trong phạm vi | **Ngoài phạm vi hiện tại** |
 | **GATE 1 (kỹ năng dự báo)** | Trong phạm vi | **Vẫn trong phạm vi — và là cổng DUY NHẤT còn lại** |
 | Câu hỏi về vốn | Cần trả lời | **Không áp dụng** |
 
@@ -129,6 +130,19 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Literal, Optional
 import pandas as pd
+
+@dataclass(frozen=True)
+class PReq:
+    """Ngưỡng thắng của cược ĐỐI XỨNG 1:1 — chỉ để HIỂN THỊ."""
+    value: float          # đã kẹp [0,5 ; 1,0]
+    unreachable: bool     # raw ≥ 1,0 ⇒ không đạt được ở mọi tỉ lệ thắng
+
+@dataclass(frozen=True)
+class PStar:
+    """Ngưỡng thắng của cược RÀO CHẮN 3,33:1 — cổng QUYẾT ĐỊNH."""
+    value: float
+# ⛔ Hai kiểu KHÁC NHAU có chủ ý: `PReq < PStar` không biên dịch được.
+#    Đây là biện pháp chống lặp lại lỗi thứ nguyên đã xảy ra ba lần (ADR-013).
 
 # ══ ĐỘ TƯƠI — HAI KHÁI NIỆM KHÁC NHAU, trước đây bị gộp làm một (B10 · B15) ══
 DataFreshness = Literal["live", "delayed", "disconnected"]   # thuộc tính của DỮ LIỆU VÀO
@@ -385,9 +399,13 @@ def cost_gate(H_days, instrument, f_daily) -> float:
     return max(cost_pct(H_days, instrument, max(f_daily, 0.0)), 0.20)
 
 def p_required_symmetric(sigma_d, H_days, instrument, f_daily) -> PReq:
-    """CỔNG HIỂN THỊ — cược đối xứng 1:1. In trên MỌI panel."""
+    """CỔNG HIỂN THỊ — cược đối xứng 1:1. In trên MỌI panel.
+    ★ KẸP TRẦN 1,0: với coin biến động rất thấp, giá trị thô vượt 100% (σ̂=0,20%
+      cho 159,5%) và dashboard sẽ in một 'xác suất' > 1. Kẹp, kèm cờ để giao diện
+      hiện «không đạt được ở mọi tỉ lệ thắng» thay vì một con số vô nghĩa."""
     e_move = sigma_d * ABS_MOVE_RATIO * sqrt(H_days) * 100
-    return PReq(0.5 + cost_gate(H_days, instrument, f_daily) / (2 * e_move))
+    raw = 0.5 + cost_gate(H_days, instrument, f_daily) / (2 * e_move)
+    return PReq(value=min(raw, 1.0), unreachable=raw >= 1.0)
 
 def p_star_event(sigma_d, sl_mult=1.2, tp_mult=4.0) -> PStar:
     """CỔNG QUYẾT ĐỊNH — GIAO NGAY (chi phí không phụ thuộc thời gian giữ
@@ -410,9 +428,9 @@ def p_star_event(sigma_d, sl_mult=1.2, tp_mult=4.0) -> PStar:
 | 3,00% (BTC 2021–26) | 3,60% | 0,083 | **25,0%** |
 | 2,43% (chế độ vol thấp 2023–26) | 2,92% | 0,103 | **25,5%** |
 | | | *dao động* | **0,5 điểm** |
-| *Đối chiếu: cược đối xứng giao ngay, cùng hai chế độ* | | | *56,4% → 58,8% = 2,4 điểm* |
+| *Đối chiếu: cược đối xứng giao ngay, cùng hai chế độ* | | | *57,30% → 59,01% = **1,71 điểm*** |
 
-> **Đây là lý do tồn tại của hình dạng cược bất đối xứng:** nó làm ngưỡng hoà vốn **gần bất biến theo chế độ thị trường** (0,5 so với 2,4 điểm). Đó là cách duy nhất đã tìm thấy để biến một trần năng lực cố định (51–56%) thành kỳ vọng dương mà không cần giả định nào về chế độ.
+> **Đây là lý do tồn tại của hình dạng cược bất đối xứng:** nó làm ngưỡng hoà vốn **gần bất biến theo chế độ thị trường** (0,5 so với 1,71 điểm — chặt hơn **3,4 lần**). Đó là cách duy nhất đã tìm thấy để biến một trần năng lực cố định (51–56%) thành kỳ vọng dương mà không cần giả định nào về chế độ.
 
 **Bất biến khoảng cách — hình dạng cược KHÔNG tạo ra edge:**
 
@@ -786,6 +804,18 @@ def open_tranches(w: float, book: TrancheBook, sigma_d: float,
     Bước nhảy k mức ⇒ k sự kiện riêng, cùng entry/σ̂ (mỗi cái ≤1% NAV).
     ctx.next_open is None ⇒ trả () — chưa có giá vào (B6)."""
 
+def cell_signal(bars_1d: pd.DataFrame, ef: int, es: int, dn: int) -> pd.Series:
+    """Trả CHUỖI 0/1 trên toàn lịch sử (máy trạng thái cần trạng thái trước,
+    nên không thể là hàm vô hướng như rc1 khai báo `-> int`).
+    EMA dùng `adjust=False`. Donchian = rolling(dn).max().shift(1)."""
+
+def ensemble_weight(bars_1d: pd.DataFrame, grid: tuple) -> Optional[float]:
+    """Trung bình cell_signal qua `grid`, rồi làm tròn về {0; ,25; ,5; ,75; 1}.
+    Trả None khi len(bars_1d) < max(es) + max(dn) — chưa đủ nến cho EMA200.
+    GRID_27 là TUPLE có thứ tự cố định (itertools.product theo đúng thứ tự đã
+    liệt kê) — không phải set, vì bất biến #12 pin hash của nó.
+    Không có ca hoà khi làm tròn: mọi k/27 đều không rơi đúng trung điểm."""
+
 def with_size(ev: PendingEvent, ctx: PredictCtx, cfg) -> Tranche:
     """PendingEvent → Tranche. size = TRANCHE_PCT (1% NAV) cố định theo NOTIONAL.
     stop/target/deadline tính từ ev.entry_ref_price và ev.sigma_entry."""
@@ -842,6 +872,11 @@ def predict(bars: pd.DataFrame, bars_1d: pd.DataFrame, funding_hist: pd.Series,
     kept = [e for e in events
             if calibrate(meta.predict(build_features(bars_1d), e)) >= p_star.value + MARGIN_PP]
     if not kept:                   return emit(reason=f"L6 loại {len(events)} sự kiện"), book
+    # ★ M06 · SLOT chỉ bị chiếm bởi tranche THẬT SỰ được phát.
+    #   open_tranches trả PendingEvent (chưa chiếm slot); chỉ book.with_new(new)
+    #   mới đánh dấu slot. Sự kiện bị L6 loại ⇒ slot vẫn TRỐNG ⇒ đủ điều kiện
+    #   tái vũ trang ở close kế tiếp. Nếu làm ngược lại, một lần L6 từ chối sẽ
+    #   khoá slot đó vĩnh viễn cho tới khi w tụt xuống rồi leo lại.
 
     # ── L7 · cỡ gợi ý ──
     new = tuple(with_size(e, ctx, cfg) for e in kept)
@@ -981,6 +1016,12 @@ Hệ **không biết** người dùng có vào lệnh không, và **không đư�
 | 39 | **Purge bằng độ dài NHÃN** (B16) | `assert purge_bars == embargo_bars == max(độ dài nhãn mọi tầng)`; ép `purge = horizon_bars = 1` ⇒ probe #5 (kiểm tra ranh giới) phải **đỏ** |
 | 40 | **Một trục thời gian toàn cục** (B7) | Chia fold cho 3 symbol có lịch sử khác nhau ⇒ mọi mốc cắt **giống hệt**; chia theo từng symbol ⇒ probe #4 phải **đỏ** |
 | 41 | **Probe phải tự chứng minh** (B7) | Với mỗi phép thử 1–5: tiêm rò rỉ tương ứng ⇒ **phải đỏ**; gỡ ra ⇒ **phải xanh**. Chạy trong `pytest`, chặn commit |
+| 42 | **`p_required` bị kẹp trần** (M29) | `0,5 ≤ p_required ≤ 1,0` với mọi σ̂ ∈ [0,0001; 1,0] và mọi H; raw ≥ 1,0 ⇒ `unreachable is True` |
+| 43 | **Hai ngưỡng không lẫn nhau** (M05) | `PReq` và `PStar` là hai kiểu; giao diện in `p_required` cạnh `p_up`, `p_star` cạnh `p_win` — test snapshot giao diện |
+| 44 | **Slot chỉ bị chiếm bởi tranche đã phát** (M06) | L6 loại toàn bộ sự kiện ⇒ ở close kế tiếp với `w` không đổi, sự kiện **phải được phát lại** |
+| 45 | **Nhãn giả định luôn hiện** (M03) | Mọi phản hồi chứa số bảng điểm ⇒ có trường `disclaimer` khác rỗng |
+| 46 | **Thiếu funding ≠ không có perp** (M25) | Cặp không có hợp đồng vĩnh cửu ⇒ `f̂ is None`, KHÔNG phải `p95_expanding`; hai ca phân biệt được ở tầng kiểu |
+| 47 | **FDR trước khi xếp hạng** (M08) | Bảng xếp hạng coin theo kỹ năng ⇒ phải có trường `fdr_q` khác None, nếu không thì từ chối render |
 
 **Quy tắc chọn chỗ đặt:**
 
@@ -1042,7 +1083,14 @@ Hệ **không biết** người dùng có vào lệnh không, và **không đư�
 
 ## 8.1 · Vì sao chỉ còn một cổng
 
-Với phạm vi khuyến nghị, GATE 2–4 (giao dịch giấy, tiền thật, vận hành) **ngoài phạm vi**. **GATE 1 — hệ có kỹ năng dự báo không — là cổng duy nhất, và nó quyết định sản phẩm có được ship hay không.**
+Với phạm vi khuyến nghị, **GATE 3** (chạy tiền ảo) và **GATE 4** (an toàn vận hành tiền thật) ngoài phạm vi. Còn lại **hai** cổng:
+
+| Cổng | Nội dung | Vì sao vẫn cần |
+|---|---|---|
+| **GATE 1** | Hệ có kỹ năng dự báo không | Quyết định sản phẩm có được ship hay không |
+| **GATE 2** | Hiệu chỉnh xác suất — Brier + reliability diagram | **RULE 6**: hệ phát ra `p_win` cho người dùng đọc. `predict_proba()` thô **không phải xác suất** |
+
+*(rc1 dán nhãn sai GATE 2 là «giao dịch giấy» và gạt nó khỏi phạm vi — `00_MASTER_PLAN` định nghĩa GATE 2 = hiệu chỉnh xác suất.)*
 
 ## 8.2 · Cổng kép — và thang đo mà nó chấm trên (B2)
 
@@ -1147,13 +1195,14 @@ Dải ·  ① độ phủ [q10,q90] = 80% ± 3pp trên ≥500 dự đoán đã c
 | 1 | Lưới 27 ô, purged WF, spot long/flat | Ô **trung vị** — không phải ô tốt nhất |
 | 2 | Tỉ lệ chốt lời thật của khung rào chắn | ≥ **27,5%** *(hoà vốn 25,0–25,5% + biên thận trọng 2 điểm)*; ≤ 23,1% (mức bước ngẫu nhiên) ⇒ **dừng nhánh khuyến nghị** |
 | 3 | Tỉ lệ đúng **theo nhóm ba biến động** | Không ngưỡng — phép đo **thông tin** |
-| 4 | Trượt giá của mức dừng lỗ | Cảnh báo 1,3R · chặn 1,4R **(hoà vốn 1,57R)** |
+| 4 | Trượt giá của mức dừng lỗ | Cảnh báo 1,3R · chặn 1,4R **(hoà vốn 1,57R)**. **Phương pháp đo đăng ký trước:** ① cron chụp sổ lệnh top-20 mức (spread + độ sâu) cho vũ trụ khuyến nghị **từ ngày 1** ② ước lượng bằng mô phỏng ăn-độ-sâu trên các nến σ̂ ≥ p95 ③ với hệ khuyến nghị, đo lại bằng **lệnh shadow** chứ không phải lệnh thật |
 | 5 | Tương quan E\|move\| ↔ funding toàn vũ trụ | Không ngưỡng — quyết định cổng phí có ý nghĩa trên perp không |
 | 6 | LIFO đối chứng FIFO | Chênh lệch không được là nguồn nhạy cảm chính |
 | 7 | Thời gian nắm giữ thật của **tổ hợp** | Nếu lệch xa 6,3 ngày ⇒ mở lại quyết định k=1 |
 | 8 | Chênh giá mở nến t+1 ↔ TWAP 00:15–00:45 | Vào mô hình chi phí |
 | 9 | Tỉ số phương sai VR(2..30 ngày), 4 cặp | Xác nhận giả định μ=0 ở chân trời nhiều ngày |
 | 10 | Đo lại cụm đặc trưng trên ≥3 **altcoin** | Nhóm liên thị trường chưa từng kiểm được |
+| 11b | **Bộ nhãn MỨC NẾN** — cần cho 3/7 baseline hướng (`always_up`, `seasonal_naive`, `random_5050`) | Sinh song song với nhãn mức sự kiện; `drop_flat_from_train: false`; **chỉ dùng để chấm baseline**, KHÔNG train L6 |
 | 11 | Bảy baseline (RULE 4) | `always_up` dùng 49,6% từ 2022 · `seasonal_naive` · `random_5050` · `buy_and_hold` · `tsmom_grid_median` · `dca_hold` · `naive_rw` |
 
 **Sáu điều bị cấm khi chạy bộ này:** thêm phép thử thứ 12 · nới ngưỡng đã viết · đổi giai đoạn kiểm định · chạy lại với tham số khác rồi báo cáo lần đẹp · bỏ một phép thử vì "rõ ràng nó không hợp lý" · diễn giải kết quả không đạt thành "gần đạt".
@@ -1162,9 +1211,107 @@ Dải ·  ① độ phủ [q10,q90] = 80% ± 3pp trên ≥500 dự đoán đã c
 
 ---
 
+## 8.6 · Kiểm soát đa phép thử và công suất (M08 · M09)
+
+> Bản rc1 mở rộng bộ đo từ 8 lên 11 phép thử **và** đưa bảng điểm kỹ năng theo từng đồng thành sản phẩm chính — trong khi làm rơi toàn bộ cơ chế chống dương-tính-giả của `10 mandate 9` và `mandate 10`. Hai thứ này là **hai bài toán khác nhau**, cần hai công cụ khác nhau.
+
+### 8.6.1 · FDR — theo số CHUỖI được xếp hạng
+
+```
+α = 0,05 trên 1.200 chuỗi  ⇒  kỳ vọng ~60 dương tính giả
+```
+
+| Áp ở đâu | Quy tắc |
+|---|---|
+| Bộ 11 phép đo §8.5 | **Benjamini–Hochberg q = 0,10** trên toàn bộ 11 giá trị p |
+| **Bảng điểm kỹ năng theo từng đồng** | ⛔ **CẤM hiển thị bảng xếp hạng coin theo kỹ năng trước khi áp FDR.** Một bảng 40 dòng chưa hiệu chỉnh sẽ luôn có vài dòng "xuất sắc" thuần tuý do may |
+| Đặc trưng qua L6 | BH q = 0,10 trên tập đặc trưng ứng viên |
+
+### 8.6.2 · DSR — theo số TRIAL đã chạy
+
+Deflated Sharpe Ratio (Bailey–López de Prado) hiệu chỉnh theo **số lần thử thật**, lấy từ MLflow — bao gồm **cả những lần thử tay** (RULE 10). Hai đại lượng dễ nhầm:
+
+| | Đếm cái gì | Công cụ |
+|---|---|---|
+| **DSR** | Số **trial** đã chạy để tìm ra kết quả này | Deflated Sharpe |
+| **FDR** | Số **chuỗi/giả thuyết** đang được xếp hạng cùng lúc | Benjamini–Hochberg |
+
+### 8.6.3 · n hiệu dụng — trần tham số
+
+```
+số tham số tự do tối đa  =  n_hiệu_dụng / 20
+
+n_hiệu_dụng ≠ số hàng dữ liệu:
+  · 40 cặp tương quan κ = 0,501 (kết cục lệnh)  ⇒  ~1,95 "cặp độc lập"
+  · nhãn chồng lấn tới H nến                    ⇒  chia thêm cho tới H
+  · block bootstrap: block ≥ H (= 60 ngày cho khung 1d)
+```
+
+**Bootstrap CI Sharpe theo fold, đòi phân vị 5% > 0** — không chấp nhận điểm ước lượng trần trụi.
+
+### 8.6.4 · Con số công suất phải in cạnh mọi kết quả
+
+| Chỉ tiêu | Số năm cần (40 cặp) | Trạng thái |
+|---|---|---|
+| Tỉ số sụt giảm (phát hiện khác biệt 0,20) | **3 năm** | ✅ đạt được |
+| Sharpe vượt mua-và-giữ (0,30) | **hơn 5 năm** | 🔶 ranh giới |
+| Tỉ lệ thắng (229 lệnh độc lập) | **34 năm** | ❌ không bao giờ |
+
+> **GATE 1 không phải và không thể là một phép chứng minh có edge** — nó là **màng lọc chống thất bại hiển nhiên**. Đọc nó như phép chứng minh dẫn tới hai sai lầm đối xứng: tin quá mức khi qua, và bỏ cuộc sai khi trượt.
+
+## 8.7 · Bốn nhánh kết cục của cổng kép (M12)
+
+Cổng kép có **bốn** kết cục, không phải hai. Đăng ký hành động cho cả bốn, **hôm nay**:
+
+| 1a · tỉ số sụt giảm | 1b · Sharpe | Hành động đã đăng ký |
+|---|---|---|
+| ✅ đạt | ✅ đạt | Xây L6 (lọc bỏ). Lộ trình bước 9 |
+| ✅ đạt | ❌ trượt | **Ship tổ hợp như một sản phẩm QUẢN TRỊ RỦI RO, không phải sản phẩm alpha.** Khuyến nghị được phát, nhưng dashboard nói thẳng: *«hệ này cắt sụt giảm, nó KHÔNG hứa vượt mua-và-giữ»*. **KHÔNG** xây L6 |
+| ❌ trượt | ✅ đạt | **Nghi ngờ trước, tin sau.** Sharpe không tái lập (0,07 → 0,77) còn tỉ số sụt giảm thì tái lập 54/54 — một kết quả ngược lại là dấu hiệu của may mắn hoặc lỗi, không phải kỹ năng. Điều tra rồi mới quyết; mặc định là **dừng** |
+| ❌ trượt | ❌ trượt | **Dừng nhánh khuyến nghị, ship Đài quan trắc.** Đây là **KẾT QUẢ HỢP LỆ**, không phải thất bại |
+
+> **Kịch bản dễ xảy ra nhất là hàng thứ hai** — 1a đạt, 1b trượt — vì đó chính là hình dạng mà mọi phép đo tới nay cho thấy. Nó phải có một hành động cụ thể chứ không phải một khoảng trống.
+
+
 # PHẦN 9 · BẢNG ĐIỂM VÀ ĐỘ TRUNG THỰC
 
 > Với hệ khuyến nghị, đây **là** sản phẩm. Một lời khuyên không có lịch sử đúng/sai công khai là một lời khuyên không kiểm chứng được.
+
+## 9.0 · Bảng điểm là HIỆU SUẤT GIẢ ĐỊNH — nhãn bắt buộc (M02 · M03)
+
+§0.4 nâng bảng điểm thành *«một phần của sản phẩm»*. Điều đó **bắt buộc kèm một nhãn**, vì con số được tính từ một chuỗi giả định mà không ai kiểm chứng được:
+
+| Giả định | Thực tế |
+|---|---|
+| Vào tại `entry_ref_price` = **OPEN nến t+1** | Người dùng thực thi TWAP 00:15–00:45, **chênh lệch chưa đo** (phép đo #8) |
+| Lỗ khi chạm stop = **1,00R** | Chỉ đúng **nếu** người dùng đã đặt lệnh treo. Không đặt: TB 0,86R nhưng p90 **1,58R**, max 4,23R |
+| Thoát tại `target`/`stop`/`deadline` **đúng lúc hệ ghi nhận** | Người dùng có thể thoát sớm, muộn, hoặc **không bao giờ vào** |
+| Mọi khuyến nghị **đều được thực hiện** | Hệ **không quan sát được** điều này |
+
+**Nhãn bắt buộc, in cùng mọi con số bảng điểm — không thu gọn, không ẩn:**
+
+> ### HIỆU SUẤT GIẢ ĐỊNH
+> Các con số dưới đây đo **chất lượng lời khuyên của hệ**, tính theo giá tham chiếu và quy ước thoát của chính hệ. Chúng **không phải** kết quả giao dịch của bạn, và **không** bao gồm trượt giá thực thi của bạn.
+
+**Chấm SONG SONG hai quy ước stop** (§9.1) — cho người dùng thấy đúng cái giá của việc bỏ lệnh treo.
+
+> ### Vì sao chấm trên LỚP KHUYẾN NGHỊ, không trên lớp thực thi
+>
+> Nếu chấm trên lớp thực thi, hệ được **tha bổng** cho những lời khuyên tồi mà người dùng tình cờ bỏ qua, và bị **đổ lỗi** cho những lệnh người dùng tự nghĩ ra. Hai lớp phải tách bạch, và **chỉ lớp khuyến nghị quyết định hệ có kỹ năng hay không**. Nhưng đúng vì thế, nó phải mang nhãn giả định.
+
+## 9.0b · `p_required` nào đứng cạnh khuyến nghị (M05)
+
+§0.4 đòi *«mọi khuyến nghị đứng cạnh ngưỡng hoà vốn của CHÍNH NÓ»*. Hệ có **hai** ngưỡng, và chúng khác nhau hơn 30 điểm:
+
+| Ngưỡng | Của cược nào | Giá trị điển hình | In ở đâu |
+|---|---|---|---|
+| `p_required` — kiểu `PReq` | Đối xứng 1:1 | **~57%** | Mọi panel, cạnh `p_up` — trả lời *«cược đối xứng có đáng không?»* → gần như luôn **không** |
+| `p_star` — kiểu `PStar` | Rào chắn 3,33:1 | **25,0%** | **Cạnh mỗi khuyến nghị**, cùng `p_win` đã hiệu chỉnh — đây mới là ngưỡng của **chính khuyến nghị đó** |
+
+> ⚠️ In `p_required` ≈ 57% cạnh một khuyến nghị có `p_win` ≈ 30% khiến người dùng đọc thành *«hệ khuyên vào lệnh mà tự nó nói chưa đủ ngưỡng»* — **sai hoàn toàn**, vì hai con số nói về hai hình dạng cược khác nhau. Đó là lý do hai kiểu dữ liệu `PReq`/`PStar` không so sánh chéo được (Phần 2), và giao diện phải giữ đúng ranh giới ấy.
+
+**Mỗi khuyến nghị in đủ bốn số:** `p_win` (đã hiệu chỉnh) · `p_star` (hoà vốn của chính nó) · `stop_price` · `target_price`.
+
 
 ## 9.1 · Chấm điểm — chạy vô điều kiện, kể cả khi hệ im lặng
 
@@ -1191,7 +1338,8 @@ Dải ·  ① độ phủ [q10,q90] = 80% ± 3pp trên ≥500 dự đoán đã c
 
 ## 9.3 · Bốn thứ bảng điều khiển BẮT BUỘC hiển thị
 
-1. **`p_required` ngay cạnh `p_up`, ở mọi khung** — kể cả khung không giao dịch. Người dùng thấy khoảng cách, không phải đoán.
+1. **`p_required` ngay cạnh `p_up`, ở mọi khung** — kể cả khung không giao dịch. Người dùng thấy khoảng cách, không phải đoán. **Và `p_star` cạnh mỗi khuyến nghị** — hai ngưỡng khác nhau, xem §9.0b.
+1b. **Nhãn «HIỆU SUẤT GIẢ ĐỊNH»** trên mọi con số bảng điểm (§9.0).
 2. **Im lặng có số**: *"0/2.400 nến qua cổng trong 7 ngày — đây là hành vi ĐÚNG. Kỳ vọng ~9 khuyến nghị/đồng/năm."*
 3. **Độ tươi dữ liệu**: Live / Chậm / Mất kết nối / Dự đoán cũ.
 4. **Bảng điểm lịch sử** — không phải trang phụ, không ẩn sau menu. **Chấm song song hai quy ước stop** (§9.1).
@@ -1241,6 +1389,59 @@ Dải ·  ① độ phủ [q10,q90] = 80% ± 3pp trên ≥500 dự đoán đã c
 
 # PHẦN 11 · LỘ TRÌNH IMPLEMENT
 
+## 11.0 · Hai vũ trụ, bẫy sống sót, và phụ thuộc (M10 · M11 · M17 · M25 · M31)
+
+### 11.0.1 · Hai vũ trụ — có chủ ý, kèm nghĩa vụ ADR (M10)
+
+| Mục đích | Số cặp | Vì sao |
+|---|---|---|
+| **ĐO** — chấm GATE 1 | **40** | Cần tối đa quan sát độc lập; 3 năm × 40 cặp cho sai số 0,093 trên khác biệt 0,20 |
+| **KHUYẾN NGHỊ** — phát cho người dùng | **8 – 10** thanh khoản nhất | Từ 10 lên 40 cặp chỉ thêm **0,01 đơn vị** đa dạng hoá (ρ = 0,9) nhưng tải theo dõi gấp **bốn lần** |
+
+> ⚠️ **Nghĩa vụ đăng ký: hệ được KIỂM ĐỊNH không hoàn toàn là hệ được CHẠY.** Phải ghi **ADR-014**, và thêm một phép kiểm bắt buộc: **nhóm 8–10 cặp khuyến nghị không được lệch hệ thống so với toàn bộ 40** (tỉ số sụt giảm của nhóm nhỏ nằm trong khoảng tin cậy của nhóm lớn). Lệch ⇒ hoặc mở rộng vũ trụ khuyến nghị, hoặc chấm lại chỉ trên nhóm nhỏ và chịu mất công suất.
+
+### 11.0.2 · Bẫy sống sót — rủi ro đã đặt tên, không phải câu hỏi tải dữ liệu (M11)
+
+Backtest trên top-40 **của hôm nay** dùng thông tin *«cặp này còn tồn tại năm 2026»* để ra quyết định năm 2023. Cặp đã chết bị loại khỏi mẫu — **chính những cặp mà xu hướng tăng sẽ mua rồi mất tiền**.
+
+| Kịch bản của điều tra 2 giờ (bước 0b) | Hành động đã đăng ký |
+|---|---|
+| Kho lưu trữ **có** cặp đã huỷ niêm yết | Tải cả chúng. Vũ trụ đo = mọi cặp **tồn tại tại thời điểm đó** |
+| Kho lưu trữ **không có** | **Không được im lặng bỏ qua.** Bắt buộc: ① in số cặp đã huỷ niêm yết trong giai đoạn (từ thông báo Binance) ② ước lượng chặn trên của thiên lệch bằng cách giả định **mọi** cặp đã chết đều cho kết cục xấu nhất ③ ghi con số đó **cạnh** kết quả GATE 1, không phải trong phụ lục |
+
+### 11.0.3 · Tầng cắt ngang — hoãn, không xoá (M17)
+
+Tầng R8 (động lượng cắt ngang — `17 §3`) **không nằm trong bản thiết kế này**, vì nó bị khoá chờ ≥12 ảnh chụp vũ trụ (sớm nhất 2027-08) hoặc kết quả điều tra 0b. Nhưng **dấu vết của nó vẫn phải giữ** ở ba chỗ, vì cron ngày 1 tồn tại chính vì nó:
+
+| Chỗ | Nội dung |
+|---|---|
+| Ma trận hỏng (Phần 10) | Dòng «ảnh chụp vũ trụ» — chỉ nuôi tầng cắt ngang tương lai |
+| Lộ trình bước 0 | Cron ảnh chụp hằng tháng — **không tạo lại được**, mỗi tháng hoãn là mất vĩnh viễn |
+| §8.7 nhánh «1a trượt» | Nếu GATE 1 trượt và ảnh chụp đã đủ 12 tháng ⇒ R8 là **phương án dự phòng số một** (đặc tả đầy đủ ở `17 §3`) |
+
+⇒ **Không có tầng R8 trong `predict()` hiện tại. Có một chỗ trống đã đặt tên, và một cron nuôi nó.**
+
+### 11.0.4 · Dữ liệu funding cho toàn vũ trụ (M25)
+
+Bước 5 (*σ̂ + f̂ cùng đợt*) **không có đầu vào**: `data/raw/funding/` chỉ có 4 symbol, tải bằng một script ngoài `src/` **tự tạo client ccxt** — vi phạm luật repo *«Chỉ `cryptopred.data.exchange` được tạo client ccxt»*.
+
+| Việc | Nội dung |
+|---|---|
+| **Bước 1b (mới)** | Module `cryptopred.data.funding`, dùng `data.exchange`, tải lịch sử funding 8 giờ cho **toàn vũ trụ đo** |
+| **Cặp không có hợp đồng vĩnh cửu** | `f̂ = None` · `instrument` hiển thị khoá `"spot"` · **KHÔNG** dùng `p95_expanding` — đó là chế độ *«dữ liệu hỏng»*, không phải *«không tồn tại»*. Hai ca này phải phân biệt được, kèm bất biến |
+
+### 11.0.5 · Phụ thuộc chưa khai báo (M31)
+
+Đã kiểm trong `.venv`: **`scipy` và `statsmodels` không có trong bất kỳ nhóm phụ thuộc nào** của `pyproject.toml`; `lightgbm`/`sklearn`/`mlflow` chưa cài.
+
+| Gói | Nhóm | Cần cho |
+|---|---|---|
+| **`scipy`** | **dependencies lõi** | L3 `norm.ppf`/`cdf` — mốc M-A phải chạy được **không cần** nhóm `model` |
+| `statsmodels` | `model` | HAR-RV (hoặc dùng `numpy.linalg.lstsq`, đủ cho 4 hệ số) |
+| `mlflow` | `model` | RULE 10 — **thêm bước 2b vào lộ trình**: dựng tracking + `log_run(git_hash, seed, data_hash, config, metrics)`, **trước** bước 3, vì bước 3 (tiêm rò rỉ) đã là phép đo chặn cửa |
+| `lightgbm` | `model` | Chỉ L6 — bước 9, có thể không bao giờ cần |
+
+
 ## 11.1 · Thứ tự có lý do nhân quả
 
 | # | Việc | Vì sao ở vị trí này | Chặn bởi |
@@ -1274,6 +1475,8 @@ Dải ·  ① độ phủ [q10,q90] = 80% ± 3pp trên ≥500 dự đoán đã c
 | `config/model.yaml` | **Xoá** `decision.p_up_threshold` / `p_down_threshold` (thay bằng `TRADE_TF` + `p_required` trong mã) · **xoá** khối `quantile` · `classifier` → `meta_label` (depth 3 · ≤15 lá · ≤300 cây) · `drop_flat_from_train: false` · `tuning.n_trials: 20` · `baselines` += `tsmom_grid_median`, `dca_hold`, `naive_rw` · `costs.funding_rate_8h_pct` giữ làm tham chiếu hiển thị, **cấm** dùng trong cổng |
 | `config/features.yaml` | **Theo bảng Phụ lục B.3** — làm ở bước 4, **cùng lúc** viết `build_features` |
 | `config/symbols.yaml` | Mở rộng exclude: neo pháp định (EUR…) · vàng/hàng hoá (XAUT, PAXG) · RLUSD · cổ phiếu token hoá |
+| **`CLAUDE.md`** | Bảng trạng thái + dòng «prototype dashboard v6 là hợp đồng UI» — **đầu ra thứ 4 (khuyến nghị vào/ra) là SỬA HỢP ĐỒNG UI**, phải khai báo, không để lệch âm thầm |
+| **`docs/00_MASTER_PLAN.md §5`** | Hợp đồng ba đầu ra → **bốn** (thêm khuyến nghị vào/ra). Cần **ADR-015** |
 | `serving/schemas.py` | Theo Phần 2 — kèm khôi phục `last_close` · `valid_until` · `in_training_universe` mà rc1 làm rơi |
 | `config/model.yaml` *(bổ sung)* | `validation.min_train_bars`: **theo khung** (1d ≈ 500, 1h 5000) — hiện 5000 khiến purged WF không sinh nổi fold nào ở khung ngày · `validation.purge_bars`/`embargo_bars`: **60** cho khung 1d *(nhãn L6 là kết cục rào chắn kéo dài tới 60 ngày, không phải `horizon_bars`=1)* · `tuning.objective` → `mean_oos_drawdown_ratio` · xoá `label.dead_zone` |
 
@@ -1328,7 +1531,8 @@ Dải ·  ① độ phủ [q10,q90] = 80% ± 3pp trên ≥500 dự đoán đã c
 | SOL 11/2022 | −42,47% notional, 141/165 kỳ âm | `13 §7.4` |
 | Sụt giảm chuỗi funding | BTC −1,52% · SOL −43,40% | ↑ |
 | Đặc trưng: 57 đề xuất → 13 chiều | | `14 §0.1` |
-| Khung 4h: p_required | 69,0% spot / 62,7% perp | `ADR-002 §2.3` |
+| Khung 4h, **chân trời 4 GIỜ**: p_required | 69,0% spot / 62,7% perp | `ADR-002 §2.3` |
+| Khung 4h, **chân trời `H_DAYS["4h"] = 1,0 ngày`** *(giá trị hệ thực sự in)* | **57,3%** | công thức §L4 |
 | Khung 4h: R² biến động / hướng | 0,278 / 52,27% vs 51,04% | ↑ §2.4 |
 
 Mã tái tạo: `scripts/measurements_2026_08_26/` (13 script, có README).
