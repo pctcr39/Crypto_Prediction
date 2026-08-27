@@ -47,7 +47,7 @@ Khi hệ tự giao dịch, sai lầm của nó hiện ra thành lỗ — một c
 
 | # | Yêu cầu | Vì sao |
 |---|---|---|
-| **1** | **Mọi khuyến nghị đã phát đều bất biến và được chấm điểm** — không sửa, không xoá, không "quên" | Không có sổ lệnh sàn làm bằng chứng khách quan. Sổ của hệ **chính là** bằng chứng duy nhất |
+| **1** | **Mọi khuyến nghị đã phát đều bất biến và được chấm điểm** — không sửa, không xoá, không "quên" | Không có sổ lệnh sàn làm bằng chứng khách quan. Sổ của hệ **chính là** bằng chứng duy nhất. **Và hệ phát ~1,5 khuyến nghị/ngày** — sổ lớn nhanh, càng phải bất biến |
 | **2** | **Bảng điểm công khai là một phần của sản phẩm**, không phải trang phụ | Người dùng không thể đánh giá lời khuyên nếu không thấy lịch sử đúng/sai |
 | **3** | **Mọi khuyến nghị đứng cạnh ngưỡng hoà vốn của chính nó** | Một khuyến nghị không kèm `p_required` là con số vô nghĩa được trình bày như con số có nghĩa |
 
@@ -1068,6 +1068,7 @@ Hệ **không biết** người dùng có vào lệnh không, và **không đư�
 | 46 | **Thiếu funding ≠ không có perp** (M25) | Cặp không có hợp đồng vĩnh cửu ⇒ `f̂ is None`, KHÔNG phải `p95_expanding`; hai ca phân biệt được ở tầng kiểu |
 | 47 | **FDR trước khi xếp hạng** (M08) | Bảng xếp hạng coin theo kỹ năng ⇒ phải có trường `fdr_q` khác None, nếu không thì từ chối render |
 | 48 | **`H_DAYS` suy từ config, không hằng số cứng** (m08) | `assert H_DAYS[tf] == horizon_bars[tf] * timeframe_hours[tf] / 24` cho cả ba khung — đổi `horizon_bars` trong config mà quên sửa mã ⇒ đỏ |
+| 49 | **Quay vòng trong ngân sách** | Quay vòng `w`/năm của backtest phải nằm trong dải đăng ký ở [`spec_numbers §3b`](generated/spec_numbers.md) ± 30%; vượt ⇒ đỏ *(thay bất biến «trần tỉ lệ phát theo % số nến» của rc1, vốn dựng trên tần suất sai 6 lần)* |
 
 **Quy tắc chọn chỗ đặt:**
 
@@ -1373,16 +1374,36 @@ Cổng kép có **bốn** kết cục, không phải hai. Đăng ký hành độ
 
 ## 9.2 · Ngân sách im lặng — ba con số có tên riêng, in trên màn hình
 
-> ### ⚠️ Ngân sách im lặng đăng ký ở rc1 SAI 6 LẦN
+> ### ★ Hệ này KHÔNG im lặng — và đó là sự thật phải nói thẳng
 >
-> rc1 đăng ký **~9 tranche-mở/đồng/năm**, đo trên *một ô lưới, một lệnh mỗi lần tín hiệu bật*. Chạy **đúng đặc tả** (tổ hợp 27 ô · 4 mức tranche · tái vũ trang không cooldown): **50 – 62 sự kiện/đồng/năm** → [`spec_numbers.md §2`](generated/spec_numbers.md).
+> rc1 đăng ký **~9 tranche-mở/đồng/năm** và dựng cả một khung *«im lặng là trạng thái được thiết kế»* quanh con số đó. Chạy đúng đặc tả: **50 – 62 sự kiện/đồng/năm** → [`spec_numbers.md §2`](generated/spec_numbers.md). Sai **6 lần**, và khung kia sụp theo.
 >
-> Với vũ trụ khuyến nghị 8–10 đồng: **404 – 617 khuyến nghị/năm ≈ 1,5/ngày**. Toàn bộ khung *«im lặng là trạng thái được thiết kế»* phải viết lại theo con số này — hoặc quy tắc tái vũ trang phải đổi. **Quyết định chưa chốt.**
+> **Bản chất thật của hệ:** không phải *«hiếm khi lên tiếng»* mà là **«vào và ra liên tục bằng những bước nhỏ»**. Với vũ trụ 8–10 đồng: khoảng **1,5 khuyến nghị mỗi ngày**.
 
-| Con số | Nguồn | Ghi chú |
+**Vì sao tần suất đó KHÔNG vi phạm bức tường phí** — đây là chỗ khung cũ và khung mới khác nhau về bản chất:
+
+| | Khung cũ *(sai)* | **Khung mới** |
 |---|---|---|
-| Sự kiện tranche/đồng/năm | [`spec_numbers.md §2`](generated/spec_numbers.md) | ★ số in to nhất trên dashboard |
-| Sự kiện ĐÓNG/đồng/năm | ↑ *(bảo toàn — mỗi tranche mở rồi cũng đóng)* | ~63% bằng stop |
+| Lập luận sinh tồn | *«Ít lệnh»* | **«Lệnh nhỏ»** |
+| Mỗi lệnh | *(ngầm hiểu)* toàn vốn | **1% NAV**, tối đa 4% một đồng |
+| Phí | *(chưa tính)* | **1,36 – 1,67% NAV/năm** với 9 đồng → [`§3b`](generated/spec_numbers.md) |
+
+> `08 §A2` tính bức tường phí cho lệnh **toàn vốn** — ở đó 6 lệnh/ngày là bất khả. Ở đây mỗi tranche là 1% NAV, nên **tiền phí không tỉ lệ với số lệnh theo cách đó**. Ràng buộc thật là **quay vòng trên vốn chiến lược**: 6,2 – 7,9 đơn vị `w`/năm ⇒ 0,93 – 1,19%/năm. Đó mới là con số phải theo dõi.
+
+**Điều này đổi ba thứ trên dashboard:**
+
+| | |
+|---|---|
+| **Không** in *«im lặng có số»* kiểu *«0/2.400 nến qua cổng»* | Sai bản chất — hệ có ý kiến gần như mỗi ngày |
+| **Có** in **quay vòng luỹ kế và tiền phí đã trả** | Đây mới là đại lượng người dùng cần canh |
+| **Có** in **tỉ trọng `w` hiện tại và lịch sử của nó** | Hệ nói bằng *mức phơi bày*, không bằng *tín hiệu rời rạc* |
+
+**Trần cảnh báo đổi theo:** không còn *«phát quá nhiều»* theo % số nến, mà **quay vòng vượt 2× mức đăng ký ⇒ cảnh báo** — vì quay vòng, không phải số lệnh, mới là thứ ăn tiền.
+
+| Con số | Nguồn |
+|---|---|
+| Sự kiện tranche/đồng/năm · sự kiện đóng | [`spec_numbers.md §2`](generated/spec_numbers.md) |
+| Quay vòng `w`/năm · phí/năm | [`spec_numbers.md §3b`](generated/spec_numbers.md) |
 | Trần phát khung 1h · 4h | **0 tuyệt đối** — một lần phát bất kỳ ⇒ test đỏ | |
 | Trần phát khung 1d | > 2× kỳ vọng tranche-mở ⇒ **cảnh báo** | Hệ nói quá nhiều cũng là chế độ hỏng |
 
@@ -1390,7 +1411,7 @@ Cổng kép có **bốn** kết cục, không phải hai. Đăng ký hành độ
 
 1. **`p_required` ngay cạnh `p_up`, ở mọi khung** — kể cả khung không giao dịch. Người dùng thấy khoảng cách, không phải đoán. **Và `p_star` cạnh mỗi khuyến nghị** — hai ngưỡng khác nhau, xem §9.0b.
 1b. **Nhãn «HIỆU SUẤT GIẢ ĐỊNH»** trên mọi con số bảng điểm (§9.0).
-2. **Im lặng có số**: *"0/2.400 nến qua cổng trong 7 ngày — đây là hành vi ĐÚNG. Kỳ vọng ~9 khuyến nghị/đồng/năm."*
+2. **Quay vòng luỹ kế và tiền phí đã trả** — thay cho *«im lặng có số»* của rc1, vốn dựng trên một tần suất sai 6 lần (§9.2). Hệ có ý kiến gần như mỗi ngày; đại lượng cần canh là **quay vòng**, không phải sự vắng mặt.
 3. **Độ tươi dữ liệu**: Live / Chậm / Mất kết nối / Dự đoán cũ.
 4. **Bảng điểm lịch sử** — không phải trang phụ, không ẩn sau menu. **Chấm song song hai quy ước stop** (§9.1).
 5. **Khuyến nghị THOÁT hiển thị ngang hàng khuyến nghị VÀO** — cùng vùng, cùng cỡ chữ. Với hệ khuyến nghị, tín hiệu thoát là thứ khẩn cấp nhất.
@@ -1430,8 +1451,8 @@ Cổng kép có **bốn** kết cục, không phải hai. Đăng ký hành độ
 |---|---|---|
 | HAR-RV phân kỳ | σ̂ ngoài khoảng hợp lý | Rơi về EWMA λ=0,94 **tất định**, ghi nhật ký |
 | Độ phủ dải trôi | Kiểm toán cuộn 500 dự đoán lệch khỏi 80% ± 3pp | **Cảnh báo, KHÔNG tự chỉnh** — tự chỉnh che mất nguyên nhân |
-| Hệ im lặng quá lâu | 0 khuyến nghị trong N tuần | Hiển thị số **kỳ vọng** cạnh số **thực tế**. Không hành động |
-| Hệ phát quá nhiều | Vượt trần tỉ lệ phát | **Cảnh báo** — nghi rò rỉ hoặc lỗi cổng |
+| Hệ im lặng bất thường | 0 khuyến nghị trong N tuần *(bất thường — kỳ vọng ~1,5/ngày)* | **Cảnh báo** — với tần suất thật, im lặng dài là dấu hiệu hỏng chứ không phải hành vi đúng |
+| **Quay vòng vượt mức** | Quay vòng `w` > 2× mức đăng ký | **Cảnh báo** — quay vòng, không phải số lệnh, mới là thứ ăn tiền |
 | Chuỗi thua dài | 8 khuyến nghị thua liên tiếp | **Không phản ứng** — xác suất 5,8% ở tỉ lệ thắng 30%, nằm trong thiết kế |
 | Tỉ lệ đúng khung 1h > 60% | | **RULE 11: giả định rò rỉ** cho tới khi chứng minh ngược lại |
 

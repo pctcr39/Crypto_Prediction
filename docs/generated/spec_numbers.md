@@ -50,6 +50,20 @@ Vũ trụ đo: BTCUSDT, ETHUSDT, SOLUSDT, DOGEUSDT · rào `1.2σ̂/4.0σ̂` · 
 | 1.5R | +0.013R |
 | 1.52R | -0.001R |
 
+## 3b · Quay vòng và tiền phí
+
+| Cặp | Quay vòng (`w`/năm) | Phí/năm trên **vốn chiến lược** | Sự kiện/năm | Phí/năm trên **NAV** *(tranche 1% NAV)* |
+|---|---|---|---|---|
+| BTCUSDT | 7.9 | 1.19% | 50.5 | 0.151% |
+| ETHUSDT | 7.9 | 1.19% | 61.7 | 0.185% |
+| SOLUSDT | 6.2 | 0.93% | 51.8 | 0.155% |
+| DOGEUSDT | 6.3 | 0.94% | 54.7 | 0.164% |
+
+**Phí trên NAV: 0.151 – 0.185% mỗi đồng mỗi năm.** Với 9 đồng: **1.36 – 1.67% NAV/năm**.
+
+> Tần suất cao nhưng **mỗi lệnh nhỏ**. Bức tường phí của `08 §A2` tính cho lệnh **toàn vốn**; ở đây mỗi tranche là 1% NAV nên tiền phí không tỉ lệ với số lệnh theo cách đó.
+
+
 ## 4 · GATE 1a — tỉ số sụt giảm, thang `w`
 
 | Cặp | Sụt giảm chiến lược | Mua-và-giữ | **Tỉ số** | Ngưỡng 0,60 |

@@ -43,7 +43,9 @@ Số **định tính / ngoại sinh** (trích từ literature hoặc từ hồ s
 
 **Ba hệ quả phải xử lý riêng:**
 
-1. **Ngân sách im lặng sai 6 lần.** Với vũ trụ 8–10 đồng: **404 – 617 khuyến nghị/năm ≈ 1,5/ngày**. Toàn bộ khung *«im lặng là trạng thái được thiết kế»* phải viết lại theo con số này, **hoặc** quy tắc tái vũ trang phải đổi. Chưa chốt.
+1. **Ngân sách im lặng sai 6 lần — ĐÃ CHỐT (27/08).** Với vũ trụ 8–10 đồng: **404 – 617 khuyến nghị/năm ≈ 1,5/ngày**. **Chấp nhận tần suất này, KHÔNG thêm cooldown** (thêm cooldown là tạo tham số mới để cứu một khung tường thuật — đúng thứ `16` cấm).
+   Khung *«im lặng là trạng thái được thiết kế»* bị **xoá bỏ** và thay bằng phát biểu đúng bản chất: hệ **vào ra liên tục bằng những bước nhỏ**, không phải hiếm khi lên tiếng.
+   **Lập luận sinh tồn đổi từ «ít lệnh» sang «lệnh nhỏ»:** `08 §A2` tính bức tường phí cho lệnh **toàn vốn**; ở đây mỗi tranche là 1% NAV nên phí chỉ **1,36 – 1,67% NAV/năm** với 9 đồng. Ràng buộc thật là **quay vòng trên vốn chiến lược** (6,2 – 7,9 đơn vị `w`/năm ⇒ 0,93 – 1,19%/năm) — đó mới là đại lượng phải theo dõi, và dashboard in nó thay cho «im lặng có số».
 2. **`ADR-013 §3` lý do #2 bị bác.** ADR đó giữ rào `1,2/4,0` với ba lý do; lý do #2 là *«ô 1,2/4,8 cho biên +7,5 so với +8,7 — tệ hơn»*, đo bằng quy ước cũ. Đo đúng đặc tả, **ô 1,2/4,8 tốt hơn ở cả biên lẫn EV**. Lý do #1 (không đổi tham số để khôi phục kết luận) vẫn đứng và vẫn là lý do mạnh nhất — nhưng ADR đang viện một lý do sai. **Ô đang dùng không phải ô tốt nhất, và tài liệu phải nói thẳng điều đó.**
 3. **σ̂ được định nghĩa hai lần.** `sigma_hat_daily` = trung bình trượt Parkinson (L1) và `har_rv` = HAR (L2), cả hai tự nhận là đường duy nhất. Phép đo phân xử: trung bình trượt **thua** EWMA(0,94) 2,2% theo QLIKE — **trượt chính cổng L2** — còn HAR **thắng** 23,6%. Chốt: **HAR là đường duy nhất**, Parkinson là đầu vào của nó.
 

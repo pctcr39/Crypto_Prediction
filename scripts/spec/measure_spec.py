@@ -160,6 +160,26 @@ def measure(sl=SL_MULT, tp=TP_MULT) -> dict:
                 payoff=float(payoff), reasons=reason, per_symbol=per,
                 hold_days=float(np.mean([t.i_exit - t.i_entry for _, t in rows])))
 
+def turnover_and_drag() -> dict:
+    """Phí quay vòng — khung im lặng cũ dựa vào 'ít lệnh'; khung mới phải dựa vào
+    'lệnh nhỏ'. Đây là con số phân biệt hai khung."""
+    out = {}
+    for s in SYMS:
+        b, sig, w = _prep(s)
+        yrs = len(b) / 365.25
+        # thang w (vốn CỦA CHIẾN LƯỢC)
+        p_ = w.shift(1).fillna(0)
+        turn_w = float((p_ - p_.shift(1).fillna(0)).abs().sum())
+        # thang NAV: mỗi tranche 1% NAV notional
+        tr = run_tranches(b, w, sig)
+        out[s] = dict(
+            turnover_w_per_year=round(turn_w / yrs, 1),
+            fee_w_pct_per_year=round(turn_w / yrs * COST_ROUNDTRIP / 2, 2),
+            events_per_year=round(len(tr) / yrs, 1),
+            fee_nav_pct_per_year=round(len(tr) / yrs * COST_ROUNDTRIP * 0.01, 3),
+        )
+    return out
+
 def emit(path="docs/generated/spec_numbers.md") -> None:
     m, amr, dd, surf, slip = measure(), abs_move_ratio(), drawdown_ratio_w_scale(), barrier_surface(), None
     slip = slippage_table(m)
@@ -196,6 +216,15 @@ def emit(path="docs/generated/spec_numbers.md") -> None:
     A(f"\n| Lỗ thực nhận | EV |\n|---|---|")
     for r in slip[:-1]:
         A(f"| {r['loss_R']}R | {r['ev']:+.3f}R |")
+    A("\n## 3b · Quay vòng và tiền phí\n")
+    tv = turnover_and_drag()
+    A("| Cặp | Quay vòng (`w`/năm) | Phí/năm trên **vốn chiến lược** | Sự kiện/năm | Phí/năm trên **NAV** *(tranche 1% NAV)* |")
+    A("|---|---|---|---|---|")
+    for k, v in tv.items():
+        A(f"| {k} | {v['turnover_w_per_year']} | {v['fee_w_pct_per_year']}% | {v['events_per_year']} | {v['fee_nav_pct_per_year']}% |")
+    fn = [v["fee_nav_pct_per_year"] for v in tv.values()]
+    A(f"\n**Phí trên NAV: {min(fn):.3f} – {max(fn):.3f}% mỗi đồng mỗi năm.** Với 9 đồng: **{min(fn)*9:.2f} – {max(fn)*9:.2f}% NAV/năm**.")
+    A("\n> Tần suất cao nhưng **mỗi lệnh nhỏ**. Bức tường phí của `08 §A2` tính cho lệnh **toàn vốn**; ở đây mỗi tranche là 1% NAV nên tiền phí không tỉ lệ với số lệnh theo cách đó.\n")
     A("\n## 4 · GATE 1a — tỉ số sụt giảm, thang `w`\n")
     A("| Cặp | Sụt giảm chiến lược | Mua-và-giữ | **Tỉ số** | Ngưỡng 0,60 |\n|---|---|---|---|---|")
     for k, v in dd.items():
