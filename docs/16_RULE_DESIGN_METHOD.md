@@ -262,9 +262,27 @@ Phương pháp chỉ đáng tin nếu nó bắt được lỗi của chính ngư
 
 **Bài học:** **suy nghĩ không thay được phép đo.** Khi một đại lượng nằm sau một lệnh tải hai phút, mọi phút bỏ ra tranh luận về nó là phút lãng phí.
 
-## 6.7 · Mẫu hình chung của cả sáu lỗi
+## 6.7 · Lỗi thứ bảy — đọc lại một công thức không phải kiểm tra nó
 
-Cả sáu đều là **một dạng**: chấp nhận một khẳng định vì nó **hợp lý**, thay vì vì nó **đã được kiểm**. Và cả sáu đều bị bắt bởi cùng một thứ — **đặt con số cạnh đối chứng của nó**:
+**Lỗi:** công thức hoà vốn `p* = (1+c_R)/(tp_mult+1)` coi `4,0` là tỉ số payoff, trong khi `4,0` là **hệ số của σ̂**. Rào `1,2σ̂/4,0σ̂` cho payoff **3,33:1**, nên mẫu số phải là `tp/sl + 1 = 4,333`. Hoà vốn đúng **25,0%**, không phải 21,7%.
+
+**Nó sống sót qua:** sáu tài liệu · hai vòng phản biện đối kháng (69 + 58 phát hiện) · và một mục §L4 tự tuyên bố *"hai kiểu dữ liệu — biện pháp chống lặp lại lỗi thứ nguyên"* đặt ngay cạnh nó.
+
+**Bắt được bởi:** một agent **tự đạo hàm lại** công thức từ định nghĩa rào, thay vì đọc lại nó.
+
+**Và một lỗi thứ tám đi kèm:** khi xác minh, phát hiện `pp4_final.py` lấy điểm vào từ một chuỗi **đã dịch** rồi dịch thêm một lần nữa — vào lệnh chậm một ngày. Tỉ lệ chốt lời thật là 33,7%, không phải 30,0%. **Hai lỗi đi ngược chiều và triệt tiêu nhau gần hết** (+8,3 → +5,0 → +8,7 điểm) — con số headline gần như không đổi trong khi cả hai đầu vào đều sai.
+
+**Bài học — bổ sung vào Bước 8 của quy trình:**
+
+> **Đọc lại một công thức không phải kiểm tra nó.** Với mọi biểu thức mà một quyết định đứng lên: ① **đạo hàm lại độc lập từ định nghĩa gốc**, ② viết một **bất biến tính đại lượng đó bằng đường khác** (ở đây: `assert EV(p*) == 0` tính thẳng từ `sl`/`tp`/`cost`). Bảng số kiểm được số học nhưng **không kiểm được thứ nguyên** — vì mọi phép tính trong bảng đều dùng chung công thức sai.
+>
+> Hệ quả thứ hai: **một kết quả đúng-vẻ-ngoài có thể là tích của hai sai số bù trừ.** Khi phát hiện một lỗi, phải kiểm cả các đầu vào khác của cùng con số — sửa một nửa làm kết quả tệ hơn cả khi chưa sửa.
+
+*Chi tiết đầy đủ: `docs/adr/013-sua-loi-thu-nguyen-payoff.md`.*
+
+## 6.8 · Mẫu hình chung của cả tám lỗi
+
+Cả tám đều là **một dạng**: chấp nhận một khẳng định vì nó **hợp lý**, thay vì vì nó **đã được kiểm**. Và cả sáu đều bị bắt bởi cùng một thứ — **đặt con số cạnh đối chứng của nó**:
 
 | Con số | Đối chứng |
 |---|---|
@@ -274,6 +292,7 @@ Cả sáu đều là **một dạng**: chấp nhận một khẳng định vì n
 | Điểm phi tương quan | Kết quả đo độ liên quan |
 | Đặc tả rào chắn | Mô phỏng rào chắn |
 | Lập luận về funding | Dữ liệu funding |
+| **Công thức đọc lại** | **Công thức đạo hàm lại** |
 
 ---
 

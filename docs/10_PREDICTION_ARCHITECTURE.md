@@ -188,7 +188,9 @@ Kế thừa nguyên A0–A3, thêm cổng phí động và một tầng nghiêng
 |---|---|---|---|
 | 1:1 đối xứng (1d perp + funding) | 54,9% | trần 52–56% | **−2,9 … +1,1 điểm** |
 | 3:1 | **27,5%** | | +7,5 điểm |
-| **4:1** (stop 1,2σ̂ / target 4σ̂) | **22,0%** | TSMOM ≈ 35% `09 §4` | **+13 điểm** |
+| **4:1** (stop 1,2σ̂ / target 4σ̂) | ~~22,0%~~ → **25,0%** | TSMOM ≈ 35% `09 §4` | ~~+13~~ → +10 điểm |
+> ⚠️ **SỬA 27/08/2026 — xem `docs/adr/013-sua-loi-thu-nguyen-payoff.md`.** Rào `1,2σ̂ / 4,0σ̂` cho payoff **3,33:1**, không phải 4:1 — `sl_mult`/`tp_mult` là hệ số của σ̂, không phải tỉ số R. Hoà vốn đúng: **25,0%** (σ̂=3,00%) / 25,5% (σ̂=2,43%). Đây là GỐC của lỗi đã lan sang `11`, `12`, `17`, `PREDICTION_DESIGN`.
+
 
 Kỳ vọng: `0,35×4R − 0,65×1R − 0,10R(phí) = +0,65R/lệnh`.
 Và tần suất: **15 lệnh/năm = 4,5%/năm tiền phí**, so với 1 vòng/tuần = **10,4%/năm** — riêng việc giảm tần suất trả lại nửa bức tường.

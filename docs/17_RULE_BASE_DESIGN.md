@@ -127,8 +127,10 @@ def p_star_event(sigma_d, sl_mult=1.2, tp_mult=4.0) -> PStar:
 **Kiểm số học — tính lại toàn bộ sau phản biện** (σ̂ là độ lệch chuẩn log-return ngày, **đo được**: BTC 2021–26 = 3,00% · chế độ vol thấp 2023–26 = 2,43% — `12 §2.8`):
 
 ```
-σ̂ = 3,00%:  c_R = 0,30/3,60 = 0,083  ⇒  p* = 21,7%
-σ̂ = 2,43%:  c_R = 0,30/2,92 = 0,103  ⇒  p* = 22,1%
+σ̂ = 3,00%:  c_R = 0,30/3,60 = 0,083  ⇒  p* = 25,0%   [sửa: mẫu số tp/sl+1 = 4,333]
+> ⚠️ **SỬA 27/08/2026 — xem `docs/adr/013-sua-loi-thu-nguyen-payoff.md`.** Toàn bộ khối §1.2 kế thừa lỗi thứ nguyên: mẫu số phải là `tp_mult/sl_mult + 1 = 4,333`, không phải `tp_mult + 1 = 5`. Số đúng: **25,0% / 25,5%** (dao động 0,5 điểm — kết luận bất biến-theo-chế-độ vẫn đứng). Hoà vốn trượt giá: **1,57R**, không phải 1,60R.
+
+σ̂ = 2,43%:  c_R = 0,30/2,92 = 0,103  ⇒  p* = 25,5%   [sửa]
               dao động giữa hai chế độ:      0,4 điểm
 Đối chiếu cược đối xứng GIAO NGAY cùng hai chế độ (10 §1.1): 56,4% → 58,8% = 2,4 điểm
 ```
@@ -138,9 +140,9 @@ def p_star_event(sigma_d, sl_mult=1.2, tp_mult=4.0) -> PStar:
 **Sức chịu trượt giá của lệnh cắt lỗ** — tính lại, và sửa một phát biểu sai của 0.9:
 
 ```
-Lỗ thực nhận 1,0R:  p* = 21,7%     biên so 30,0% đo được:  +8,3 điểm
-Lỗ thực nhận 1,5R:  p* = (1,5+0,083)/5,5 = 28,8%           +1,2 điểm
-HOÀ VỐN tại tỉ lệ thắng 30,0%:  m = (4×0,30−0,083)/0,70 = 1,60R
+Lỗ thực nhận 1,0R:  p* = 25,0%     biên so 33,7% đo được:  +8,7 điểm   [sửa ADR-013]
+Lỗ thực nhận 1,5R:  p* = (1,5+0,083)/4,833 = 32,8%        +0,9 điểm   [sửa ADR-013]
+HOÀ VỐN tại tỉ lệ thắng 33,7% (số đã sửa off-by-one):  m = (0,337×3,333−0,083)/0,663 = 1,57R
 ```
 
 ⇒ Cổng trượt-giá-stop (§6.2): **cảnh báo tại 1,3R · chặn tại 1,4R** — 1,4R là ngưỡng **thận trọng** (biên còn ~2 điểm, về ~0 sau biên +2pp), *không phải* điểm kỳ vọng âm; kỳ vọng chỉ âm từ ~1,6R. *(0.9 viết "≥1,4R ⇒ kỳ vọng âm" — sai theo chính số học của nó.)*
@@ -489,4 +491,4 @@ Ngày 1: cron funding + OI + ảnh chụp vũ trụ + **cron sổ lệnh (spread
 
 ---
 
-*v1.0 · Phản biện: workflow 8 agent, 929k token, mô phỏng lưu trong transcript phiên (`tranche_stress.py`, `desync.py`, `maxpos.py`…). Nguồn số: docs 11–16 + `scripts/measurements_2026_08_26/`. Mọi con số mới trong bản này (0,685 · 21,7/22,1% · 1,60R · 21,8/năm · 16% LIFO · 23,4%/tuần · 33,9% · 1,36) truy được về phép đo của phản biện hoặc script repo.*
+*v1.0 · Phản biện: workflow 8 agent, 929k token, mô phỏng lưu trong transcript phiên (`tranche_stress.py`, `desync.py`, `maxpos.py`…). Nguồn số: docs 11–16 + `scripts/measurements_2026_08_26/`. Mọi con số mới trong bản này (0,685 · ~~21,7/22,1%~~ →25,0/25,5% · ~~1,60R~~ →1,57R · 21,8/năm · 16% LIFO · 23,4%/tuần · 33,9% · 1,36) truy được về phép đo của phản biện hoặc script repo.*

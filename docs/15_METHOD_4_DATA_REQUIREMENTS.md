@@ -118,7 +118,9 @@ Phương pháp này có **lợi nhuận lệch dương**: nhiều lệnh thua nh
 | DOGEUSDT | 7,0 | 25 | 3,6 | 28,0% |
 | **TỔNG** | | **90** | **3,5** | **30,0%** |
 
-*Tỉ lệ nền khớp cửa sổ (`12 §2.9`): 23,7% · Hoà vốn payoff 4:1: 22,0%*
+*Tỉ lệ nền khớp cửa sổ (`12 §2.9`): 23,7% · Hoà vốn (payoff thật 3,33:1): **25,0%***
+> ⚠️ **SỬA 27/08/2026 — xem `docs/adr/013-sua-loi-thu-nguyen-payoff.md`.** **Hai sửa.** ① Hoà vốn: lỗi thứ nguyên payoff. ② **Bảng trên có lỗi off-by-one:** `pp4_final.py` lấy điểm vào từ `run()` của `pp4_data_needs` — hàm này trả `p = sig.shift(1)` **đã dịch** — rồi vào tại `open[i+1]`, tức **chậm một ngày** so với quy ước repo. Số đúng: **89 lệnh, 33,7%** (BTC 47,8% · ETH 43,5% · SOL 27,8% · DOGE 16,0%). Script đã vá; `null.py`/`all27.py` không bị ảnh hưởng. Biên đúng = 33,7% − 25,0% = **+8,7 điểm**.
+
 
 > **Chú ý SOL: 21,1% — dưới cả tỉ lệ nền.** Với khoảng 20 lệnh mỗi cặp, độ phân tán giữa các cặp rất lớn. Đây là §3 dưới dạng trực quan: **cỡ mẫu mỗi cặp quá nhỏ để nói bất cứ điều gì về cặp đó.**
 

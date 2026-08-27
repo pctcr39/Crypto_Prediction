@@ -8,7 +8,11 @@ sg={s:lr[s].rolling(20).std().shift(1) for s in SYMS}
 trades={}
 for s in SYMS:
     X=D[s]; p,_=run(X); idx=list(X.index)
-    ent=p[(p.diff()>0)].index; out=[]
+    # ★ SUA 27/08: run() tra p = sig.shift(1) (DA dich). Lay entry tu p roi
+    # vao tai open[i+1] => cham MOT ngay so voi quy uoc repo (vao tai open cua
+    # nen KE TIEP nen sinh tin hieu). Dich nguoc lai de khop null.py/all27.py.
+    sig_raw = p.shift(-1)
+    ent=sig_raw[(sig_raw.diff()>0)].index; out=[]
     for t in ent:
         i=idx.index(t); v=sg[s].loc[t]
         if i+1>=len(idx) or not np.isfinite(v): continue

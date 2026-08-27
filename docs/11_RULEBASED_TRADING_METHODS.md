@@ -329,7 +329,9 @@ chốt lời  = giá_vào × (1 + 4,0 · σ̂ · √H)
 hết hạn   = 60 ngày
 ```
 
-Hình dạng bốn ăn một cho hoà vốn **22,0%** (đã tính cả phí 0,1R), so với random walk thuần 1,2σ / 4,0σ cho **23,1%**.
+Hình dạng rào `1,2σ̂ / 4,0σ̂` cho payoff **3,33:1** và hoà vốn **25,0%**, so với random walk thuần cho **23,1%**.
+> ⚠️ **SỬA 27/08/2026 — xem `docs/adr/013-sua-loi-thu-nguyen-payoff.md`.** Số cũ 22,0% kế thừa lỗi thứ nguyên từ `10 §2/C`. Ngưỡng cổng **27,5% giữ nguyên** — nó vốn là biên thận trọng, và vẫn nằm trên hoà vốn đúng 25,0–25,5%.
+
 
 > ⚠️ **Cảnh báo trung thực bắt buộc lặp lại từ `10`:** con số thắng 35% được **mượn** từ hệ đường trung bình mua-hoặc-đứng-ngoài đã kiểm toán, **không phải** đo trên khung rào chắn 1,2σ / 4,0σ. **Hình dạng cược CHUYỂN gánh nặng, không TẠO RA biên.** Toàn bộ edge vẫn nằm ở khẳng định "theo xu hướng nâng 23,1% lên 35%", và khẳng định đó phải được đo trước khi xây bất cứ thứ gì đứng lên nó — đó là Phép đo 2 ở Phần 8.
 

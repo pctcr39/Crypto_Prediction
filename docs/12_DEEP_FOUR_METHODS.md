@@ -20,7 +20,9 @@ Dữ liệu: `BTCUSDT` khung 1 giờ gộp thành **2.062 nến ngày**, từ 20
 | Chọn tham số tốt nhất trên quá khứ có chuyển sang tương lai không? | Ô tốt nhất đoạn 1 (1,04) → đoạn 2 chỉ **0,72**, **bằng đúng mua-và-giữ (0,72)** | ❌ **Lợi thế chọn tham số = 0** |
 | Thứ hạng tham số có ổn định giữa hai đoạn? | Tương quan hạng **+0,19** | ❌ **Gần như ngẫu nhiên** |
 | **Trend Following cắt sụt giảm** | Mua-và-giữ −76,6% / −53,0% → lưới trung vị **−29,9% / −18,9%**; **54/54 quan sát đều cắt** | ✅ **VỮNG NHẤT trong toàn bộ phép đo** |
-| Tỉ lệ chốt lời khung rào chắn 1,2σ̂ / 4,0σ̂ | Ô trung vị **30,0%** · tỉ lệ nền khớp cửa sổ **23,7%** · hoà vốn 22,0% | 🔶 **Dấu đúng, p = 0,24 — không đủ công suất** |
+| Tỉ lệ chốt lời khung rào chắn 1,2σ̂ / 4,0σ̂ | Ô trung vị **30,0%** · tỉ lệ nền khớp cửa sổ **23,7%** · hoà vốn ~~22,0%~~ → **25,0%** | 🔶 **Dấu đúng, p = 0,24 — không đủ công suất** |
+> ⚠️ **SỬA 27/08/2026 — xem `docs/adr/013-sua-loi-thu-nguyen-payoff.md`.** Hoà vốn đúng là 25,0% ⇒ biên của ô trung vị là **+5,0 điểm**, không phải +8,0. Các số đo khác của tài liệu này (30,0% · 23,7% · p=0,237) **không bị ảnh hưởng** — chúng dùng quy ước vào lệnh đúng (`null.py`, `all27.py`).
+
 | **Fair Value Gap "phải được lấp"** | Lấp 50,0 / 59,8 / 69,4 / 79,5% (5/10/20/60 ngày) · **nền cùng độ sâu 45,5 / 60,7 / 70,3 / 85,1%** | ❌ **BỊ BÁC — chênh −5,6 đến +4,5 điểm** |
 | **Quét rồi lấy lại (sweep-and-reclaim)** | Lợi suất 5 ngày sau: tín hiệu **−0,30%** · nền **+0,43%** · p = 0,92 | ❌ **BỊ BÁC — edge ÂM** |
 | **Số tròn hút giá (Osler)** | Dưới mốc +0,06% · trên mốc +0,35% · **giữa khoảng +1,24%** · nền +0,26% | ❌ **Không có hiệu ứng; giữa khoảng lại mạnh nhất** |
