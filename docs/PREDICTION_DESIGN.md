@@ -21,7 +21,8 @@
 | **1** | `expected_vol_pct` — biến động kỳ vọng | Dự báo, có bằng chứng | Mọi khung |
 | **2** | `q10 / q50 / q90` — dải giá | Dự báo, suy từ (1) | Mọi khung |
 | **3** | `p_up` — xác suất tăng | Dự báo, suy từ cùng một phân phối | Mọi khung |
-| **4** | **Khuyến nghị vào lệnh** — hướng · mức dừng lỗ · mức chốt lời · cỡ gợi ý | **Lời khuyên có điều kiện**, kèm ngưỡng hoà vốn của chính nó | **Chỉ khung 1 ngày** |
+| **4a** | **Khuyến nghị VÀO** — hướng · mức dừng lỗ · mức chốt lời · cỡ gợi ý | **Lời khuyên có điều kiện**, kèm ngưỡng hoà vốn của chính nó | **Chỉ khung 1 ngày** |
+| **4b** | **Khuyến nghị THOÁT** — khuyến nghị nào vừa đóng, vì sao, R thực nhận | **Khẩn cấp nhất** — hiển thị ngang hàng 4a, không ẩn | **Chỉ khung 1 ngày** |
 
 Kèm theo mọi lúc, không bao giờ ẩn: **`p_required`** (ngưỡng thắng cần để hoà vốn) · **`trend_weight`** (đồng hồ xu hướng) · **`data_freshness`** · **`silence_reason`**.
 
@@ -30,7 +31,7 @@ Kèm theo mọi lúc, không bao giờ ẩn: **`p_required`** (ngưỡng thắng
 | Hạng mục | Trước (hệ tự giao dịch) | **Nay (hệ khuyến nghị)** |
 |---|---|---|
 | Tầng L7 | Định cỡ + veto **thực thi** | **Khuyến nghị cỡ + cảnh báo rủi ro** — người dùng quyết |
-| Lệnh dừng lỗ | Lệnh stop-limit **treo trên sàn** | **Mức giá khuyến nghị**, hiển thị; người dùng tự đặt |
+| Lệnh dừng lỗ | Lệnh stop-limit **treo trên sàn** | **Khuyến nghị BẮT BUỘC kèm chỉ dẫn đặt lệnh stop-limit treo ngay lúc vào** — xem §L5 «Vì sao lệnh treo là bắt buộc» |
 | Đối soát (L8) | Đối soát vị thế với sàn mỗi 5 phút | **Theo dõi kết cục của khuyến nghị đã phát** |
 | Khoá API | Cần khoá giao dịch từ GATE 4 | **Không cần khoá giao dịch. Chỉ đọc dữ liệu công khai** |
 | GATE 2–4 (tiền thật) | Trong phạm vi | **Ngoài phạm vi hiện tại** |
@@ -148,6 +149,12 @@ class Tranche:
     instrument: Literal["spot"]        # không có giá trị khác ở tầng kiểu
     status: TrancheStatus
     p_star_at_entry: float             # ngưỡng hoà vốn lúc phát — để chấm lại sau
+    # ── KẾT CỤC · None khi status == "active" (B3) ──
+    exit_time: Optional[datetime] = None
+    exit_price: Optional[float] = None
+    close_reason: Optional[Literal["hit_target","hit_stop","expired","superseded"]] = None
+    realized_r: Optional[float] = None      # (exit − entry) / (entry · 1,2·σ̂_entry)
+    unverified_since: Optional[datetime] = None   # mất kết nối ⇒ sổ chưa tiến (B1)
 
 @dataclass(frozen=True)
 class Prediction:
@@ -173,7 +180,8 @@ class Prediction:
 
     # ── khuyến nghị · None và () là giá trị HỢP LỆ và THƯỜNG GẶP ──
     trend_weight: Optional[float]      # w — đồng hồ xu hướng, hiển thị cả khi im lặng
-    new_tranches: tuple[Tranche, ...]  # khuyến nghị MỚI phát lần này
+    new_tranches: tuple[Tranche, ...]     # khuyến nghị VÀO mới phát lần này
+    closed_tranches: tuple[Tranche, ...]  # ★ KHUYẾN NGHỊ THOÁT — hiển thị NGANG HÀNG
     active_tranches: tuple[Tranche, ...]  # khuyến nghị còn hiệu lực
     warnings: tuple[str, ...]          # cảnh báo rủi ro từ L7
 
@@ -325,7 +333,9 @@ khoảng cách                      = c_R/(1 + tp/sl)         = 1,92 điểm   �
 
 **Sức chịu trượt giá của mức dừng lỗ:**
 
-Tỉ lệ chốt lời đo được: **33,7%** (89 lệnh, 4 cặp, vào tại `open[t+1]`).
+Tỉ lệ chốt lời **theo quy ước vận hành** (stop treo, TP tại close): **29,2%** — thấp hơn quy ước cả-hai-intrabar (33,7%) nhưng **EV cao hơn 57%** vì lệnh thắng trung bình đạt **4,74R** thay vì bị chặn ở 3,33R.
+
+> Cổng `p_star = 25,0%` tính theo payoff **hợp đồng** 3,33R ⇒ nó **thận trọng theo cấu tạo**: bỏ qua toàn bộ phần upside của việc để lệnh thắng chạy. Biên trên chính điều kiện của cổng: **+4,2 điểm**. EV thực đo kể cả phần chạy: **+0,593R**.
 
 | Lỗ thực nhận | EV mỗi lệnh |
 |---|---|
@@ -381,12 +391,43 @@ SỰ KIỆN MỞ = mỗi bước 0,25 mà w vượt LÊN và slot đó đang TR�
     tại close kế tiếp, nếu w vẫn ≥ mức slot ⇒ SỰ KIỆN MỚI (entry mới, σ̂ mới).
     Không cooldown — cooldown là tham số mới.
 
-SỰ KIỆN ĐÓNG:
-    · chạm target/stop  — soi INTRABAR (high/low); cùng nến chạm cả hai ⇒ STOP trước
-    · w bước XUỐNG      — đóng theo LIFO
-    · quá deadline
-    (Người dùng có thể đã thoát sớm hoặc không vào — sổ ghi nhận điều đó riêng, §5.3)
+SỰ KIỆN ĐÓNG — QUY ƯỚC BẤT ĐỐI XỨNG, có chủ ý:
+    · chạm STOP    — soi INTRABAR (low ≤ stop). Khớp với lệnh stop-limit TREO
+    · chạm TARGET  — kiểm tại CLOSE (close ≥ target), KHÔNG soi intrabar
+    · cùng nến chạm cả hai ⇒ STOP trước (thận trọng)
+    · w bước XUỐNG ⇒ đóng theo LIFO   ·   quá deadline
+    (Người dùng có thể đã thoát sớm hoặc không vào — sổ ghi riêng, §5.3)
 ```
+
+### ★ Vì sao lệnh stop treo là BẮT BUỘC, còn target thì KHÔNG
+
+Hai rào có bản chất khác nhau, và phép đo xác nhận sự bất đối xứng đó là **đúng**:
+
+| Quy ước | % thắng | R TB lệnh thắng | **EV sau phí** |
+|---|---|---|---|
+| Stop treo **+ limit treo tại target** | 33,7% | 3,33R *(bị chặn)* | +0,377R |
+| **Stop treo, TP kiểm tại close** ← dùng | **29,2%** | **4,74R** *(chạy tiếp)* | **+0,593R** |
+
+*89 lệnh, 4 cặp — `scripts/measurements_2026_08_26/groupB.py`*
+
+> **Tỉ lệ thắng thấp hơn nhưng EV cao hơn 57%.** Đặt lệnh limit tại target **chặn mất lệnh thắng lớn** — đúng thứ mà một hệ theo xu hướng sống nhờ. Stop thì ngược lại: nó bảo vệ, và phải chắc chắn.
+
+**Chỉ dẫn bắt buộc in cùng mọi khuyến nghị vào:**
+
+> *«Đặt lệnh stop-limit treo tại {stop_price} NGAY khi vào lệnh. KHÔNG đặt lệnh chờ tại mức chốt lời — hệ sẽ báo khi đến lúc thoát.»*
+
+**Vì sao không để tuỳ người dùng** — lập luận không phải về lợi nhuận mà về **đo lường được**:
+
+| | |
+|---|---|
+| **Có lệnh treo** | Lỗ = 1,0R **theo cấu tạo**. Đặc tả kiểm chứng được |
+| **Không có lệnh treo** | Lỗ phụ thuộc **người dùng có mở máy hôm đó không** — hệ **không quan sát được, không kiểm soát được** |
+
+Đo trên 59 lệnh chạm stop, quy ước «kiểm mỗi ngày, thoát tại close»: lỗ TB **0,86R** — *tốt hơn 1,0R về trung bình* — nhưng **p90 = 1,58R** (vượt hoà vốn 1,57R), **max 4,23R**, và **18,6% số stop vượt ngưỡng chặn 1,4R**.
+
+> Hình dạng *nhặt xu trước xe lu*: trung bình đẹp hơn, đuôi trái dày hơn nhiều. Với n=59, trung bình chưa đáng tin còn đuôi thì đã thấy. **Và quan trọng hơn cả: nó không phải một đặc tả — nó là một hi vọng.** Với hệ mà sản phẩm là bảng điểm trung thực, một đầu vào không quan sát được là chí mạng: bạn không bao giờ biết bảng điểm đang đo kỹ năng của hệ hay thói quen của người dùng.
+
+**Bảng điểm chấm SONG SONG cả hai quy ước** (§9.1) — chi phí gần bằng 0, và nó cho người dùng thấy đúng cái giá của việc không đặt lệnh treo.
 
 **Vì sao k = 1 (thang σ̂ ngày):** ở thang 35 ngày, đo được **11/23 lệnh kết thúc bằng hết hạn** thay vì chạm rào giá ⇒ hình dạng 4:1 **không xảy ra**, và toàn bộ lập luận kinh tế sụp. Ở k=1: **0/23 hết hạn**, thời gian nắm giữ thực tế ~6 ngày.
 
@@ -453,10 +494,21 @@ def predict(bars, funding_hist, book: TrancheBook, now_hint, cfg
     """HÀM THUẦN: mọi trạng thái vào-ra qua tham số; không đồng hồ, không I/O,
     không global. Gọi hai lần cùng đầu vào ⇒ giống hệt từng byte."""
 
-    # ── L0 ── độ tươi chặn trước mọi thứ
+    # ── L0 ── độ tươi
     fresh = freshness(bars, now_hint, cfg)
-    if fresh in ("delayed", "disconnected"):
-        return no_opinion(fresh, "dữ liệu không đủ tươi"), book
+
+    # ★ MẤT KẾT NỐI: không có nến để tiến sổ. Đánh dấu, KHÔNG đoán.
+    if fresh == "disconnected":
+        return no_opinion(fresh, "mất kết nối"), book.mark_unverified(bars.index[-1])
+
+    # ★★ TIẾN SỔ TRƯỚC MỌI `return` KHÁC (B1)
+    #    Soi rào · đóng LIFO · cưỡng chế deadline — bắt kịp qua NHIỀU nến nếu có gap.
+    #    Việc này KHÔNG phụ thuộc cổng phí: một khuyến nghị đã phát phải được
+    #    theo dõi tới cùng, kể cả khi hệ không còn phát khuyến nghị mới.
+    book, closed = advance_book(book, bars, cfg)
+
+    if fresh == "delayed":     # nến trễ vẫn là nến THẬT ⇒ tiến sổ được, chỉ không mở mới
+        return display_only(..., closed=closed, reason="dữ liệu chậm"), book
 
     # ── L1–L2 ──
     feats = build_features(bars)                          # shift_all(1) bên trong
@@ -472,22 +524,23 @@ def predict(bars, funding_hist, book: TrancheBook, now_hint, cfg
     # ── L4 ── cổng phí
     p_req = p_required_symmetric(sigma, H, "spot", f_hat)
     if cfg.tf not in TRADE_TF or p_req.value > RULE11_ACC:
-        return display_only(F, p_req, w=None,
+        return display_only(F, p_req, w=None, closed=closed,
                             reason="khung hiển thị — không phát khuyến nghị"), book
 
     # ── L5 ── hướng + máy trạng thái tranche
     w = ensemble_weight(bars, GRID_27)
     events, book2 = tranche_step(w, book, sigma, last_close, bars.close_time)
     if not events:
-        return display_only(F, p_req, w, f"w={w:.2f} — không có slot mở"), book2
+        return display_only(F, p_req, w, closed=closed,
+                            reason=f"w={w:.2f} — không có slot mở"), book2
 
     # ── L6 ── học máy CHỈ LỌC BỎ
     p_star = p_star_event(sigma)
     kept = [ev for ev in events
             if calibrate(meta.predict(feats, ev)) >= p_star.value + 0.02]
     if not kept:
-        return display_only(F, p_req, w,
-                            f"L6 loại {len(events)} sự kiện (p_win < {p_star.value:.3f}+2pp)"), book2
+        return display_only(F, p_req, w, closed=closed,
+                            reason=f"L6 loại {len(events)} sự kiện (p_win < {p_star.value:.3f}+2pp)"), book2
 
     # ── L7 ── cỡ gợi ý + cảnh báo (KHÔNG chặn)
     sized = [with_size(ev, cfg) for ev in kept]
@@ -499,11 +552,29 @@ def predict(bars, funding_hist, book: TrancheBook, now_hint, cfg
         expected_vol_pct=sigma * 100, q10=q10, q50=q50, q90=q90, p_up=p_up,
         p_required=p_req.value, e_move_pct=..., cost_assumed_pct=...,
         instrument=choose_instrument_display(H, f_hat),
-        trend_weight=w, new_tranches=tuple(sized),
+        trend_weight=w, new_tranches=tuple(sized), closed_tranches=closed,
         active_tranches=book2.active, warnings=warns,
         data_freshness=fresh, silence_reason=None,
     ), book2.with_new(sized)
 ```
+
+### Ma trận: tiến sổ so với mở khuyến nghị mới
+
+| Trạng thái | **Tiến sổ** (soi rào · LIFO · deadline) | Mở tranche mới |
+|---|---|---|
+| `live` | ✅ qua mọi nến mới | ✅ nếu cổng mở |
+| `delayed` | ✅ **có** — nến trễ vẫn là nến thật | ❌ |
+| `disconnected` | ❌ không có dữ liệu ⇒ gắn `unverified_since`, **không đoán** | ❌ |
+| **Cổng phí đóng** (σ̂ thấp) | ✅ **bình thường** | ❌ |
+| Khung không giao dịch | ✅ *(sổ chỉ tồn tại ở khung 1d)* | ❌ |
+
+> **Vì sao đây là blocker, không phải tinh chỉnh:** cổng phí đóng khi `σ̂ < 2,19%/ngày`. Đo trên BTC: **32,3% số ngày**, chuỗi liên tục dài nhất **155 ngày** — **dài hơn chính deadline 60 ngày**. Dưới thiết kế cũ, một khuyến nghị mở ra rồi thị trường vào chế độ vol thấp, người dùng **không nhận được tín hiệu thoát nào trong năm tháng**, trong khi sổ — thứ §5.1 gọi là *bằng chứng duy nhất* — vẫn ghi nó là `active`.
+>
+> | Cặp | % ngày cổng đóng | Chuỗi dài nhất |
+> |---|---|---|
+> | **BTCUSDT** | **32,3%** | **155 ngày** |
+> | ETHUSDT · DOGEUSDT | 9,2% | 111 · 49 ngày |
+> | SOLUSDT | 2,0% | 21 ngày |
 
 **Bất biến của hàm này:** mọi nhánh hoặc trả `display_only` (không khuyến nghị mới), hoặc trả khuyến nghị **theo đúng hướng mà L5 quyết**. **Không nhánh nào tạo ra hướng.** L6 chỉ xuất hiện ở vị trí có thể trả `display_only`.
 
@@ -525,15 +596,21 @@ def predict(bars, funding_hist, book: TrancheBook, now_hint, cfg
 ## 5.2 · Máy trạng thái
 
 ```
-      phát khuyến nghị
+      phát khuyến nghị VÀO
             │
             ▼
-        [ active ] ──── chạm target ──────► [ hit_target ]
-            │      ──── chạm stop ────────► [ hit_stop   ]
-            │      ──── quá deadline ─────► [ expired    ]
-            │      ──── w bước xuống ─────► [ superseded ]  (LIFO)
-            │
+        [ active ] ──── close ≥ target ───► [ hit_target ]  ─┐
+            │      ──── low ≤ stop ───────► [ hit_stop   ]  ─┤ mọi nhánh này
+            │      ──── quá deadline ─────► [ expired    ]  ─┤ phát KHUYẾN NGHỊ
+            │      ──── w bước xuống ─────► [ superseded ]  ─┘ THOÁT (§0.2 · 4b)
+            │           (LIFO)                                 và ghi exit_time,
+            │                                                  exit_price,
+            │      ──── mất kết nối ──────► [ active + unverified_since ]
+            │                                (KHÔNG đổi trạng thái — không đoán)
             └──── slot trống ⇒ đủ điều kiện tái vũ trang ở close kế tiếp
+
+★ Bước tiến sổ chạy VÔ ĐIỀU KIỆN mỗi lần predict() có nến mới — kể cả khi cổng
+  phí đóng và hệ không phát khuyến nghị vào nào (B1). Xem ma trận ở Phần 4.
 ```
 
 ## 5.3 · Theo dõi việc người dùng có làm theo hay không
@@ -553,6 +630,9 @@ Hệ **không biết** người dùng có vào lệnh không, và **không đư�
 đọc sổ → dựng lại TrancheBook từ các bản ghi status="active"
        → đối chiếu: mọi tranche active phải có deadline > hiện tại
        → tranche quá hạn mà chưa đóng ⇒ đóng với status="expired", ghi cảnh báo
+       → advance_book bắt kịp qua MỌI nến kể từ lần chạy cuối (bất biến 27)
+       → mọi tranche đóng trong lúc bắt kịp ⇒ vào closed_tranches của lần phát đầu tiên
+         sau khởi động, kèm cảnh báo "khuyến nghị thoát bị TRỄ từ <exit_time>"
        → KHÔNG BAO GIỜ tự tạo lại rào chắn từ trí nhớ hoặc từ giá hiện tại
 ```
 
@@ -586,6 +666,11 @@ Hệ **không biết** người dùng có vào lệnh không, và **không đư�
 | 22 | Cấm định danh hệ thuật ngữ | Quét `src/`: `order_block` · `fvg` · `bos` · `choch` · `liquidity_grab` · `killzone` · `elliott` · `wave_count` · `harmonic` · `gartley` · `smart_money` |
 | 23 | **Kỳ vọng tại `p_star` bằng 0** | `assert abs(EV(p_star_event(σ), sl, tp, cost)) < 1e-9` với σ ∈ {0,005 … 0,20} — tính trực tiếp từ `sl_mult`/`tp_mult`/`cost`, **không** đọc lại công thức. Bất biến này bắt lớp lỗi thứ nguyên mà bảng số không bắt được (ADR-013) |
 | 24 | **Khoảng cách null → hoà vốn** | `assert p_star − sl/(sl+tp) == c_R/(1 + tp/sl)` và luôn **dương** — hình dạng cược không tạo ra edge |
+| 25 | **Tiến sổ vô điều kiện** (B1) | Ép `p_required > 0,60` trên nến mà giá đã xuyên stop ⇒ tranche đó **phải** chuyển `hit_stop`. Và: gọi `predict()` N lần liên tiếp với cổng đóng ⇒ mọi tranche quá deadline **phải** thành `expired` |
+| 26 | **Mất kết nối không đoán** (B1) | `disconnected` ⇒ sổ không đổi trạng thái tranche nào, mọi tranche active mang `unverified_since` |
+| 27 | **Bắt kịp qua gap** (B1) | Cho `advance_book` một chuỗi 10 nến sau gián đoạn ⇒ kết cục giống hệt khi chạy từng nến một |
+| 28 | **Mọi tranche đóng đều xuất hiện** (B3) | Tranche rời `active` ⇒ **phải** có mặt trong `closed_tranches` của đúng lần `predict()` đó, kèm đủ `exit_time`/`exit_price`/`close_reason`/`realized_r` |
+| 29 | **Quy ước rào bất đối xứng** (B11) | Stop soi `low`, target soi `close` — test một nến có `high ≥ target` nhưng `close < target` ⇒ tranche **vẫn active** |
 
 **Quy tắc chọn chỗ đặt:**
 
@@ -724,6 +809,7 @@ Dải:  độ phủ [q10,q90] = 80% ± 3pp trên ≥500 dự đoán đã chấm
 | Xác suất | Reliability diagram + Brier | Climatology |
 | Phân phối | **CRPSS** | Climatology + persistence |
 | Khuyến nghị | Tỉ lệ chốt lời, lợi suất theo R | **`p_star` tại lúc phát** + 7 baseline |
+| **Khuyến nghị — quy ước phụ** | Cùng chỉ tiêu, nhưng giả định **không có lệnh stop treo** (thoát tại close nến xuyên stop) | Quy ước chính. **Hiển thị cả hai** — cho người dùng thấy giá của việc bỏ lệnh treo (B11) |
 | Tổng thể | **FVA** (Forecast Value Added) | Từng baseline |
 
 ## 9.2 · Ngân sách im lặng — ba con số có tên riêng, in trên màn hình
@@ -732,6 +818,7 @@ Dải:  độ phủ [q10,q90] = 80% ± 3pp trên ≥500 dự đoán đã chấm
 |---|---|---|
 | **Tranche-mở / đồng / năm** ← in to nhất | **~9** + phần tái vũ trang (đo ở GATE 1) | Số người dùng cần biết để hiểu im lặng là bình thường |
 | Thay-đổi-tỉ-trọng / đồng / năm | 17–24 (đo: BTC 21,8 · ETH 20,5 · SOL 17,1 · DOGE 18,2) | |
+| **Sự kiện ĐÓNG / đồng / năm** | **~9** *(bảo toàn: mỗi tranche mở rồi cũng đóng)* — trong đó ~63% bằng stop |
 | Lệnh-ô-đơn / đồng / năm (tham chiếu) | 3,5 | |
 | Trần phát khung 1h · 4h | **0 tuyệt đối** — một lần phát bất kỳ ⇒ test đỏ | |
 | Trần phát khung 1d | > 2× kỳ vọng tranche-mở ⇒ **cảnh báo** | Hệ nói quá nhiều cũng là chế độ hỏng |
@@ -741,7 +828,9 @@ Dải:  độ phủ [q10,q90] = 80% ± 3pp trên ≥500 dự đoán đã chấm
 1. **`p_required` ngay cạnh `p_up`, ở mọi khung** — kể cả khung không giao dịch. Người dùng thấy khoảng cách, không phải đoán.
 2. **Im lặng có số**: *"0/2.400 nến qua cổng trong 7 ngày — đây là hành vi ĐÚNG. Kỳ vọng ~9 khuyến nghị/đồng/năm."*
 3. **Độ tươi dữ liệu**: Live / Chậm / Mất kết nối / Dự đoán cũ.
-4. **Bảng điểm lịch sử** — không phải trang phụ, không ẩn sau menu.
+4. **Bảng điểm lịch sử** — không phải trang phụ, không ẩn sau menu. **Chấm song song hai quy ước stop** (§9.1).
+5. **Khuyến nghị THOÁT hiển thị ngang hàng khuyến nghị VÀO** — cùng vùng, cùng cỡ chữ. Với hệ khuyến nghị, tín hiệu thoát là thứ khẩn cấp nhất.
+6. **Chỉ dẫn đặt lệnh stop treo** in kèm mọi khuyến nghị vào, không thu gọn, không ẩn.
 
 ## 9.4 · Quy ước thị giác — không thương lượng
 
@@ -762,6 +851,14 @@ Dải:  độ phủ [q10,q90] = 80% ± 3pp trên ≥500 dự đoán đã chấm
 | **Funding** | > 24h ⇒ coi như thiếu | `f̂` = p95-expanding (giả định xấu nhất) | Kẹp ±1,40 nuốt outlier; ngoài kẹp ⇒ cảnh báo |
 | **Open Interest** *(chỉ nuôi đặc trưng L6)* | Đặc trưng = NaN ⇒ L6 bỏ qua sự kiện (**thu hẹp** — hợp bất biến đơn điệu) | Như trễ | z-score tự hấp thụ; \|z\| > 8 ⇒ NaN |
 | **Ảnh chụp vũ trụ** *(chỉ tầng cắt ngang tương lai)* | Dùng ảnh gần nhất TRƯỚC kỳ; quá 45 ngày ⇒ tầng đó đứng ngoài + cảnh báo | Tầng đó đứng ngoài | Số symbol lệch > 20% so tháng trước ⇒ chặn + cảnh báo |
+
+**Độ trễ phản ứng của người dùng** *(chỉ tồn tại vì hệ là khuyến nghị — B11)*:
+
+| Mức | Lỗ thực nhận khi chạm stop | Hệ quả |
+|---|---|---|
+| **Đặt lệnh stop treo** ← khuyến nghị | **1,00R theo cấu tạo** | Đặc tả kiểm chứng được |
+| Kiểm hằng ngày | TB 0,86R · **p90 1,58R** · max 4,23R · 18,6% vượt 1,4R | Trung bình tốt hơn, **đuôi không kiểm soát được** |
+| Kiểm thưa hơn | **Không đo được** | Ngoài khả năng quan sát của hệ |
 
 **Chế độ hỏng của mô hình:**
 
