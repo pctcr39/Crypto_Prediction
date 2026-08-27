@@ -53,6 +53,15 @@ Khi hệ tự giao dịch, sai lầm của nó hiện ra thành lỗ — một c
 
 ---
 
+## 0.4b · Nguyên tắc SỐ: tài liệu không giữ số
+
+| | |
+|---|---|
+| **Số định lượng** | Sinh bởi `scripts/spec/measure_spec.py` → [`spec_numbers.md`](generated/spec_numbers.md). Tài liệu **trỏ**, không **chép** |
+| **Số định tính / ngoại sinh** | Trích từ hồ sơ bằng chứng `09`–`17`, ghi rõ nguồn ở Phụ lục A.2 |
+| **Quy tắc cứng** | Số nào `measure_spec.py` không sinh được thì **không được xuất hiện** trong tài liệu |
+| **Vì sao** | Ba vòng phản biện: ~17/28 blocker cùng một nguyên nhân — trích số đo bằng **hệ khác** với hệ được đặc tả. Sửa từng số sinh vòng sau; tháo số ra xoá cả lớp lỗi |
+
 ## 0.5 · Mười hai luật dưới phạm vi khuyến nghị (m01)
 
 | # | Luật | Dưới phạm vi này |
@@ -359,11 +368,12 @@ def realized_variance(bars_1d):
     # Chọn bằng phép đo, không bằng quy ước — xem bảng dưới.
     return (np.log(bars_1d.high / bars_1d.low) ** 2) / (4 * LN2)
 
-def sigma_hat_daily(bars_1d, *, window: int = 20) -> float:
-    # σ̂ LUÔN là độ lệch chuẩn log-return NGÀY — bất kể panel nào đang phục vụ.
-    # Tính từ NẾN NGÀY, không phải nến của cfg.tf.
-    # Đây là hàm DUY NHẤT sinh ra σ̂ (bất biến #11).
-    return float(np.sqrt(realized_variance(bars_1d).rolling(window).mean().shift(1).iloc[-1]))
+def sigma_hat_daily(bars_1d) -> float:
+    # ĐƯỜNG DUY NHẤT sinh σ̂ — và nó là HAR, không phải trung bình trượt.
+    # Bản rc1 định nghĩa σ̂ HAI lần (rolling mean ở L1, HAR ở L2), cả hai tự nhận
+    # là duy nhất. Phép đo phân xử: rolling(20).mean(Parkinson) THUA EWMA(0,94)
+    # 2,2% theo QLIKE (trượt chính cổng L2), HAR-Parkinson THẮNG 23,6%.
+    return har_rv(bars_1d) or ewma_sigma(bars_1d, lam=0.94)
 ```
 
 **Vì sao Parkinson — đo trên 2.062 ngày BTC, mục tiêu là RV THẬT tính từ nến 1 giờ:**
@@ -377,14 +387,7 @@ def sigma_hat_daily(bars_1d, *, window: int = 20) -> float:
 
 > **Close-to-close cho R² ÂM ở chân trời nhiều ngày.** Đó chính là ước lượng mà mọi phép đo trước đây trong repo đã dùng — và cũng là ước lượng tệ nhất cho đúng việc mà σ̂ phải làm.
 
-**Đổi sang Parkinson KHÔNG làm lệch các hằng số đã đo** *(89–90 lệnh, 4 cặp, quy ước rào bất đối xứng)*:
-
-| Ước lượng | n | % thắng | R TB thắng | EV | Ngày TB | % hết hạn |
-|---|---|---|---|---|---|---|
-| Close-to-close | 89 | 28,1% | 4,76R | +0,536R | 5,4 | **0,0%** |
-| **Parkinson** | 90 | 30,0% | 4,48R | +0,559R | 5,8 | **0,0%** |
-
-⇒ Quyết định `k = 1` (0% hết hạn) và thời gian nắm giữ ~6 ngày **bền vững qua cả hai ước lượng**.
+**Đổi sang Parkinson không làm đổi kết luận `k = 1`** — tỉ lệ hết hạn bằng 0 ở cả hai ước lượng. Số → [`spec_numbers.md §1`](generated/spec_numbers.md) (`reasons`).
 
 ### Thang thời gian — σ̂ nội bộ LUÔN là NGÀY
 
@@ -482,16 +485,15 @@ def p_star_event(sigma_d, sl_mult=1.2, tp_mult=4.0) -> PStar:
 
 **Hai cổng là hai kiểu dữ liệu `PReq` / `PStar` — không so sánh chéo được.** Đây là biện pháp chống lặp lại lỗi thứ nguyên đã xảy ra hai lần trong dự án này.
 
-**Kiểm số học:**
+**Kiểm số học · độ bền qua bề mặt rào · sức chịu trượt giá** → **[`docs/generated/spec_numbers.md`](generated/spec_numbers.md)** §1, §3, §5.
 
-| σ̂ (độ lệch chuẩn log-return ngày) | R = 1,2σ̂ | c_R | **p\*** |
-|---|---|---|---|
-| 3,00% (BTC 2021–26) | 3,60% | 0,083 | **25,0%** |
-| 2,43% (chế độ vol thấp 2023–26) | 2,92% | 0,103 | **25,5%** |
-| | | *dao động* | **0,5 điểm** |
-| *Đối chiếu: cược đối xứng giao ngay, cùng hai chế độ* | | | *57,30% → 59,01% = **1,71 điểm*** |
-
-> **Đây là lý do tồn tại của hình dạng cược bất đối xứng:** nó làm ngưỡng hoà vốn **gần bất biến theo chế độ thị trường** (0,5 so với 1,71 điểm — chặt hơn **3,4 lần**). Đó là cách duy nhất đã tìm thấy để biến một trần năng lực cố định (51–56%) thành kỳ vọng dương mà không cần giả định nào về chế độ.
+> ### ⛔ TÀI LIỆU NÀY KHÔNG CHÉP SỐ ĐỊNH LƯỢNG
+>
+> Mọi con số kinh tế được sinh bởi **`scripts/spec/measure_spec.py`** — script **thực thi đúng đặc tả** này: HAR-Parkinson · tổ hợp 27 ô · máy trạng thái tranche đầy đủ (LIFO · tái vũ trang) · stop intrabar / TP tại close · vào tại `open[t+1]`.
+>
+> **Vì sao:** ba vòng phản biện cho thấy ~17 trong 28 blocker cùng một nguyên nhân — tài liệu trích số **đo bằng một hệ khác với hệ nó đặc tả** (một ô lưới thay vì tổ hợp; một lệnh mỗi tín hiệu thay vì máy tranche; close-to-close thay vì Parkinson; cả-hai-intrabar thay vì bất đối xứng). Sửa từng số sinh ra vòng sau. Tháo số ra khỏi văn bản xoá cả lớp lỗi.
+>
+> **Quy tắc:** số nào `measure_spec.py` không sinh được thì **không được xuất hiện** trong tài liệu này.
 
 **Bất biến khoảng cách — hình dạng cược KHÔNG tạo ra edge:**
 
@@ -534,50 +536,19 @@ NULL_SEED, NULL_PATHS, SUB_STEPS = 20_260_827, 200_000, 24
 
 > Tỉ lệ nền thực nghiệm **23,67%** là đối chứng dùng cho cổng — nó bao gồm cả phần trôi, nên nó là thanh xà đúng. Null mô phỏng 23,42% dùng cho **bất biến test**, nơi cần một con số tái lập được không phụ thuộc dữ liệu.
 
-**Kiểm độ bền qua bề mặt tham số rào** *(90 lệnh, 4 cặp — kiểm tra độ bền, KHÔNG phải thủ tục chọn)*
+**Kiểm độ bền qua bề mặt tham số rào** → [`spec_numbers.md §5`](generated/spec_numbers.md)
 
-Đo **đúng đặc tả đã chốt**: ước lượng Parkinson · stop soi intrabar / TP soi tại close · vào tại `open[t+1]`.
+Lưới 4×4 cấu hình `(stop, target)`, mỗi ô chạy **trên chính máy trạng thái tranche** — không phải trên một ô lưới đơn. Đây là **kiểm tra độ bền, KHÔNG phải thủ tục chọn**: nếu biên chỉ dương ở vài ô thì lập luận kinh tế mong manh, và đó mới là phát hiện.
 
-| stop / target | payoff | hoà vốn | % thắng | **biên** | R TB thắng | **EV sau phí** |
-|---|---|---|---|---|---|---|
-| 1,0 / 4,0 | 4,00R | 22,0% | 26,7% | +4,7 | 5,46R | +0,623R |
-| 1,2 / 3,0 | 2,50R | 31,0% | 35,6% | +4,6 | 3,69R | +0,584R |
-| **1,2 / 4,0** ← dùng | **3,33R** | **25,0%** | **30,0%** | **+5,0** | **4,48R** | **+0,559R** |
-| 1,2 / 4,8 | 4,00R | 21,7% | 28,9% | +7,2 | 5,48R | +0,788R |
-| 1,5 / 4,0 | 2,67R | 29,1% | 32,2% | +3,1 | 3,58R | +0,410R |
-| 2,0 / 6,0 | 3,00R | 26,2% | 34,4% | +8,2 | 3,88R | +0,632R |
-| *…10 ô còn lại* | | | | +3,3 … +7,6 | | +0,454 … +0,936R |
-
-```
-Biên: trung vị +5,7 · min +3,1 · max +8,2 · độ lệch 1,6
-16/16 ô có biên DƯƠNG   ·   16/16 ô có EV DƯƠNG
-```
-
-⇒ Kết luận **không phụ thuộc lựa chọn rào**. Ô đang dùng nằm dưới trung vị một chút — **không phải ô được chọn vì đẹp**.
-
-> ⚠️ **Bảng này thay bảng cũ đo bằng close-to-close + cả-hai-intrabar** (`barrier_surface.py`), vốn cho ô 1,2/4,0 là +8,7 điểm và mâu thuẫn với con số +5,0 ở chính tài liệu này. Đo lại đúng đặc tả: `barrier_surface_v2.py`. Bề mặt mới **ổn định hơn** (độ lệch 1,6 so với 2,8) và mọi ô đều dương cả biên lẫn EV.
+> ⚠️ Ô đang dùng `1,2/4,0` **không phải ô tốt nhất** trên bề mặt. Giữ nó vì lý do phương pháp (`ADR-013 §3` lý do #1: đổi tham số để khôi phục một kết luận mong muốn là p-hacking), **không** vì nó tối ưu. `ADR-013` lý do #2 — *«ô 1,2/4,8 tệ hơn»* — đã bị chính bảng sinh tự động **bác bỏ**; xem `ADR-016`.
 
 **Sức chịu trượt giá của mức dừng lỗ:**
 
-Tỉ lệ chốt lời **theo quy ước vận hành** (stop treo · TP tại close · σ̂ Parkinson): **30,0%** (n = 90). Thấp hơn quy ước cả-hai-intrabar nhưng **EV cao hơn** vì lệnh thắng trung bình đạt **4,48R** thay vì bị chặn ở 3,33R.
+**Sức chịu trượt giá của mức dừng lỗ** → [`spec_numbers.md §3`](generated/spec_numbers.md).
 
-> Cổng `p_star = 25,0%` tính theo payoff **hợp đồng** 3,33R ⇒ nó **thận trọng theo cấu tạo**: bỏ qua toàn bộ upside của việc để lệnh thắng chạy.
->
-> | | |
-> |---|---|
-> | Biên trên điều kiện của chính cổng | **+5,0 điểm** (30,0% vs 25,0%) |
-> | Nâng so tỉ lệ nền thực nghiệm | **+6,3 điểm** (30,0% vs 23,67%) |
-> | **EV thực đo, kể cả phần chạy** | **+0,559R** |
+Hoà vốn được tính từ **chính cặp (p, W) đang vận hành**, không phải từ payoff hợp đồng — vì lệnh thắng chạy quá mức chốt lời. Ngưỡng **cảnh báo 1,3R · chặn 1,4R** giữ nguyên; bảng sinh tự động kiểm chúng vẫn nằm trong vùng kỳ vọng dương.
 
-| Lỗ thực nhận | EV mỗi lệnh |
-|---|---|
-| **1,00R** *(giả định nền)* | **+0,377R** |
-| 1,30R *(ngưỡng cảnh báo)* | +0,171R |
-| 1,40R *(ngưỡng chặn)* | +0,105R |
-| 1,50R | +0,046R |
-| **1,57R** | **−0,001R** ← hoà vốn |
-
-Ngưỡng cảnh báo 1,3R và chặn 1,4R nằm **trong vùng kỳ vọng dương** — chúng là cổng thận trọng, không phải điểm kỳ vọng âm.
+> Cổng `p_star` tính theo payoff **hợp đồng** ⇒ **thận trọng theo cấu tạo**: nó bỏ qua toàn bộ upside của phần chạy. Đây là hai cơ sở khác nhau cho hai mục đích khác nhau, và tài liệu phải giữ chúng tách biệt — trộn chúng chính là lỗi mà `PReq`/`PStar` được tạo ra để chặn.
 
 ## L5 · Hướng sơ cấp
 
@@ -651,12 +622,12 @@ SỰ KIỆN ĐÓNG — QUY ƯỚC BẤT ĐỐI XỨNG, có chủ ý:
 
 Hai rào có bản chất khác nhau, và phép đo xác nhận sự bất đối xứng đó là **đúng**:
 
-| Quy ước | % thắng | R TB lệnh thắng | **EV sau phí** |
-|---|---|---|---|
-| Stop treo **+ limit treo tại target** | 33,7% | 3,33R *(bị chặn)* | +0,377R |
-| **Stop treo, TP kiểm tại close** ← dùng | **29,2%** | **4,74R** *(chạy tiếp)* | **+0,593R** |
+| Quy ước | Kết quả |
+|---|---|
+| Stop treo **+ limit treo tại target** | Tỉ lệ thắng **cao hơn**, nhưng lệnh thắng **bị chặn** ở payoff hợp đồng |
+| **Stop treo, TP kiểm tại close** ← dùng | Tỉ lệ thắng thấp hơn, lệnh thắng **chạy tiếp** — **EV cao hơn** |
 
-*89 lệnh, 4 cặp — `scripts/measurements_2026_08_26/groupB.py`*
+*Số cụ thể → [`spec_numbers.md §1`](generated/spec_numbers.md)*
 
 > **Tỉ lệ thắng thấp hơn nhưng EV cao hơn 57%.** Đặt lệnh limit tại target **chặn mất lệnh thắng lớn** — đúng thứ mà một hệ theo xu hướng sống nhờ. Stop thì ngược lại: nó bảo vệ, và phải chắc chắn.
 
@@ -671,7 +642,7 @@ Hai rào có bản chất khác nhau, và phép đo xác nhận sự bất đố
 | **Có lệnh treo** | Lỗ = 1,0R **theo cấu tạo**. Đặc tả kiểm chứng được |
 | **Không có lệnh treo** | Lỗ phụ thuộc **người dùng có mở máy hôm đó không** — hệ **không quan sát được, không kiểm soát được** |
 
-Đo trên 59 lệnh chạm stop, quy ước «kiểm mỗi ngày, thoát tại close»: lỗ TB **0,86R** — *tốt hơn 1,0R về trung bình* — nhưng **p90 = 1,58R** (vượt hoà vốn 1,57R), **max 4,23R**, và **18,6% số stop vượt ngưỡng chặn 1,4R**.
+Đo trên 59 lệnh chạm stop *(`groupB.py`, bộ sinh sự kiện một-ô — chưa đo lại trên máy tranche)*, quy ước «kiểm mỗi ngày, thoát tại close»: lỗ TB **0,86R** — *tốt hơn 1,0R về trung bình* — nhưng **p90 = 1,58R** (vượt hoà vốn 1,57R), **max 4,23R**, và **18,6% số stop vượt ngưỡng chặn 1,4R**.
 
 > Hình dạng *nhặt xu trước xe lu*: trung bình đẹp hơn, đuôi trái dày hơn nhiều. Với n=59, trung bình chưa đáng tin còn đuôi thì đã thấy. **Và quan trọng hơn cả: nó không phải một đặc tả — nó là một hi vọng.** Với hệ mà sản phẩm là bảng điểm trung thực, một đầu vào không quan sát được là chí mạng: bạn không bao giờ biết bảng điểm đang đo kỹ năng của hệ hay thói quen của người dùng.
 
@@ -1056,7 +1027,7 @@ Hệ **không biết** người dùng có vào lệnh không, và **không đư�
 | 5 | Sàn perp | `A = σ̂ · ABS_MOVE_RATIO · 100` (biên độ 1 ngày, %). `assert p_required ≥ 0,5 + √(c₀·f̂)/A` với **f̂ > 0** và quét `d ∈ [0,25 ; 90]` ngày |
 | 6 | Miền f̂ ≤ 0 | `cost_gate ≥ 0,20` và `p_star > 0` với **mọi** f̂ ∈ [−1,40; +1,40], ca test tại đúng biên |
 | 7 | Hai cổng hai kiểu | `PReq` và `PStar` không so sánh chéo được (kiểu) |
-| 8 | Hằng số tỉ lệ biên độ | Pin `ABS_MOVE_RATIO` = 0,685 ± 0,02 bằng phép đo lại trong test |
+| 8 | Hằng số tỉ lệ biên độ | `ABS_MOVE_RATIO` phải khớp `spec_numbers §3` ± 0,02, và phải đo với **chính σ̂ mà hệ dùng** (HAR), không phải σ close-to-close — sai lệch hệ thống nếu lẫn |
 | 9 | Thiếu funding ⇒ giả định xấu | Cắt chuỗi ⇒ `f̂` **tăng** lên p95-expanding, không rơi về mặc định |
 | 10 | Rò rỉ funding | Đưa kỳ funding tương lai vào ⇒ đỏ |
 | 11 | Một hàm biến động, batch ≡ live | Hai đường, `assert khớp 1e-6` |
@@ -1128,7 +1099,7 @@ Hệ **không biết** người dùng có vào lệnh không, và **không đư�
 | LIFO khi w giảm | LIFO | — | **1-trong-3** (LIFO/FIFO/pro-rata), ảnh hưởng P&L ⇒ phép đo đối chứng LIFO/FIFO trong bộ đo |
 | Biên cổng L6 | +2pp | `10 §2/B` | quy ước |
 | `RULE11_ACC` | 0,60 | RULE 11 | trong mã, không trong config |
-| `ABS_MOVE_RATIO` | 0,685 | đo (2,06/3,00) | pin bằng test |
+| `ABS_MOVE_RATIO` | → `spec_numbers §3` | đo E\|move\|/σ̂_HAR | pin bằng test |
 | f̂ bán rã | 7 ngày | `13 §4.2` | đo |
 | f̂ biên kẹp | ±1,40%/ngày | max(p99 ngày × 3) = 1,36 (DOGE), làm tròn lên | tái lập được |
 | f̂ fallback | p95 **expanding** | `13 §9` | không dùng phân vị toàn mẫu trong backtest |
@@ -1270,7 +1241,7 @@ Dải ·  ① độ phủ [q10,q90] = 80% ± 3pp trên ≥500 dự đoán đã c
 | 1 | Lưới 27 ô, purged WF, spot long/flat | Ô **trung vị** — không phải ô tốt nhất |
 | 2 | Tỉ lệ chốt lời thật của khung rào chắn | ≥ **27,5%** *(hoà vốn 25,0–25,5% + biên thận trọng 2 điểm)*; ≤ 23,1% (mức bước ngẫu nhiên) ⇒ **dừng nhánh khuyến nghị** |
 | 3 | Tỉ lệ đúng **theo nhóm ba biến động** | Không ngưỡng — phép đo **thông tin** |
-| 4 | Trượt giá của mức dừng lỗ | Cảnh báo 1,3R · chặn 1,4R **(hoà vốn 1,57R)**. **Phương pháp đo đăng ký trước:** ① cron chụp sổ lệnh top-20 mức (spread + độ sâu) cho vũ trụ khuyến nghị **từ ngày 1** ② ước lượng bằng mô phỏng ăn-độ-sâu trên các nến σ̂ ≥ p95 ③ với hệ khuyến nghị, đo lại bằng **lệnh shadow** chứ không phải lệnh thật |
+| 4 | Trượt giá của mức dừng lỗ | Cảnh báo 1,3R · chặn 1,4R *(hoà vốn → [`spec_numbers.md §3`](generated/spec_numbers.md))*. **Phương pháp đo đăng ký trước:** ① cron chụp sổ lệnh top-20 mức (spread + độ sâu) cho vũ trụ khuyến nghị **từ ngày 1** ② ước lượng bằng mô phỏng ăn-độ-sâu trên các nến σ̂ ≥ p95 ③ với hệ khuyến nghị, đo lại bằng **lệnh shadow** chứ không phải lệnh thật |
 | 5 | Tương quan E\|move\| ↔ funding toàn vũ trụ | Không ngưỡng — quyết định cổng phí có ý nghĩa trên perp không |
 | 6 | LIFO đối chứng FIFO | Chênh lệch không được là nguồn nhạy cảm chính |
 | 7 | Thời gian nắm giữ thật của **tổ hợp** | Nếu lệch xa 6,3 ngày ⇒ mở lại quyết định k=1 |
@@ -1402,12 +1373,16 @@ Cổng kép có **bốn** kết cục, không phải hai. Đăng ký hành độ
 
 ## 9.2 · Ngân sách im lặng — ba con số có tên riêng, in trên màn hình
 
-| Con số | Giá trị đăng ký | Ghi chú |
+> ### ⚠️ Ngân sách im lặng đăng ký ở rc1 SAI 6 LẦN
+>
+> rc1 đăng ký **~9 tranche-mở/đồng/năm**, đo trên *một ô lưới, một lệnh mỗi lần tín hiệu bật*. Chạy **đúng đặc tả** (tổ hợp 27 ô · 4 mức tranche · tái vũ trang không cooldown): **50 – 62 sự kiện/đồng/năm** → [`spec_numbers.md §2`](generated/spec_numbers.md).
+>
+> Với vũ trụ khuyến nghị 8–10 đồng: **404 – 617 khuyến nghị/năm ≈ 1,5/ngày**. Toàn bộ khung *«im lặng là trạng thái được thiết kế»* phải viết lại theo con số này — hoặc quy tắc tái vũ trang phải đổi. **Quyết định chưa chốt.**
+
+| Con số | Nguồn | Ghi chú |
 |---|---|---|
-| **Tranche-mở / đồng / năm** ← in to nhất | **~9** + phần tái vũ trang (đo ở GATE 1) | Số người dùng cần biết để hiểu im lặng là bình thường |
-| Thay-đổi-tỉ-trọng / đồng / năm | 17–24 (đo: BTC 21,8 · ETH 20,5 · SOL 17,1 · DOGE 18,2) | |
-| **Sự kiện ĐÓNG / đồng / năm** | **~9** *(bảo toàn: mỗi tranche mở rồi cũng đóng)* — trong đó ~63% bằng stop |
-| Lệnh-ô-đơn / đồng / năm (tham chiếu) | 3,5 | |
+| Sự kiện tranche/đồng/năm | [`spec_numbers.md §2`](generated/spec_numbers.md) | ★ số in to nhất trên dashboard |
+| Sự kiện ĐÓNG/đồng/năm | ↑ *(bảo toàn — mỗi tranche mở rồi cũng đóng)* | ~63% bằng stop |
 | Trần phát khung 1h · 4h | **0 tuyệt đối** — một lần phát bất kỳ ⇒ test đỏ | |
 | Trần phát khung 1d | > 2× kỳ vọng tranche-mở ⇒ **cảnh báo** | Hệ nói quá nhiều cũng là chế độ hỏng |
 
@@ -1590,46 +1565,29 @@ Bước 5 (*σ̂ + f̂ cùng đợt*) **không có đầu vào**: `data/raw/fund
 
 # PHỤ LỤC A · TRUY VẾT NGUỒN
 
+## A.1 · Số ĐỊNH LƯỢNG — sinh tự động, không chép
+
+**Toàn bộ ở [`docs/generated/spec_numbers.md`](generated/spec_numbers.md)**, sinh bởi `scripts/spec/measure_spec.py`:
+kinh tế học khuyến nghị · ngân sách sự kiện · `ABS_MOVE_RATIO` · `c_R` · hoà vốn trượt giá · GATE 1a · bề mặt 16 ô rào chắn.
+
+## A.2 · Số ĐỊNH TÍNH / ngoại sinh — trích từ hồ sơ bằng chứng
+
 | Con số | Giá trị | Nguồn |
 |---|---|---|
-| R² hướng | 0,00–0,01 | `09 §3.1` |
-| R² biến động — **thang ngày, dữ liệu của repo** | **0,202 (1 ngày) · 0,248 (5 ngày)** | `rv_estimators.py` |
-| *R² biến động — thang 5 phút, 700k quan sát (KHÔNG áp dụng được)* | *0,40–0,60* | *`09 §3.1` — bối cảnh khác* |
-| R² funding | 0,44–0,51 | `13 §4.2` |
-| QLIKE HAR-Parkinson vs EWMA(0,94), chân trời 5 ngày | **+15,8%** | `rv_estimators.py` |
-| σ̂ ngày BTC 2021–26 / 2023–26 | 3,00% / 2,43% | `12 §2.8`, đo lại |
-| E\|move\| / σ̂ | 0,685 | đo trên BTC ngày |
-| p\* hình dạng 1,2σ̂/4,0σ̂ (payoff 3,33R) | **25,0% / 25,5%** | ADR-013 · `barrier_surface.py` |
-| Hoà vốn trượt giá | **1,57R** | ADR-013 |
-| Tương quan hạng tham số hai đoạn | +0,19 | `12 §2.6` |
-| Bề mặt 16 ô rào chắn (Parkinson, quy ước vận hành) | biên trung vị +5,7 · 16/16 dương | `barrier_surface_v2.py` |
-| Tỉ số sụt giảm tổ hợp — **thang `w`** | 0,29 / 0,29 / 0,31 · rời rạc hoá: **0,322** | `12 §6.5` · `ens.py` |
-| *Tỉ số sụt giảm ở 4% NAV (KHÔNG dùng cho cổng)* | *0,0143 — đạt dư 42 lần* | *§8.2* |
+| R² hướng | 0,00 – 0,01 | `09 §3.1` |
+| R² funding (OOS) | 0,44 – 0,51 | `13 §4.2` |
+| QLIKE HAR-Parkinson vs EWMA(0,94), chân trời 5 ngày | **+23,6%** | `rv_estimators.py` |
+| *R² biến động thang 5 phút, 700k quan sát — **KHÔNG áp dụng được*** | *0,40 – 0,60* | *`09 §3.1`, bối cảnh khác* |
+| Null bước ngẫu nhiên (mô phỏng, seed 20260827) | 23,42% | `null_barrier.py` |
+| Tỉ lệ nền thực nghiệm | 23,67% | ↑ |
+| Tương quan hạng tham số giữa hai đoạn | +0,19 | `12 §2.6` |
 | Tỉ số sụt giảm tái lập | 54/54 quan sát | `12 §2.7` |
-| **Tỉ lệ chốt lời — quy ước vận hành + Parkinson** | **30,0%** (90 lệnh, 4 cặp) | `rv_estimators.py` |
-| *Tỉ lệ chốt lời — cả hai intrabar + close-to-close* | *33,7%* | `15 §1.5` đã sửa — ADR-013 |
-| **EV mỗi lệnh (kể cả phần chạy)** | **+0,559R** · R TB thắng 4,48R | `rv_estimators.py` |
-| Tỉ lệ nền khớp cửa sổ | 23,7% | `12 §2.9` |
-| **Null bước ngẫu nhiên** | **23,42%** (mô phỏng, seed 20260827, 200k đường) | `null_barrier.py` |
-| *Null — giá trị giải tích `1,2/5,2` (SAI, ba tầng sai lệch)* | *23,08%* | *§L4 — bỏ* |
-| **Tỉ lệ nền thực nghiệm** (n = 9.046) | **23,67%** | `null_barrier.py` |
-| Rào 35 ngày ⇒ hết hạn | 11/23 | `12 §2.8` |
-| Rào k=1 ⇒ hết hạn | 0/23 | ↑ |
-| LIFO-thoát | 16% tổng tranche | mô phỏng phản biện |
-| Số năm cần: sụt giảm / Sharpe / tỉ lệ thắng | 3 / >5 / 34 | `15 §3.4` |
-| Kappa kết cục lệnh | 0,501 (61 cặp chồng lấn) | `15 §3.3` |
-| Funding: đúng sàn 0,01% | 34,8–41,4% số kỳ | `13 §3.1` |
-| Funding âm | 13,7–28,6% số kỳ | ↑ |
-| SOL 11/2022 | −42,47% notional, 141/165 kỳ âm | `13 §7.4` |
-| Sụt giảm chuỗi funding | BTC −1,52% · SOL −43,40% | ↑ |
+| Kappa kết cục lệnh | 0,501 | `15 §3.3` — ⚠️ **đo TRƯỚC khi sửa off-by-one, cần đo lại** |
+| Số năm cần: sụt giảm / Sharpe / tỉ lệ thắng | 3 / >5 / 34 | `15 §3.4` — ⚠️ **cùng cảnh báo** |
+| Funding đúng sàn 0,01% · funding âm | 34,8–41,4% · 13,7–28,6% | `13 §3.1` |
+| SOL 11/2022 | −42,47% notional | `13 §7.4` |
 | Đặc trưng: 57 đề xuất → 13 chiều | | `14 §0.1` |
-| Khung 4h, **chân trời 4 GIỜ**: p_required | 69,0% spot / 62,7% perp | `ADR-002 §2.3` |
-| Khung 4h, **chân trời `H_DAYS["4h"] = 1,0 ngày`** *(giá trị hệ thực sự in)* | **57,3%** | công thức §L4 |
-| Khung 4h: R² biến động / hướng | 0,278 / 52,27% vs 51,04% | ↑ §2.4 |
-
-Mã tái tạo: `scripts/measurements_2026_08_26/` (13 script, có README).
-
----
+| Khung 4h, chân trời 4 giờ: p_required | 69,0% spot / 62,7% perp | `ADR-002 §2.3` |
 
 # PHỤ LỤC B · BỘ ĐẶC TRƯNG
 
