@@ -31,7 +31,7 @@ hơn để người dùng mất tiền vì một con số chưa được kiểm 
 | Khớp lệnh | Mô phỏng tại giá thật + phí taker 0,10%/chiều + trượt giá 0,05% | Lệnh thật gửi lên Binance qua đường lệnh có đối soát |
 | Dự đoán & khuyến nghị | Có, đầy đủ | Có, đầy đủ — cùng một nguồn, cùng một con số |
 | Đặt lệnh thủ công | Có | Có — sau cổng kỹ thuật đường lệnh (§5) |
-| Bot tự giao dịch | Có, mở từ Phase 2 — nơi người dùng thấy bot làm gì mà không mất gì | Người dùng tự bật, không có kỳ tập bắt buộc; giới hạn rủi ro riêng; nhãn trạng thái kiểm chứng luôn hiện (§5.2 Luật 15) |
+| Bot — ba chế độ | Có, mở từ Phase 2 — nơi người dùng thấy bot làm gì mà không mất gì | **Tư vấn** (chỉ gợi ý, không đặt lệnh) · **bán tự động** (bot đề xuất, người dùng duyệt từng lệnh) · **tự động**. Người dùng tự bật và tự setup phạm vi thực thi; không có kỳ tập bắt buộc; nhãn trạng thái kiểm chứng luôn hiện (§5.2 Luật 15) |
 | Thành tích | Track record cá nhân, bất biến | Track record cá nhân + đối soát với số dư thật |
 | Phân biệt thị giác | Nhãn PAPER ở mọi panel | Nhãn TIỀN THẬT ở mọi panel — không bao giờ để nhầm |
 
