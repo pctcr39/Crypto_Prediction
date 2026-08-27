@@ -61,6 +61,8 @@ RULE 11 giả định có rò rỉ từ              :  60%
 | Đại lượng | Phương pháp | Kết quả ngoài mẫu |
 |---|---|---|
 | **Biến động** nến 4 giờ tiếp theo | HAR ba thang (1 ngày / 5 ngày / 22 ngày) | **R² = 0,278** |
+
+> ⚠️ **Ghi chú thang đo (27/08):** con số 0,278 đo ở **thang nến 4 giờ**, mục tiêu là nến kế tiếp. `PREDICTION_DESIGN` đặc tả σ̂ ở **thang NGÀY** với mục tiêu **trung bình 5 ngày tới** — hai đại lượng khác nhau, không so trực tiếp được. Số tương ứng ở thang ngày: R² 0,202 (1 ngày) / 0,248 (5 ngày).
 | **Hướng** nến 4 giờ tiếp theo | Cùng ba thang | **52,27%** — so với always-up 51,04% |
 
 **Chênh lệch: biên hướng là 1,2 điểm, trong khi cần 18 điểm để hoà vốn. Biên độ thì dự báo được với R² 0,278.**

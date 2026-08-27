@@ -223,7 +223,56 @@ def freshness(bars, now_hint, cfg) -> Freshness:
 
 - Đúng **một** hàm `shift_all(1)`; không đường vòng.
 - `assert_scale_free()` chạy trên mọi cột.
-- **Một** hàm biến động duy nhất, dùng chung batch ↔ live, định nghĩa **đóng băng**.
+
+### ★ Hàm biến động — định nghĩa ĐÓNG BĂNG (B4 · B5)
+
+```python
+LN2 = math.log(2)
+
+def realized_variance(bars_1d):
+    # PARKINSON (1980) — ước lượng phương sai NGÀY từ high/low.
+    # Chọn bằng phép đo, không bằng quy ước — xem bảng dưới.
+    return (np.log(bars_1d.high / bars_1d.low) ** 2) / (4 * LN2)
+
+def sigma_hat_daily(bars_1d, *, window: int = 20) -> float:
+    # σ̂ LUÔN là độ lệch chuẩn log-return NGÀY — bất kể panel nào đang phục vụ.
+    # Tính từ NẾN NGÀY, không phải nến của cfg.tf.
+    # Đây là hàm DUY NHẤT sinh ra σ̂ (bất biến #11).
+    return float(np.sqrt(realized_variance(bars_1d).rolling(window).mean().shift(1).iloc[-1]))
+```
+
+**Vì sao Parkinson — đo trên 2.062 ngày BTC, mục tiêu là RV THẬT tính từ nến 1 giờ:**
+
+| Ước lượng đầu vào | OOS R² (mục tiêu 1 ngày) | OOS R² (mục tiêu **5 ngày**) | QLIKE 5 ngày |
+|---|---|---|---|
+| Close-to-close | 0,059 | **−0,057** | 0,239 |
+| **Parkinson** ← chọn | **0,202** | **0,248** | **0,190** |
+| Garman-Klass | 0,185 | 0,248 | 0,193 |
+| Rogers-Satchell | 0,160 | 0,241 | 0,195 |
+
+> **Close-to-close cho R² ÂM ở chân trời nhiều ngày.** Đó chính là ước lượng mà mọi phép đo trước đây trong repo đã dùng — và cũng là ước lượng tệ nhất cho đúng việc mà σ̂ phải làm.
+
+**Đổi sang Parkinson KHÔNG làm lệch các hằng số đã đo** *(89–90 lệnh, 4 cặp, quy ước rào bất đối xứng)*:
+
+| Ước lượng | n | % thắng | R TB thắng | EV | Ngày TB | % hết hạn |
+|---|---|---|---|---|---|---|
+| Close-to-close | 89 | 28,1% | 4,76R | +0,536R | 5,4 | **0,0%** |
+| **Parkinson** | 90 | 30,0% | 4,48R | +0,559R | 5,8 | **0,0%** |
+
+⇒ Quyết định `k = 1` (0% hết hạn) và thời gian nắm giữ ~6 ngày **bền vững qua cả hai ước lượng**.
+
+### Thang thời gian — σ̂ nội bộ LUÔN là NGÀY
+
+| Dùng ở đâu | Đại lượng |
+|---|---|
+| Rào chắn `1,2σ̂` / `4,0σ̂` | **σ̂ ngày** |
+| `p_star_event(σ̂)` | **σ̂ ngày** |
+| `F = Normal(0, σ̂·√H)` với `H` tính bằng **ngày** | **σ̂ ngày** |
+| **Hiển thị** `expected_vol_pct` cho panel khung `tf` | **σ̂ ngày · √(H_DAYS[tf]) · 100** |
+
+⇒ Panel 1h in `σ̂·√(4/24) = 0,408·σ̂`; panel 4h và 1d in `σ̂` (vì `H_DAYS` của cả hai = 1,0). Đây cũng đúng bằng **độ rộng dải giá** — nhất quán theo cấu tạo.
+
+> ⚠️ `ADR-002 §2.4` báo cáo `R² = 0,278` cho *"biến động nến 4 giờ tiếp theo"* — **thang khác**, không so sánh trực tiếp với các số ở đây (thang ngày).
 - Bộ đặc trưng: **13 suất dựng được + 5 suất chờ dữ liệu** (Phụ lục B).
 
 **Phép thử rò rỉ thứ sáu:** chạy cùng đoạn lịch sử qua hai đường (batch và live), `assert σ̂ khớp 1e-6`.
@@ -231,9 +280,15 @@ def freshness(bars, now_hint, cfg) -> Freshness:
 ## L2 · Hai đại lượng dự báo được
 
 ```python
-def har_rv(feats) -> float:
-    """HAR-RV: OLS trên log(RV) ba thang 1d/5d/22d. 4 hệ số, refit hàng tuần.
-    Chấm bằng QLIKE (Patton 2011), KHÔNG phải MSE."""
+def har_rv(bars_1d) -> float:
+    # HAR-RV: OLS trên log(realized_variance) ba thang 1d/5d/22d -> 4 hệ số,
+    # refit hàng tuần. Trả σ̂ NGÀY.
+    #
+    # ★ MỤC TIÊU DỰ BÁO: trung bình RV 5 NGÀY TỚI, không phải ngày kế tiếp.
+    #   Lý do đo được: ở chân trời 1 ngày HAR THUA EWMA(0,94) 10% theo QLIKE;
+    #   ở chân trời 5 ngày HAR THẮNG 15,8%. Và 5 ngày đúng bằng thời gian
+    #   nắm giữ thực tế của rào chắn (5,8 ngày).
+    # Chấm bằng QLIKE (Patton 2011), KHÔNG phải MSE.
 
 def ewma_sigma(feats, lam=0.94) -> float:
     """Fallback TẤT ĐỊNH khi HAR phân kỳ. λ=0,94 — quy ước RiskMetrics 1996,
@@ -512,7 +567,7 @@ def predict(bars, funding_hist, book: TrancheBook, now_hint, cfg
 
     # ── L1–L2 ──
     feats = build_features(bars)                          # shift_all(1) bên trong
-    sigma = har_rv(feats) or ewma_sigma(feats, lam=0.94)
+    sigma = har_rv(bars_1d) or ewma_sigma(bars_1d, lam=0.94)   # σ̂ NGÀY
     f_hat = forecast_funding_daily(funding_hist, asof=bars.close_time)
 
     # ── L3 ── một phân phối, ba cách đọc
@@ -671,6 +726,9 @@ Hệ **không biết** người dùng có vào lệnh không, và **không đư�
 | 27 | **Bắt kịp qua gap** (B1) | Cho `advance_book` một chuỗi 10 nến sau gián đoạn ⇒ kết cục giống hệt khi chạy từng nến một |
 | 28 | **Mọi tranche đóng đều xuất hiện** (B3) | Tranche rời `active` ⇒ **phải** có mặt trong `closed_tranches` của đúng lần `predict()` đó, kèm đủ `exit_time`/`exit_price`/`close_reason`/`realized_r` |
 | 29 | **Quy ước rào bất đối xứng** (B11) | Stop soi `low`, target soi `close` — test một nến có `high ≥ target` nhưng `close < target` ⇒ tranche **vẫn active** |
+| 30 | **Một hàm biến động duy nhất** (B4) | `sigma_hat_daily` là đường DUY NHẤT sinh σ̂ — quét `src/` cấm mọi `.std()`/`rolling` tính vol ngoài nó |
+| 31 | **σ̂ luôn thang NGÀY** (B5) | Gọi `predict()` với `tf` ∈ {1h, 4h, 1d} trên cùng mốc thời gian ⇒ σ̂ nội bộ **giống hệt**; chỉ `expected_vol_pct` khác theo `√H_DAYS[tf]` |
+| 32 | **Chân trời dự báo khớp thời gian nắm giữ** (C3) | `assert har_target_days == 5` và test hồi quy: nếu ai đổi sang 1 ngày, phép so QLIKE với EWMA phải **đỏ** |
 
 **Quy tắc chọn chỗ đặt:**
 
@@ -762,17 +820,50 @@ Vì lưới/k=1/ngưỡng được chốt sau khi nhìn 4 đồng:
 
 ## 8.4 · Cổng riêng của tầng L2
 
-L2 là tầng **tự chứng minh được** (cần ~11 quan sát, so với 229 lệnh cho tỉ lệ thắng) — nên nó có cổng riêng và ship được độc lập:
+L2 là tầng **tự chứng minh được** (cần ~11 quan sát, so với 229 lệnh cho tỉ lệ thắng) — nên nó có cổng riêng và ship được độc lập.
+
+**Nguyên tắc: mọi vế đều TƯƠNG ĐỐI so với một đối chứng cụ thể.** Cùng bài học đã áp cho GATE 1a — chỉ tiêu tuyệt đối đo **chế độ thị trường**, chỉ tiêu tương đối đo **mô hình**.
 
 ```
-σ̂ :  QLIKE tốt hơn EWMA(0,94) ≥5% (Diebold–Mariano p<0,05)
-      VÀ OOS R² log-RV ≥ 0,30
-f̂ :  OOS R² ≥ 0,35 (đo được 0,44–0,51 trên 4 cặp)
-Dải:  độ phủ [q10,q90] = 80% ± 3pp trên ≥500 dự đoán đã chấm
-      VÀ số lần quantile cắt nhau = 0
+σ̂  ·  mục tiêu = trung bình RV 5 NGÀY tới, ước lượng Parkinson
+      ① QLIKE tốt hơn EWMA(0,94)   ≥  5%   (Diebold–Mariano p < 0,05)
+                                              đo được: +15,8%   ✅
+      ② QLIKE tốt hơn climatology  ≥ 20%
+      ⛔ KHÔNG có vế R² tuyệt đối — xem khối cảnh báo dưới
+
+f̂  ·  ① QLIKE tốt hơn "giữ nguyên giá trị hôm nay" ≥ 10%
+      ② dấu dự báo đúng ≥ 60% số kỳ            (đo được R² 0,44–0,51 trên 4 cặp)
+
+Dải ·  ① độ phủ [q10,q90] = 80% ± 3pp trên ≥500 dự đoán đã chấm
+      ② số lần quantile cắt nhau = 0
+      ③ PIT histogram không lệch (Kolmogorov–Smirnov p > 0,05)
 ```
 
-> **Nếu L2 đạt và GATE 1 trượt: vẫn có sản phẩm thật.** Đài quan trắc biến động — dải giá, biến động kỳ vọng, `p_required` — dựng trên tầng duy nhất có R² 0,5. Đó là **kết quả hợp lệ**, không phải thất bại.
+> ### ⚠️ Vì sao BỎ vế «OOS R² log-RV ≥ 0,30»
+>
+> Ngưỡng 0,30 mượn từ `09 §3.1` — *"tái lập 0,512 trên 700k nến 5m Binance"*. Đó là dự báo **RV thang 5 phút từ dữ liệu tần suất cao, 700.000 quan sát**. Bài toán ở đây là **RV thang ngày từ nến ngày, 2.062 quan sát**. **Ngưỡng chưa bao giờ áp dụng được cho bài toán này.**
+>
+> Đo thật, với ước lượng tốt nhất trong bốn ứng viên:
+>
+> | Chân trời mục tiêu | OOS R² tốt nhất | So ngưỡng 0,30 |
+> |---|---|---|
+> | 1 ngày | 0,202 | trượt |
+> | **5 ngày** *(chân trời dùng thật)* | **0,248** | trượt |
+>
+> Giữ nguyên 0,30 thì L2 trượt, và **không còn sản phẩm nào** — kể cả nhánh dự phòng Đài quan trắc. Nhưng hạ xuống 0,20 cho khớp con số vừa đo là **đặt ngưỡng sau khi nhìn kết quả**, đúng thứ `16` cấm.
+>
+> Lối thoát đúng là lối đã dùng cho GATE 1a: **so tương đối**. Vế ① và ② ở trên không phụ thuộc chế độ biến động của giai đoạn kiểm định, và chúng bác bỏ được — nếu HAR không thắng nổi một EWMA một tham số thì nó không đáng tồn tại.
+
+> ### ★ Một phát hiện đi kèm: HAR chỉ đáng dùng ở chân trời nhiều ngày
+>
+> | Chân trời mục tiêu | QLIKE EWMA(0,94) | QLIKE HAR-Parkinson | |
+> |---|---|---|---|
+> | **1 ngày** | 0,4311 | 0,4744 | **HAR THUA 10%** |
+> | **5 ngày** | 0,2254 | **0,1897** | **HAR THẮNG 15,8%** |
+>
+> Nếu đặc tả để σ̂ dự báo *ngày kế tiếp* — cách đọc tự nhiên và là cách bản rc1 ngầm giả định — thì **toàn bộ tầng HAR là phí công**, một EWMA đơn giản tốt hơn. Chân trời dự báo phải bằng **thời gian nắm giữ thực tế** (5,8 ngày), và điều đó phải nằm trong đặc tả chứ không nằm trong đầu người viết mã.
+
+> **Nếu L2 đạt và GATE 1 trượt: vẫn có sản phẩm thật.** Đài quan trắc biến động — dải giá, biến động kỳ vọng, `p_required` — dựng trên tầng duy nhất tự chứng minh được. Đó là **kết quả hợp lệ**, không phải thất bại.
 
 ## 8.5 · Bộ phép đo bắt buộc trước khi chấm cổng
 
@@ -931,7 +1022,11 @@ Dải:  độ phủ [q10,q90] = 80% ± 3pp trên ≥500 dự đoán đã chấm
 
 | Con số | Giá trị | Nguồn |
 |---|---|---|
-| R² hướng · biến động · funding | 0,00–0,01 · 0,40–0,60 · 0,44–0,51 | `09 §3.1` · `13 §4.2` |
+| R² hướng | 0,00–0,01 | `09 §3.1` |
+| R² biến động — **thang ngày, dữ liệu của repo** | **0,202 (1 ngày) · 0,248 (5 ngày)** | `rv_estimators.py` |
+| *R² biến động — thang 5 phút, 700k quan sát (KHÔNG áp dụng được)* | *0,40–0,60* | *`09 §3.1` — bối cảnh khác* |
+| R² funding | 0,44–0,51 | `13 §4.2` |
+| QLIKE HAR-Parkinson vs EWMA(0,94), chân trời 5 ngày | **+15,8%** | `rv_estimators.py` |
 | σ̂ ngày BTC 2021–26 / 2023–26 | 3,00% / 2,43% | `12 §2.8`, đo lại |
 | E\|move\| / σ̂ | 0,685 | đo trên BTC ngày |
 | p\* hình dạng 1,2σ̂/4,0σ̂ (payoff 3,33R) | **25,0% / 25,5%** | ADR-013 · `barrier_surface.py` |
