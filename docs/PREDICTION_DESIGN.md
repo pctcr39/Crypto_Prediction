@@ -393,7 +393,7 @@ def sigma_hat_daily(bars_1d) -> float:
 
 | Dùng ở đâu | Đại lượng |
 |---|---|
-| Rào chắn `1,2σ̂` / `4,0σ̂` | **σ̂ ngày** |
+| Rào chắn `1,2σ̂` / `6,0σ̂` | **σ̂ ngày** |
 | `p_star_event(σ̂)` | **σ̂ ngày** |
 | `F = Normal(0, σ̂·√H)` với `H` tính bằng **ngày** | **σ̂ ngày** |
 | **Hiển thị** `expected_vol_pct` cho panel khung `tf` | **σ̂ ngày · √(H_DAYS[tf]) · 100** |
@@ -498,12 +498,12 @@ def p_star_event(sigma_d, sl_mult=1.2, tp_mult=4.0) -> PStar:
 **Bất biến khoảng cách — hình dạng cược KHÔNG tạo ra edge:**
 
 ```
-null (bước ngẫu nhiên không trôi, MÔ PHỎNG đúng quy ước) = 23,42%
-hoà vốn = (1 + c_R)/(tp/sl + 1)                          = 25,00%
-khoảng cách = c_R/(1 + tp/sl)                            =  1,92 điểm   ← LUÔN DƯƠNG
+null (bước ngẫu nhiên không trôi, MÔ PHỎNG đúng quy ước)  → spec_numbers
+hoà vốn     = (1 + c_R)/(tp/sl + 1)                        → spec_numbers §1
+khoảng cách = c_R/(1 + tp/sl)                             ← LUÔN DƯƠNG
 ```
 
-> Dưới bước ngẫu nhiên, **mọi** cấu hình rào chắn đều lỗ, đúng bằng `c_R/(1+r)`. Hình dạng cược chỉ đổi **mức nâng tỉ lệ thắng mà tín hiệu phải cung cấp** — với 1,2/4,0 là 1,92 điểm; tín hiệu đo được nâng **6,6 điểm** (23,42% → 30,0%).
+> Dưới bước ngẫu nhiên, **mọi** cấu hình rào chắn đều lỗ, đúng bằng `c_R/(1+r)`. Hình dạng cược chỉ đổi **mức nâng tỉ lệ thắng mà tín hiệu phải cung cấp** — xem `spec_numbers`.
 
 ### ⚠️ Null KHÔNG phải `1,2/5,2 = 23,08%` — ba tầng sai lệch chồng nhau
 
@@ -511,7 +511,7 @@ Công thức gambler's ruin `sl/(sl+tp)` chỉ đúng cho chuyển động Brown
 
 | # | Sai lệch | Ảnh hưởng |
 |---|---|---|
-| 1 | Rào định nghĩa **nhân trong giá** (`e·(1±kσ)`) nhưng bước ngẫu nhiên **cộng trong log** ⇒ tỉ lệ rào trong log-space là `\|log(1−1,2σ)\| : log(1+4,0σ)` = 3,67% : 11,33%, **không phải** 1,2 : 4,0 | **+1,37 điểm** |
+| 1 | Rào định nghĩa **nhân trong giá** (`e·(1±kσ)`) nhưng bước ngẫu nhiên **cộng trong log** ⇒ tỉ lệ rào trong log-space là `\|log(1−1,2σ)\| : log(1+6,0σ)`, **không phải** 1,2 : 6,0 | **+1,37 điểm** |
 | 2 | Bước **ngày rời rạc**, không liên tục | +1,1 điểm |
 | 3 | **TP soi tại CLOSE**, không intrabar (§L5) | −2,1 điểm |
 | | **Ròng** | 23,08% → **23,42%** *(gần nhau do trùng hợp, không do đúng)* |
@@ -524,23 +524,25 @@ NULL_SEED, NULL_PATHS, SUB_STEPS = 20_260_827, 200_000, 24
 # · stop soi low (ưu tiên khi cùng nến) · target soi close · hạn 60 ngày
 ```
 
-| σ̂ ngày | Null — quy ước vận hành | Null — cả hai intrabar |
-|---|---|---|
-| 2,43% | **23,19%** | 25,26% |
-| **3,00%** | **23,42%** | 25,52% |
-| 4,00% | **23,82%** | 25,99% |
+| σ̂ ngày | Null — quy ước vận hành |
+|---|---|
+| 2,43% | **17,8%** |
+| **3,00%** | **18,03%** |
+| 4,00% | **18,44%** |
 
-Ổn định theo seed *(5 seed, σ̂ = 3,00%)*: 23,42 · 23,70 · 23,51 · 23,28 · 23,41 — **độ lệch 0,138 điểm**.
+Ổn định theo seed *(5 seed, σ̂ = 3,00%)*: 18,03 · 18,35 · 18,19 · 17,99 · 18,06 — **độ lệch 0,130 điểm**.
 
-**Đối chiếu tỉ lệ nền thực nghiệm** *(vào lệnh mọi ngày trong mẫu, cùng quy ước, σ̂ Parkinson, n = 9.046)*: **23,67%** — cao hơn null mô phỏng **+0,25 điểm**, đúng bằng phần trôi dương của thị trường crypto.
+**Đối chiếu tỉ lệ nền thực nghiệm** *(vào lệnh mọi ngày trong mẫu, cùng quy ước, σ̂ Parkinson, n = 9.046)*: **19,05%** — cao hơn null mô phỏng **+1,02 điểm**, đúng bằng phần trôi dương của thị trường crypto.
 
-> Tỉ lệ nền thực nghiệm **23,67%** là đối chứng dùng cho cổng — nó bao gồm cả phần trôi, nên nó là thanh xà đúng. Null mô phỏng 23,42% dùng cho **bất biến test**, nơi cần một con số tái lập được không phụ thuộc dữ liệu.
+> Tỉ lệ nền thực nghiệm **19,05%** là đối chứng dùng cho cổng — nó bao gồm cả phần trôi, nên nó là thanh xà đúng. Null mô phỏng 18,03% dùng cho **bất biến test**, nơi cần một con số tái lập được không phụ thuộc dữ liệu.
 
 **Kiểm độ bền qua bề mặt tham số rào** → [`spec_numbers.md §5`](generated/spec_numbers.md)
 
 Lưới 4×4 cấu hình `(stop, target)`, mỗi ô chạy **trên chính máy trạng thái tranche** — không phải trên một ô lưới đơn. Đây là **kiểm tra độ bền, KHÔNG phải thủ tục chọn**: nếu biên chỉ dương ở vài ô thì lập luận kinh tế mong manh, và đó mới là phát hiện.
 
-> ⚠️ Ô đang dùng `1,2/4,0` **không phải ô tốt nhất** trên bề mặt. Giữ nó vì lý do phương pháp (`ADR-013 §3` lý do #1: đổi tham số để khôi phục một kết luận mong muốn là p-hacking), **không** vì nó tối ưu. `ADR-013` lý do #2 — *«ô 1,2/4,8 tệ hơn»* — đã bị chính bảng sinh tự động **bác bỏ**; xem `ADR-016`.
+> ⚠️ **Ô đang dùng `1,2/6,0` được CHỌN SAU KHI NHÌN bề mặt này, trên bốn cặp hiệu chuẩn** — `ADR-017`. Nó là ô EV cao nhất, nên con số của nó mang **thiên lệch chọn lọc in-sample** và sẽ co lại ngoài mẫu. Bốn cặp hiệu chuẩn nay **nhiễm kép**; giao thức khử nhiễm ở `§8.3` siết theo `ADR-017 §2`.
+>
+> Điểm đỡ cho nó: ưu thế đến từ **cả cột `target = 6,0σ̂`** (mọi `stop` đều cho EV cao), không từ một ô riêng lẻ — mẫu hình có cấu trúc, không phải đỉnh nhọn. Nhưng nó **vẫn được phát hiện in-sample**.
 
 **Sức chịu trượt giá của mức dừng lỗ:**
 
@@ -602,7 +604,7 @@ w = round_to(mean(cell_signal(bars, *c) for c in GRID_27), {0, .25, .50, .75, 1.
 SỰ KIỆN MỞ = mỗi bước 0,25 mà w vượt LÊN và slot đó đang TRỐNG
     · bước nhảy k mức trong một nến ⇒ k SỰ KIỆN RIÊNG (cùng entry, cùng σ̂)
     · stop  = entry × (1 − 1,2·σ̂)      ← σ̂ NGÀY (k = 1)
-    · target= entry × (1 + 4,0·σ̂)
+    · target= entry × (1 + 6,0·σ̂)      ← ADR-017
     · deadline = entry_time + 60 ngày
 
 ★ TÁI VŨ TRANG — quy tắc KHÔNG tham số:
@@ -648,7 +650,7 @@ Hai rào có bản chất khác nhau, và phép đo xác nhận sự bất đố
 
 **Bảng điểm chấm SONG SONG cả hai quy ước** (§9.1) — chi phí gần bằng 0, và nó cho người dùng thấy đúng cái giá của việc không đặt lệnh treo.
 
-**Vì sao k = 1 (thang σ̂ ngày):** ở thang 35 ngày, đo được **11/23 lệnh kết thúc bằng hết hạn** thay vì chạm rào giá ⇒ hình dạng 4:1 **không xảy ra**, và toàn bộ lập luận kinh tế sụp. Ở k=1: **0/23 hết hạn**, thời gian nắm giữ thực tế ~6 ngày.
+**Vì sao k = 1 (thang σ̂ ngày):** ở thang 35 ngày, đo được **11/23 lệnh kết thúc bằng hết hạn** thay vì chạm rào giá ⇒ hình dạng bất đối xứng **không xảy ra**, và toàn bộ lập luận kinh tế sụp. Ở k=1: **0/23 hết hạn**, thời gian nắm giữ thực tế ~6 ngày.
 
 **Ba tham số của rào chắn là ràng buộc lẫn nhau, chỉ chọn được hai trong ba.** Dưới bước ngẫu nhiên, thời gian kỳ vọng chạm một trong hai rào = `1,2k · 4,0k = 4,8k²` ngày; với hạn 60 ngày thì `k ≈ 1` là điểm mà rào giá chi phối.
 
@@ -781,7 +783,7 @@ RULE11_ACC = 0.60                         # dây an toàn thứ hai (RULE 11)
 H_DAYS     = {"1h": 4/24, "4h": 1.0, "1d": 1.0}    # = horizon_bars × giờ_mỗi_nến / 24
 GRID_27    = tuple(itertools.product((10,20,50), (100,150,200), (20,55,100)))  # THỨ TỰ CỐ ĐỊNH
 EXP_HOLD_DAYS = 5.8                       # đo được — dùng cho choose_instrument_display
-SL_MULT, TP_MULT, DEADLINE_DAYS = 1.2, 4.0, 60
+SL_MULT, TP_MULT, DEADLINE_DAYS = 1.2, 6.0, 60   # ADR-017
 MARGIN_PP  = 0.02                         # biên cổng L6
 SIZE_BASE_PCT, TRANCHE_PCT = 4.0, 1.0     # % NAV
 
@@ -1034,7 +1036,7 @@ Hệ **không biết** người dùng có vào lệnh không, và **không đư�
 | 12 | Lưới đóng băng | Hash 27 ô pin trong test |
 | 13 | Máy trạng thái tranche | Property test: slot mở ⟺ w ≥ mức và slot trống · đóng đúng LIFO · không tranche nào sống quá deadline · Σ notional ≤ w × size_base |
 | 14 | Nhãn không phản thực | Hàm nhãn **không được đọc** giá sau thời điểm thoát |
-| 15 | **Quy ước soi rào** | `simulate_null(σ=0,03, seed=NULL_SEED, n=200k, sub=24)` phải cho **23,42% ± 0,4 điểm**. Đổi sang cả-hai-intrabar cho 25,5% ⇒ refactor lệch quy ước làm test đỏ. *(Con số 23,1% cũ là giải tích sai — xem §L4)* |
+| 15 | **Quy ước soi rào** | `simulate_null(σ=0,03, seed=NULL_SEED, n=200k, sub=24)` phải cho **18,03% ± 0,4 điểm** *(rào 1,2/6,0)*. Refactor lệch quy ước làm test đỏ. *(Giá trị giải tích `sl/(sl+tp)` = 16,67% SAI — ba tầng sai lệch, xem §L4)* |
 | 16 | Mọi tranche là giao ngay | `instrument == "spot"` toàn sổ |
 | 17 | `predict()` thuần | Gọi hai lần cùng đầu vào ⇒ giống hệt từng byte |
 | 18 | Độ tươi chặn trước | `delayed`/`disconnected` ⇒ `new_tranches == ()`, mọi trường hợp |
@@ -1094,7 +1096,7 @@ Hệ **không biết** người dùng có vào lệnh không, và **không đư�
 | Tổ hợp trọng số đều | — | `12 §6.5` | quyết định thiết kế |
 | Rời rạc hoá | 5 mức | ↑ | quy ước |
 | Hệ số dừng lỗ | 1,2σ̂ | `10 §2/C` | đóng băng sau khi nhìn |
-| Hệ số chốt lời | 4,0σ̂ | ↑ | ↑ |
+| Hệ số chốt lời | **6,0σ̂** | `ADR-017` | ⚠️ **chọn SAU khi nhìn bề mặt** trên 4 cặp hiệu chuẩn — thiên lệch chọn lọc, xem `ADR-017 §2` |
 | Hạn thời gian | 60 ngày | ↑ | ↑ |
 | Thang σ̂ | **k = 1 (ngày)** | `12 §2.8` — 0/23 hết hạn | bằng chứng đo trên **ô tốt nhất in-sample, n=23, một đồng** ⇒ **đo lại trên tổ hợp ở GATE 1** |
 | LIFO khi w giảm | LIFO | — | **1-trong-3** (LIFO/FIFO/pro-rata), ảnh hưởng P&L ⇒ phép đo đối chứng LIFO/FIFO trong bộ đo |

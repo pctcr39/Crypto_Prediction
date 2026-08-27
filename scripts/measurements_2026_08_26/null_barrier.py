@@ -11,7 +11,7 @@ sys.path.insert(0, str(__import__('pathlib').Path(__file__).parent))
 
 SEED, N_PATHS, SUB = 20260827, 200_000, 24     # 24 buoc/ngay -> sinh high/low trong ngay
 
-def simulate_null(sigma_d, sl=1.2, tp=4.0, tmax=60, drift=0.0,
+def simulate_null(sigma_d, sl=1.2, tp=6.0, tmax=60, drift=0.0,   # tp: ADR-017
                   conv="stop_low_tp_close", seed=SEED, n=N_PATHS):
     """GBM khong troi, buoc gio, gop thanh nen ngay. Tra ti le CHAM TARGET."""
     rng = np.random.default_rng(seed)
@@ -42,7 +42,7 @@ def simulate_null(sigma_d, sl=1.2, tp=4.0, tmax=60, drift=0.0,
     return hit.mean(), (~done).mean()
 
 print(f"═══ NULL MO PHONG — seed {SEED}, {N_PATHS:,} duong, {SUB} buoc/ngay ═══\n")
-print(f"   Gia tri GIAI TICH (Brown, giam sat lien tuc, khong han): sl/(sl+tp) = {1.2/5.2*100:.2f}%\n")
+print(f"   Gia tri GIAI TICH (Brown, giam sat lien tuc, khong han): sl/(sl+tp) = {1.2/7.2*100:.2f}%\n")
 print(f"{'Quy uoc':26s} {'sigma ngay':>11s} {'null mo phong':>14s} {'% het han':>10s}")
 for conv,lab in [("ca_hai_intrabar","cả hai intrabar"),("stop_low_tp_close","stop low / TP close")]:
     for sd in [0.0243, 0.0300, 0.0400]:
@@ -56,7 +56,7 @@ print(f"      5 seed: {' · '.join(f'{v*100:.2f}%' for v in vals)}   do lech {np
 
 print("\n\n═══ DOI CHIEU TI LE NEN THUC NGHIEM (cung quy uoc van hanh) ═══\n")
 from barrier_surface import D, SYMS
-def base_rate(X, sl=1.2, tp=4.0, tmax=60):
+def base_rate(X, sl=1.2, tp=6.0, tmax=60):
     o,hi,lo,c = X.open,X.high,X.low,X.close
     var=(np.log(hi/lo)**2)/(4*np.log(2))                  # Parkinson (B4)
     sg=np.sqrt(var.rolling(20).mean()).shift(1)

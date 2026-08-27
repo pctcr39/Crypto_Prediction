@@ -18,7 +18,7 @@ import numpy as np, pandas as pd
 
 LN2 = np.log(2)
 COST_ROUNDTRIP = 0.30          # % — taker 0,10×2 + trượt 0,05×2
-SL_MULT, TP_MULT, DEADLINE = 1.2, 4.0, 60
+SL_MULT, TP_MULT, DEADLINE = 1.2, 6.0, 60   # ADR-017 — đổi từ 4,0 (chọn SAU khi nhìn bề mặt)
 LEVELS = (0.25, 0.50, 0.75, 1.00)
 GRID_27 = tuple(itertools.product((10, 20, 50), (100, 150, 200), (20, 55, 100)))
 HAR_TARGET_DAYS, HAR_REFIT_EVERY, HAR_MIN_TRAIN = 5, 7, 250
