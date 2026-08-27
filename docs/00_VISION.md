@@ -41,8 +41,9 @@ duy nhất ở chỗ tiền đi đâu — và vì thế khác nhau ở cổng an
 ## 3 · Người dùng và thị trường
 
 - **Nhiều người dùng**, mỗi người một tài khoản đăng nhập, dữ liệu tách biệt.
-- **Việt Nam trước**: giao diện tiếng Việt mặc định, tiếng Anh phụ; mô hình chi
-  phí đã tính thuế 0,1%/giao dịch (Thông tư 32/2026). Thị trường khác xét sau.
+- **Việt Nam trước**: giao diện tiếng Việt mặc định, tiếng Anh phụ. Thị trường
+  khác xét sau. Hệ **không** đưa thuế vào mô hình chi phí — thuế là việc từng
+  người dùng tự khai (quyết định chủ dự án 27/08/2026).
 - Hai nhóm người dùng hình dung khi thiết kế:
   - *Người mới* — cần hiểu một con số trong một chạm, cần Paper để tập, cần được
     hệ nói "không rõ" thay vì bị dụ.
@@ -53,8 +54,9 @@ duy nhất ở chỗ tiền đi đâu — và vì thế khác nhau ở cổng an
 
 | Hạng mục | Quyết định | Hệ quả thiết kế |
 |---|---|---|
-| Kinh doanh | **Miễn phí giai đoạn đầu** | Không xây billing; kiến trúc không được chặn đường thu phí sau này (gói/quyền theo người dùng có chỗ sẵn) |
-| Hạ tầng | **0đ trên máy cá nhân càng lâu càng tốt** | Toàn bộ chạy được trên một máy; Docker hoá để khi có người dùng ngoài thật thì chuyển VPS mà không viết lại |
+| Kinh doanh | **Miễn phí — không thu phí người dùng** | Không xây billing, không gói trả phí; nếu sau này đổi ý phải qua ADR |
+| Hạ tầng | **Mac mini M4 tại nhà, host qua Cloudflare Tunnel** | Toàn bộ chạy trên một máy; Cloudflare Tunnel + Access là cửa vào duy nhất (không mở port); Docker hoá để tách môi trường và sao lưu; VPS chỉ khi Mac mini không kham nổi |
+| Chi phí giao dịch | **Chỉ phí sàn + trượt giá, không tính thuế** | `config → costs` gồm taker 0,10%/chiều + trượt giá 0,05%; hệ không ước tính, không khấu trừ thuế — người dùng tự khai |
 | Nguồn lực | **Một người + Claude, làm tới khi xong** | Lộ trình xếp theo *thứ tự phụ thuộc*, không theo lịch; mỗi module chạy độc lập, có test, để tiến độ chậm không làm hỏng cái đã xong |
 | Thị trường | **Việt Nam trước** | Xem §3 |
 
@@ -120,8 +122,8 @@ Kế thừa từ các vòng phản biện (`docs/Old/09`, `11`, `12`); chi tiế
 
 | Ràng buộc | Ai xử lý | Chặn phase nào |
 |---|---|---|
-| Pháp lý vận hành nền tảng đặt lệnh hộ người dùng tại Việt Nam (thuế TT 32/2026, điều kiện tư vấn/môi giới nếu có) | Chủ dự án — cần tư vấn pháp lý | Trading mode cho người ngoài (Phase 3) |
-| Hạ tầng 0đ máy cá nhân không đảm bảo uptime cho người dùng ngoài | Chủ dự án quyết thời điểm chuyển VPS | Mở đăng ký công khai (Phase 2 muộn) |
+| Pháp lý vận hành nền tảng đặt lệnh hộ người dùng tại Việt Nam (điều kiện tư vấn/môi giới nếu có) | Chủ dự án — cần tư vấn pháp lý | Trading mode cho người ngoài (Phase 3) |
+| Mac mini tại nhà: điện và mạng gia đình là điểm hỏng đơn | Chủ dự án — UPS, watchdog, sao lưu ngoài máy | Mở đăng ký công khai (Phase 2 muộn) |
 | Chưa có mô hình nào qua GATE 1 — mọi khuyến nghị hiện chỉ có giá trị đo lường | Lộ trình Phase 1 | Bot trading tiền thật (Phase 4) |
 
 ## 9 · Bản đồ bộ tài liệu và trạng thái duyệt

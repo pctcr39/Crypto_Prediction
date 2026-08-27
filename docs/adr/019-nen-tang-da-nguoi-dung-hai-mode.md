@@ -36,11 +36,12 @@ dự án là quyết định hiệu lực, và ghi rõ cái giá phải trả.
    GATE 1–4 nguyên ngưỡng số (`docs/Old/00_MASTER_PLAN.md §7`); trade thủ công mở
    sớm hơn nhưng phải qua cổng kỹ thuật riêng của đường đặt lệnh (idempotent,
    đối soát, kill switch — nhóm 2 của GATE 4). 12 RULE giữ nguyên toàn bộ.
-5. **Các quyết định vận hành kèm theo** (chủ dự án chốt cùng ngày): miễn phí giai
-   đoạn đầu (kiến trúc chừa chỗ billing, chưa xây) · hạ tầng 0đ trên máy cá nhân
-   càng lâu càng tốt, chỉ chuyển VPS khi có người dùng ngoài thật · nguồn lực một
-   người + Claude, làm tới khi xong (roadmap xếp theo thứ tự phụ thuộc, không theo
-   lịch cứng) · thị trường Việt Nam trước, UI tiếng Việt mặc định, tiếng Anh phụ.
+5. **Các quyết định vận hành kèm theo** (chủ dự án chốt cùng ngày, làm rõ buổi
+   chiều): miễn phí, không thu phí người dùng (không xây billing) · hạ tầng Mac
+   mini M4 tại nhà, host qua Cloudflare Tunnel · không đưa thuế vào mô hình chi
+   phí (người dùng tự khai) · nguồn lực một người + Claude, làm tới khi xong
+   (roadmap xếp theo thứ tự phụ thuộc, không theo lịch cứng) · thị trường Việt
+   Nam trước, UI tiếng Việt mặc định, tiếng Anh phụ.
 
 ## Phương án đã cân nhắc và loại bỏ
 
@@ -62,8 +63,8 @@ PREDICTION_DESIGN được giữ nguyên làm lõi tầng 1; đường nâng c�
   được khoá" (doc 18 cũ) **mất hiệu lực** — thay bằng phòng thủ chủ động: khoá
   chỉ-trade, mã hoá, GATE, kill switch, đối soát.
 - **Ràng buộc pháp lý thành việc chặn đường**: vận hành nền tảng đặt lệnh hộ
-  người khác có thể cần điều kiện pháp lý (VN: thuế 0,1%/giao dịch theo Thông tư
-  32/2026 đã nằm trong toán hoà vốn). Phải có tư vấn pháp lý **trước khi mở
+  người khác có thể cần điều kiện pháp lý. Phải có tư vấn pháp lý **trước khi mở
   Trading mode cho người ngoài** — ghi thành REQ ở `docs/01_REQUIREMENTS.md`.
+  Thuế không nằm trong mô hình chi phí của hệ (quyết định chủ dự án).
 - Khi hệ chỉ khuyên, sai lầm hiện ra chậm; khi hệ đặt lệnh, sai lầm hiện ra
   bằng tiền của người khác. Chuẩn kiểm định vì thế chỉ được siết, không được nới.

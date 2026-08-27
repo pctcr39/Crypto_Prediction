@@ -1,6 +1,7 @@
 # 01 · YÊU CẦU HỆ THỐNG (REQ) — cryptopred
 
 > **Trạng thái:** bản nháp 1 · 27/08/2026 · chờ chủ dự án duyệt (Bước 3)
+> **Cập nhật cùng ngày (quyết định chủ dự án):** không thu phí người dùng · không tính thuế vào mô hình chi phí · hạ tầng Mac mini M4 + Cloudflare Tunnel — đã phản ánh ở TRADE-01/07, LEGAL-03, NFR-03, §15
 > **Căn cứ:** `00_VISION.md` (phạm vi, luật) · `adr/019` (quyết định gốc) · bản kiểm kê 20+ tài liệu thế hệ 1 (`docs/Old/`)
 > **Vai trò:** nói **CÁI GÌ** hệ phải làm và **KIỂM BẰNG GÌ**. Không nói làm thế nào (`02_FRD`) hay bằng gì (`03_ARCHITECTURE`).
 
@@ -86,13 +87,13 @@
 
 | ID | Mức | Yêu cầu | Kiểm bằng |
 |---|---|---|---|
-| TRADE-01 | PHẢI | Đặt lệnh giao ngay (market/limit) trên tài khoản user qua hệ; **xác nhận 2 bước**; hiển thị phí + thuế ước tính + cỡ so với NAV **trước** khi gửi | Checklist UI + test |
+| TRADE-01 | PHẢI | Đặt lệnh giao ngay (market/limit) trên tài khoản user qua hệ; **xác nhận 2 bước**; hiển thị phí ước tính + cỡ so với NAV **trước** khi gửi | Checklist UI + test |
 | TRADE-02 | PHẢI | Idempotent: mỗi lệnh một `clientOrderId`; gửi lại không tạo lệnh mới; sổ lệnh append-only **ghi trước khi gửi** | Test gửi trùng |
 | TRADE-03 | PHẢI | Đối soát trạng thái nội bộ với sàn sau mỗi lệnh và định kỳ ≤ 5 phút; lệch ⇒ cảnh báo + **chặn lệnh mới** cho tới khi khớp | Test tiêm lệch |
 | TRADE-04 | PHẢI | **Cổng kỹ thuật đường lệnh** trước khi mở cho người ngoài: chạy trên Binance Demo Mode với số ngày/số lệnh tối thiểu, 0 lệnh trùng, 0 lệnh mồ côi, 0 lệch trạng thái (vế A của GATE 3 áp riêng cho đường lệnh; ngưỡng ở `05`) | Báo cáo chạy thử + ADR mở |
 | TRADE-05 | PHẢI | Giới hạn theo user: cỡ lệnh và tổng exposure có **trần hệ thống** (mặc định ≤1%/lệnh, ≤5% tổng — nhóm 1 GATE 4); user chỉ được siết, không nới quá trần | Test vượt trần bị chặn |
 | TRADE-06 | PHẢI | Nhãn **TIỀN THẬT** ở mọi panel, màu/nhãn khác hẳn Paper | Review UI |
-| TRADE-07 | PHẢI | Thuế 0,1%/giao dịch (Thông tư 32/2026) tính vào chi phí mọi lệnh, kể cả lệnh lỗ; nằm trong `config → costs` | Test toán chi phí |
+| TRADE-07 | *đã bỏ* | Không tính thuế vào mô hình chi phí (quyết định chủ dự án 27/08/2026). `config → costs` chỉ gồm phí taker 0,10%/chiều + trượt giá 0,05%; thuế là việc người dùng tự khai. Ghi lại để không ai đưa thuế vào lại mà không có ADR | — |
 | TRADE-08 | PHẢI | Khớp lệnh theo quy ước đo: tín hiệu tại close nến t ⇒ vào **open t+1**; không dùng close t (lookahead) | Test |
 
 ## 7 · REQ-BOT · Bot tự giao dịch (P4)
@@ -158,7 +159,7 @@
 |---|---|---|---|
 | NFR-01 | PHẢI | Dự đoán cho toàn vũ trụ hoàn tất trong vòng vài giây sau khi nến đóng; store đọc < 200 ms | Đo |
 | NFR-02 | PHẢI | Ingest có watchdog đo "có dữ liệu mới", không phải "tiến trình còn sống"; mất dữ liệu > ngưỡng ⇒ cảnh báo | Test |
-| NFR-03 | PHẢI | Chạy trọn trên **một máy cá nhân, 0đ** ở P1–P2 (quyết định chủ dự án); Docker hoá từ đầu để chuyển VPS không viết lại; chuyển VPS **trước** khi mở đăng ký cho người ngoài | Checklist |
+| NFR-03 | PHẢI | Chạy trọn trên **Mac mini M4 tại nhà**, host qua **Cloudflare Tunnel + Access** — không mở port nào ra ngoài (quyết định chủ dự án); Docker hoá từ đầu; UPS + watchdog + sao lưu ngoài máy **trước** khi mở đăng ký cho người ngoài; VPS chỉ khi Mac mini không kham nổi | Checklist |
 | NFR-04 | PHẢI | Bí mật hệ thống (khoá mã hoá chủ, mật khẩu DB) ngoài repo; **không log khoá**; threat model đa user viết trước P3 | Review |
 | NFR-05 | PHẢI | Sao lưu dữ liệu user + sổ khuyến nghị hằng ngày, phục hồi có kiểm | Diễn tập |
 | NFR-06 | PHẢI | Mỗi module chạy độc lập, có test; `validation/` không sửa nếu không kèm test; lint xanh là cổng commit | CI cục bộ |
@@ -171,7 +172,7 @@
 |---|---|---|---|
 | LEGAL-01 | PHẢI | **Tư vấn pháp lý trước khi mở Trading mode cho người ngoài** (P3): tư cách nền tảng đặt lệnh hộ, điều kiện tại Việt Nam, trách nhiệm khi bot gây lỗ | Chủ dự án xác nhận bằng ADR |
 | LEGAL-02 | PHẢI | Điều khoản sử dụng + disclaimer: hệ đưa khuyến nghị nhưng **quyết định và trách nhiệm thuộc người dùng**; không đảm bảo lợi nhuận; hiển thị lúc đăng ký và cạnh mọi khuyến nghị | Review |
-| LEGAL-03 | PHẢI | Thuế 0,1%/giao dịch (TT 32/2026) — xem TRADE-07 | — |
+| LEGAL-03 | *đã bỏ* | Hệ không ước tính, không khấu trừ thuế — xem TRADE-07 | — |
 | LEGAL-04 | PHẢI | Dữ liệu cá nhân: quyền xem/xoá; xoá ⇒ ẩn danh hoá track record (giữ bất biến thống kê, bỏ định danh) | Test |
 | LEGAL-05 | NÊN | Vì **không custody**, KYC/AML dự kiến tối thiểu — xác nhận với luật sư trong LEGAL-01 | — |
 
@@ -191,8 +192,8 @@
 | Phase | Nhóm REQ mở | Điều kiện vào phase |
 |---|---|---|
 | P1 | PRED, PAPER (ẩn danh), TRACK, DATA, UI cơ bản, NFR, DOC | Bộ doc 00–08 duyệt |
-| P2 | ACC, PAPER theo tài khoản, UI đầy đủ | P1 chạy ổn; NFR-03 (máy cá nhân) còn chịu được |
-| P3 | LINK, TRADE, ACC-03 2FA | LEGAL-01 xong · TRADE-04 cổng đường lệnh đạt · VPS nếu có người ngoài |
+| P2 | ACC, PAPER theo tài khoản, UI đầy đủ | P1 chạy ổn; NFR-03 (Mac mini + Cloudflare) chịu tải |
+| P3 | LINK, TRADE, ACC-03 2FA | LEGAL-01 xong · TRADE-04 cổng đường lệnh đạt · NFR-05 sao lưu ngoài máy đạt |
 | P4 | BOT | GATE 1–4 đạt toàn hệ · PAPER-06 |
 | P5 | PRED-05 tầng 2 | Tầng 2 thắng tầng 1 out-of-sample sau phí |
 
