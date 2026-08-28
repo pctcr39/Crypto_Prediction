@@ -1,0 +1,87 @@
+/* ══════════════════════════════════════════════════════════════════
+   tokens.css — NGUỒN CHÂN LÝ DUY NHẤT VỀ MÀU · prototype v15
+   Hướng màu: "Graphite Gold" — nền than chì 4 bậc kế thừa Binance,
+   vàng chỉ cho giao diện (nút, focus, tab), xanh/đỏ chỉ cho DỮ LIỆU
+   tăng/giảm, TÍM độc quyền cho mọi thứ model sinh ra (RULE 7).
+
+   Đã kiểm định (dataviz validate_palette.js, nền #181A20):
+     up #0ECB81 ↔ down #F23645 : ΔE deutan 10.7 (≥ 8 đạt), tritan 40
+     pred #A78BFA             : tương phản 6.4:1 trên --surface-1
+   DS-RULE 8: thấy mã hex ở file khác ngoài file này là lỗi.
+   ══════════════════════════════════════════════════════════════════ */
+:root{
+  /* Bề mặt 4 bậc */
+  --surface-0:#0B0E11;  /* app, nav, footer */
+  --surface-1:#181A20;  /* panel, chart */
+  --surface-2:#1E2329;  /* card, input, hàng hover nhẹ */
+  --surface-3:#2B3139;  /* hover đậm, track, chip nền */
+  --border:#2B3139;
+  --border-strong:#474D57;
+  --grid:#2B3139;
+
+  /* Chữ 3 bậc (tương phản trên --surface-1: 14.7 · 9.2 · 6.0) */
+  --text-1:#EAECEF;
+  --text-2:#B7BDC6;
+  --text-3:#8F99A8;
+
+  /* Giao diện — vàng CHỈ cho nút/focus/tab, không bao giờ cho dữ liệu (DS-RULE 5) */
+  --accent:#F0B90B;
+  --accent-hover:#FCD535;
+  --on-accent:#0B0E11;
+  --on-data:#0B0E11;    /* chữ trên nút Mua/Bán */
+  --info:#5B9DFF;
+  --warn:#FF8F3D;
+
+  /* Dữ liệu tăng/giảm — đã kiểm định mù màu, luôn đi kèm ▲▼ + chữ (DS-RULE 3) */
+  --green:#0ECB81;
+  --red:#F23645;
+  --up:var(--green);
+  --down:var(--red);
+  --down-text:#FF5C6C;  /* chữ nhỏ đỏ trên nền tối cần sáng hơn để đạt 6:1 */
+
+  /* Dự đoán — TÍM độc quyền (RULE 7 / DS-RULE 4) */
+  --pred:#A78BFA;
+  --pred-band:rgba(167,139,250,.14);
+
+  /* Trạng thái độ tươi — không bao giờ tái dụng làm màu chuỗi */
+  --status-live:var(--up);
+  --status-slow:var(--warn);
+  --status-down:var(--down);
+  --status-stale:var(--pred);
+
+  /* Bộ so sánh nhiều chuỗi (đối chứng, baseline) — luôn có chú giải + nhãn trực tiếp */
+  --series-1:#5B9DFF;
+  --series-2:#FB923C;
+  --series-3:#94A3B8;
+
+  /* Chữ */
+  --font-sans:"IBM Plex Sans","Inter",-apple-system,"Segoe UI",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono","JetBrains Mono",ui-monospace,"SF Mono",monospace;
+  --font-num:var(--font-mono);
+  --fs-11:11px;--fs-12:12px;--fs-13:13px;--fs-14:14px;--fs-16:16px;--fs-20:20px;--fs-24:24px;--fs-32:32px;
+
+  /* Khoảng cách · bo góc · chuyển động */
+  --sp-1:4px;--sp-2:8px;--sp-3:12px;--sp-4:16px;--sp-5:24px;--sp-6:32px;
+  --r-1:4px;--r-2:6px;--r-pill:999px;
+  --dur-flash:150ms;--dur-fast:120ms;--dur-base:200ms;
+  --tap:44px;
+  color-scheme:dark;
+}
+
+/* Chế độ mù màu đỏ-lục: đổi cặp dữ liệu sang xanh dương / cam (không chạm tím) */
+:root[data-cvd="true"]{--up:#3B82F6;--down:#F97316;--down-text:#FDBA74}
+/* Quy ước Á Đông: đỏ = tăng */
+:root[data-updown="asia"]{--up:var(--red);--down:var(--green);--down-text:#34D399}
+
+/* ── Chế độ SÁNG — bảng chọn riêng, đã kiểm định (không đảo tự động) ── */
+:root[data-theme="light"]{
+  --surface-0:#F5F7FA;--surface-1:#FFFFFF;--surface-2:#F0F2F5;--surface-3:#E4E7EC;
+  --border:#E0E3EB;--border-strong:#B7BDC6;--grid:#E0E3EB;
+  --text-1:#0B0E11;--text-2:#474D57;--text-3:#707A8A;
+  --accent:#C99400;--accent-hover:#B58600;--on-accent:#FFFFFF;--on-data:#FFFFFF;
+  --info:#1D6FE0;--warn:#C2410C;
+  --green:#0E9F6E;--red:#E0303F;--down-text:#C9202F;
+  --pred:#7C5CE6;--pred-band:rgba(124,92,230,.12);
+  --series-1:#2A78D6;--series-2:#EA580C;--series-3:#64748B;
+  color-scheme:light;
+}

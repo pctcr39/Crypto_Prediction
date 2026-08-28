@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="vi" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>cryptopred · v15</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="components.css">
+<!-- BUILD:CSS -->
+</head>
+<body data-mode="PAPER">
+<div class="app">
+  <header class="topnav" role="banner">
+    <a class="brand" href="#/trade" aria-label="cryptopred"><span class="logo" aria-hidden="true">cp</span><span class="hide-m">cryptopred</span></a>
+    <nav class="nav" aria-label="Chính">
+      <a href="#/trade" data-nav="trade">Giao dịch</a>
+      <a href="#/markets" data-nav="markets">Thị trường</a>
+      <a href="#/indicators" data-nav="indicators">Chỉ số</a>
+      <a href="#/consult" data-nav="consult">Phương pháp</a>
+      <a href="#/portfolio" data-nav="portfolio">Danh mục</a>
+      <a href="#/bots" data-nav="bots">Bot</a>
+    </nav>
+    <span class="spacer"></span>
+    <div class="right" id="nav-right"></div>
+  </header>
+  <div class="realbar" role="status">⚠ Bạn đang giao dịch bằng TIỀN THẬT — mọi lệnh gửi lên Binance của bạn. <button class="btn btn-sm btn-ghost" id="to-paper">Về PAPER</button></div>
+  <main id="outlet" class="outlet" tabindex="-1"></main>
+  <footer class="footer" role="contentinfo">
+    <span id="ft-source"></span>
+    <span id="ft-clock" class="num"></span>
+    <span id="ft-countdown" class="num"></span>
+    <span class="spacer"></span>
+    <span id="ft-fresh"></span>
+    <span>prototype v15 · docs/design/v15</span>
+  </footer>
+  <nav class="bottomnav" aria-label="Chính (di động)">
+    <a href="#/trade" data-nav="trade"><span aria-hidden="true">◫</span>Giao dịch</a>
+    <a href="#/markets" data-nav="markets"><span aria-hidden="true">≡</span>Thị trường</a>
+    <a href="#/indicators" data-nav="indicators"><span aria-hidden="true">∿</span>Chỉ số</a>
+    <a href="#/consult" data-nav="consult"><span aria-hidden="true">◎</span>Phương pháp</a>
+    <a href="#/account" data-nav="account"><span aria-hidden="true">●</span>Tài khoản</a>
+  </nav>
+</div>
+<script src="fallback-data.js"></script>
+<script src="data.js"></script>
+<script src="domain.js"></script>
+<script src="theory.js"></script>
+<script src="core.js"></script>
+<script src="screens/trade.js"></script>
+<script src="screens/markets.js"></script>
+<script src="screens/indicators.js"></script>
+<script src="screens/consult.js"></script>
+<script src="screens/portfolio.js"></script>
+<script src="screens/bots.js"></script>
+<script src="screens/account.js"></script>
+<script src="screens/auth.js"></script>
+<!-- BUILD:JS -->
+<script src="app.js"></script>
+</body>
+</html>
