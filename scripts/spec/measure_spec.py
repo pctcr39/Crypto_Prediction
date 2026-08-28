@@ -258,6 +258,38 @@ def emit(path="docs/generated/spec_numbers.md") -> None:
     mg = [r["margin"] for r in surf]; ev = [r["ev"] for r in surf]
     A(f"\n**Biên: trung vị {np.median(mg):+.1f} · min {min(mg):+.1f} · max {max(mg):+.1f}** · "
       f"{sum(1 for x in mg if x>0)}/{len(mg)} ô biên dương · {sum(1 for x in ev if x>0)}/{len(ev)} ô EV dương\n")
+    A("\n## 6 · ★ Hai ngưỡng, hai thứ nguyên — dây an toàn `PRED-02`\n")
+    cg = cost_gate_surface(amr["mean"], m["hold_days"])
+    A(f"`p_required` = hoà vốn cược đối xứng 1:1 (**chỉ hiển thị**) · `p_star` = hoà vốn của chính rào chắn "
+      f"`{SL_MULT}σ̂/{TP_MULT}σ̂` (**cổng quyết định**). Cùng hàm chi phí, khác thứ nguyên.\n")
+    A(f"| σ̂ ngày | `p_required` (H = 1 ngày) | `p_required` (H = giữ {cg['hold_days']} ngày) | `c_R` | `p_star` |")
+    A("|---|---|---|---|---|")
+    for r in cg["rows"]:
+        f1 = f"**{r['p_req_1d']*100:.1f}%** ⛔" if r["p_req_1d"] > cg["wire"] else f"{r['p_req_1d']*100:.1f}%"
+        f2 = f"**{r['p_req_hold']*100:.1f}%** ⛔" if r["p_req_hold"] > cg["wire"] else f"{r['p_req_hold']*100:.1f}%"
+        A(f"| {r['sigma']:.1f}% | {f1} | {f2} | {r['c_R']:.3f} | {r['p_star']*100:.1f}% |")
+    A(f"\n**Dây an toàn `p_required > {cg['wire']:.2f}` kích hoạt khi σ̂ ngày < {cg['sigma_cut_1d']:.2f}%** "
+      f"(chân trời 1 ngày) hoặc **< {cg['sigma_cut_hold']:.2f}%** (chân trời bằng thời gian nắm giữ). "
+      f"Trên cùng dải σ̂, `p_star` chỉ đi từ {cg['p_star_hi']*100:.1f}% xuống {cg['p_star_lo']*100:.1f}%.\n")
+    A("> ⚠️ Khung 1 ngày là khung **duy nhất** được phát ý định (ADR-002). Một dây an toàn kích hoạt ở "
+      "biến động thấp sẽ bịt miệng đúng khung nó được viết ra để bảo vệ — và bịt đúng lúc chi phí trên "
+      "mỗi R đang thấp nhất. Xem `docs/04_PREDICTION_SPEC.md §2.5`.\n")
+    A("\n## 7 · ★ Ranh giới của trạng thái `bác bỏ` — không hằng số, một phát biểu\n")
+    rb = rejection_boundary(mt["sd_per_event"], n_now=mt["n_total"])
+    A(f"Phát biểu đăng ký trước: **«cận trên một phía {int((1-0.05)*100)}% của EV nằm dưới 0»**. "
+      f"Không có ngưỡng hằng số — ranh giới tự suy từ `n` và độ lệch chuẩn R mỗi sự kiện "
+      f"(**{rb['sd_per_event']}R**, đo được) tại đúng thời điểm chấm.\n")
+    A("| n sự kiện | sai số chuẩn | EV đo phải âm hơn | … nếu `n_eff` chỉ bằng 25% `n` |")
+    A("|---|---|---|---|")
+    for r in rb["rows"]:
+        tag = " ← cỡ hiện có" if r["is_now"] else ""
+        A(f"| {r['n']:,}{tag} | {r['se']:.4f}R | **{r['bound']:+.3f}R** | {r['bound_neff_25']:+.3f}R |")
+    A("\n> ⚠️ **Sai số chuẩn ngây thơ là LẠC QUAN.** Sự kiện chồng lấn thời gian và tương quan chéo "
+      "coin làm `n` hiệu dụng nhỏ hơn `n` thô — cột cuối cho thấy ranh giới xê dịch bao xa. Phép chấm "
+      "thật dùng **phân vị block bootstrap**, độ dài khối ≥ độ dài nhãn; **không** dùng ±z·SE.\n")
+    A("> Đọc bảng: với cỡ mẫu hiện thực, `bác bỏ` chỉ bắt được thứ **hỏng rõ rệt**. Đó là tính chất "
+      "đúng — bác nhầm một phương pháp thật ra tốt cũng là sai lầm tốn kém. Xem "
+      "`docs/04_PREDICTION_SPEC.md §8.5`.\n")
     Path(path).parent.mkdir(parents=True, exist_ok=True)
     Path(path).write_text("\n".join(L), encoding="utf-8")
     print(f"đã sinh {path} — {len(L)} dòng")
@@ -332,6 +364,67 @@ def barrier_surface() -> list[dict]:
                          margin=round((m["win_rate"] - m["breakeven"]) * 100, 1),
                          r_win=round(m["r_win"], 2), ev=round(m["ev_net"], 3)))
     return rows
+
+# ══ L4 · CỔNG PHÍ — hai ngưỡng, hai thứ nguyên ═══════════════════════
+P_REQUIRED_SAFETY_WIRE = 0.60   # PRED-02 · dây an toàn hiện hành
+
+def cost_gate_surface(amr: float, hold_days: float,
+                      sigmas=(0.8, 1.0, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0)) -> dict:
+    """★ Bảng để thấy `p_required` và `p_star` KHÔNG thay nhau được.
+
+    p_required : hoà vốn của cược ĐỐI XỨNG 1:1 — chỉ để HIỂN THỊ (PRED-03)
+                 = 0,5 + c / (2·E|move|)  ·  E|move| = ABS_MOVE_RATIO·σ̂·√H
+    p_star     : hoà vốn của chính RÀO CHẮN đang phát — cổng QUYẾT ĐỊNH
+                 = (1 + c_R) / (W + 1)  ·  c_R = c / (sl·σ̂)  ·  W = tp/sl
+
+    Cả hai đọc cùng một hàm chi phí (PRED-16). Câu hỏi bảng trả lời:
+    ở mức σ̂ nào thì dây an toàn `p_required > 0,60` của PRED-02 bịt miệng
+    khung 1 ngày — khung DUY NHẤT được phát ý định giao dịch (ADR-002)?
+
+    Ngưỡng giải tích:  0,5 + c/(2·amr·σ̂·√H) > wire ⟺ σ̂ < c / (2·(wire−0,5)·amr·√H)
+    """
+    W = TP_MULT / SL_MULT
+    rows = []
+    for sg in sigmas:
+        c_R = COST_ROUNDTRIP / (SL_MULT * sg)
+        row = dict(sigma=sg, c_R=round(c_R, 4), p_star=round((1 + c_R) / (W + 1), 4))
+        for H, key in ((1.0, "p_req_1d"), (hold_days, "p_req_hold")):
+            row[key] = round(0.5 + COST_ROUNDTRIP / (2 * amr * sg * np.sqrt(H)), 4)
+        rows.append(row)
+    cut = lambda H: COST_ROUNDTRIP / (2 * (P_REQUIRED_SAFETY_WIRE - 0.5) * amr * np.sqrt(H))
+    return dict(rows=rows, hold_days=round(hold_days, 2), wire=P_REQUIRED_SAFETY_WIRE,
+                sigma_cut_1d=round(cut(1.0), 3), sigma_cut_hold=round(cut(hold_days), 3),
+                p_star_lo=rows[-1]["p_star"], p_star_hi=rows[0]["p_star"])
+
+
+
+# ══ L8 · ĐIỀU KIỆN RÚT LUI — ranh giới của trạng thái `bác bỏ` ═══════
+Z_ONE_SIDED_95 = 1.645   # quy ước chuẩn, KHÔNG tinh chỉnh — đăng ký trước
+
+def rejection_boundary(sd_per_event: float,
+                       ns=(300, 500, 1000, 2000), n_now: int | None = None) -> dict:
+    """★ `bác bỏ` KHÔNG có ngưỡng hằng số — nó có một PHÁT BIỂU THỐNG KÊ:
+
+        «cận trên một phía 95% của EV nằm dưới 0»
+
+    Bảng dưới chỉ để thấy BẬC ĐỘ LỚN: ở mỗi cỡ mẫu, EV đo được phải âm hơn
+    bao nhiêu thì phát biểu trên mới đúng. Không con số nào trong bảng được
+    dùng làm ngưỡng — chúng thay đổi theo n và theo sd đo được tại lúc chấm.
+
+    ⚠️ Sai số chuẩn ngây thơ `sd/√n` là LẠC QUAN: sự kiện chồng lấn thời gian
+    và tương quan chéo coin làm n hiệu dụng nhỏ hơn n thô. Phép chấm THẬT phải
+    dùng **phân vị block bootstrap**, độ dài khối ≥ độ dài nhãn — xem cột
+    `n_eff = 25% n` để thấy ranh giới xê dịch bao xa khi tính đúng.
+    """
+    rows = []
+    for n in sorted(set(list(ns) + ([n_now] if n_now else []))):
+        se = sd_per_event / np.sqrt(n)
+        rows.append(dict(n=n, se=round(se, 4),
+                         bound=round(-Z_ONE_SIDED_95 * se, 4),
+                         bound_neff_25=round(-Z_ONE_SIDED_95 * sd_per_event / np.sqrt(n * 0.25), 4),
+                         is_now=(n == n_now)))
+    return dict(sd_per_event=sd_per_event, z=Z_ONE_SIDED_95, rows=rows)
+
 
 def slippage_table(m: dict) -> list[dict]:
     """EV theo lỗ thực nhận, tính từ CHÍNH cặp (p, W) đang vận hành."""

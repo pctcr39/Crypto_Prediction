@@ -114,3 +114,40 @@ Tập LỒNG NHAU trên cùng danh sách đã phát. Một mô hình, một hi�
 | 2.0 | 6.0 | 3.0R | 820 | 37.9% | 26.2% | +11.7 | 2.94R | +0.555R |
 
 **Biên: trung vị +5.7 · min -0.9 · max +11.7** · 14/16 ô biên dương · 16/16 ô EV dương
+
+
+## 6 · ★ Hai ngưỡng, hai thứ nguyên — dây an toàn `PRED-02`
+
+`p_required` = hoà vốn cược đối xứng 1:1 (**chỉ hiển thị**) · `p_star` = hoà vốn của chính rào chắn `1.2σ̂/6.0σ̂` (**cổng quyết định**). Cùng hàm chi phí, khác thứ nguyên.
+
+| σ̂ ngày | `p_required` (H = 1 ngày) | `p_required` (H = giữ 6.47 ngày) | `c_R` | `p_star` |
+|---|---|---|---|---|
+| 0.8% | **75.8%** ⛔ | **60.1%** ⛔ | 0.312 | 21.9% |
+| 1.0% | **70.6%** ⛔ | 58.1% | 0.250 | 20.8% |
+| 1.5% | **63.8%** ⛔ | 55.4% | 0.167 | 19.4% |
+| 2.0% | **60.3%** ⛔ | 54.1% | 0.125 | 18.8% |
+| 2.5% | 58.3% | 53.2% | 0.100 | 18.3% |
+| 3.0% | 56.9% | 52.7% | 0.083 | 18.1% |
+| 4.0% | 55.2% | 52.0% | 0.062 | 17.7% |
+| 5.0% | 54.1% | 51.6% | 0.050 | 17.5% |
+
+**Dây an toàn `p_required > 0.60` kích hoạt khi σ̂ ngày < 2.06%** (chân trời 1 ngày) hoặc **< 0.81%** (chân trời bằng thời gian nắm giữ). Trên cùng dải σ̂, `p_star` chỉ đi từ 21.9% xuống 17.5%.
+
+> ⚠️ Khung 1 ngày là khung **duy nhất** được phát ý định (ADR-002). Một dây an toàn kích hoạt ở biến động thấp sẽ bịt miệng đúng khung nó được viết ra để bảo vệ — và bịt đúng lúc chi phí trên mỗi R đang thấp nhất. Xem `docs/04_PREDICTION_SPEC.md §2.5`.
+
+
+## 7 · ★ Ranh giới của trạng thái `bác bỏ` — không hằng số, một phát biểu
+
+Phát biểu đăng ký trước: **«cận trên một phía 95% của EV nằm dưới 0»**. Không có ngưỡng hằng số — ranh giới tự suy từ `n` và độ lệch chuẩn R mỗi sự kiện (**3.23R**, đo được) tại đúng thời điểm chấm.
+
+| n sự kiện | sai số chuẩn | EV đo phải âm hơn | … nếu `n_eff` chỉ bằng 25% `n` |
+|---|---|---|---|
+| 300 | 0.1865R | **-0.307R** | -0.614R |
+| 500 | 0.1444R | **-0.238R** | -0.475R |
+| 1,000 | 0.1021R | **-0.168R** | -0.336R |
+| 1,114 ← cỡ hiện có | 0.0968R | **-0.159R** | -0.318R |
+| 2,000 | 0.0722R | **-0.119R** | -0.238R |
+
+> ⚠️ **Sai số chuẩn ngây thơ là LẠC QUAN.** Sự kiện chồng lấn thời gian và tương quan chéo coin làm `n` hiệu dụng nhỏ hơn `n` thô — cột cuối cho thấy ranh giới xê dịch bao xa. Phép chấm thật dùng **phân vị block bootstrap**, độ dài khối ≥ độ dài nhãn; **không** dùng ±z·SE.
+
+> Đọc bảng: với cỡ mẫu hiện thực, `bác bỏ` chỉ bắt được thứ **hỏng rõ rệt**. Đó là tính chất đúng — bác nhầm một phương pháp thật ra tốt cũng là sai lầm tốn kém. Xem `docs/04_PREDICTION_SPEC.md §8.5`.
