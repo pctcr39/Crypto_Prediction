@@ -152,7 +152,7 @@ Xếp theo phụ thuộc, không theo lịch:
    rò rỉ thật, sổ khuyến nghị bất biến; dashboard xem + Paper ẩn danh *(mầm đã có ở `web/`)*
 2. **Nhiều người dùng** — đăng nhập, hồ sơ, ví Paper theo tài khoản, track record cá nhân
 3. **Liên kết Binance + trade thủ công** — Key Vault, xem số dư/lịch sử, đặt lệnh thủ công
-   sau cổng kỹ thuật đường lệnh và sau khi gỡ ràng buộc pháp lý (§8)
+   sau khi đủ bộ an toàn đường lệnh (§5.2 Luật 15b) và gỡ ràng buộc pháp lý (§8)
 4. **Bot trading tiền thật** — khi bộ an toàn đường lệnh đủ (Luật 15b) và đã có
    tư vấn pháp lý; từng người tự bật, giới hạn rủi ro riêng, không có kỳ tập bắt buộc
 5. **ML tầng 2** — cắm method thứ hai qua cùng bộ kiểm định

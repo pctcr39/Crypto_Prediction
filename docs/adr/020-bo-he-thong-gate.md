@@ -15,7 +15,7 @@
 > trạng thái sau nhiều ngày, hành vi của sàn ở biên, tắc nghẽn hàng đợi — sẽ được
 > phát hiện **trên tiền thật của người dùng** thay vì trong kỳ chạy thử.
 >
-> **Đổi lại, vòng rà soát 28/08 siết bù bốn lớp** (chi tiết ở `01_REQUIREMENTS §8`):
+> **Đổi lại, vòng rà soát 28/08 siết bù bốn lớp** (nay hợp nhất thành `SAFE-02` ở `01_REQUIREMENTS §12`; luật an toàn nằm ở `§9 RISK`):
 > `SAFE-05a` bộ giả lập sàn nằm trên đúng đường mã sản xuất, sinh từ phản hồi thật ·
 > `SAFE-05b` mỗi kịch bản hỏng có một bất biến viết thành assert · `SAFE-05c` bộ đột
 > biến bắt chính test phải tự chứng minh · `SAFE-05d` bài chạy dài nén thời gian
