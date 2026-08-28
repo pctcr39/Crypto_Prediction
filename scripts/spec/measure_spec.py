@@ -271,9 +271,24 @@ def emit(path="docs/generated/spec_numbers.md") -> None:
     A(f"\n**Dây an toàn `p_required > {cg['wire']:.2f}` kích hoạt khi σ̂ ngày < {cg['sigma_cut_1d']:.2f}%** "
       f"(chân trời 1 ngày) hoặc **< {cg['sigma_cut_hold']:.2f}%** (chân trời bằng thời gian nắm giữ). "
       f"Trên cùng dải σ̂, `p_star` chỉ đi từ {cg['p_star_hi']*100:.1f}% xuống {cg['p_star_lo']*100:.1f}%.\n")
-    A("> ⚠️ Khung 1 ngày là khung **duy nhất** được phát ý định (ADR-002). Một dây an toàn kích hoạt ở "
-      "biến động thấp sẽ bịt miệng đúng khung nó được viết ra để bảo vệ — và bịt đúng lúc chi phí trên "
-      "mỗi R đang thấp nhất. Xem `docs/04_PREDICTION_SPEC.md §2.5`.\n")
+    A("> ⚠️ Khung 1 ngày là khung **duy nhất** được phát ý định (ADR-002). Dây an toàn kích hoạt ở biến "
+      "động thấp — và `c_R` đi **NGƯỢC** chiều với σ̂, nên nhóm bị bịt đúng là nhóm chi phí trên mỗi R "
+      "**cao nhất**. Tần suất kích hoạt thật: `§6b`. Xem `docs/04_PREDICTION_SPEC.md §2.5`.\n")
+    A("\n## 6b · ★ Dây an toàn cắn bao nhiêu — đo trên hai mẫu số\n")
+    wb = wire_bite_rate(amr["mean"], m["hold_days"])
+    A(f"Ngưỡng kích hoạt: σ̂ < **{wb['cuts_pct']['H1d']}%** (H = 1 ngày) · **{wb['cuts_pct']['Hhold']}%** "
+      f"(H = nắm giữ). Trung vị σ̂ ngày của toàn mẫu: **{wb['median_sigma_pct']}%** "
+      f"({wb['n_days']:,} ngày-đồng · {wb['n_events']:,} sự kiện).\n")
+    A("| Cặp | % THỜI GIAN bị cắn (H=1d) | % SỰ KIỆN bị cắn (H=1d) | % thời gian (H=giữ) | % sự kiện (H=giữ) |")
+    A("|---|---|---|---|---|")
+    for k, v in wb["per"].items():
+        bold = (lambda x: f"**{x}%**") if k == "TỔNG" else (lambda x: f"{x}%")
+        A(f"| {k} | {bold(v['H1d']['days'])} | {bold(v['H1d']['events'])} | "
+          f"{bold(v['Hhold']['days'])} | {bold(v['Hhold']['events'])} |")
+    A("\n> **Không phải \"phần lớn thời gian\".** Dây cắn một thiểu số, nhưng phân bố rất lệch theo cặp — "
+      "và nhóm bị cắn là nhóm `c_R` cao nhất (chi phí trên mỗi R đi ngược chiều σ̂). Câu hỏi thật không "
+      "phải \"dây có bịt miệng hệ không\" mà **\"nhóm sự kiện đó có đáng phát không, khi mỗi đơn vị R "
+      "của chúng đắt hơn nhiều lần\"**.\n")
     A("\n## 7 · ★ Ranh giới của trạng thái `bác bỏ` — không hằng số, một phát biểu\n")
     rb = rejection_boundary(mt["sd_per_event"], n_now=mt["n_total"])
     A(f"Phát biểu đăng ký trước: **«cận trên một phía {int((1-0.05)*100)}% của EV nằm dưới 0»**. "
@@ -424,6 +439,32 @@ def rejection_boundary(sd_per_event: float,
                          bound_neff_25=round(-Z_ONE_SIDED_95 * sd_per_event / np.sqrt(n * 0.25), 4),
                          is_now=(n == n_now)))
     return dict(sd_per_event=sd_per_event, z=Z_ONE_SIDED_95, rows=rows)
+
+
+
+def wire_bite_rate(amr: float, hold_days: float) -> dict:
+    """§6b · Dây an toàn `PRED-02` CẮN bao nhiêu — đo, không suy đoán.
+
+    Trả tần suất `σ̂ < ngưỡng kích hoạt` trên HAI mẫu số khác nhau:
+      · ngày-đồng  — bao nhiêu phần trăm THỜI GIAN dây có hiệu lực
+      · sự kiện    — bao nhiêu phần trăm KHUYẾN NGHỊ thực sự bị bịt
+    Hai con số này khác nhau vì sự kiện không rải đều theo chế độ biến động.
+    """
+    cg = cost_gate_surface(amr, hold_days)
+    cuts = {"H1d": cg["sigma_cut_1d"] / 100.0, "Hhold": cg["sigma_cut_hold"] / 100.0}
+    per, all_d, all_e = {}, [], []
+    for s in SYMS:
+        b, sig, w = _prep(s)
+        d = sig.dropna().values
+        e = np.array([t.sigma for t in run_tranches(b, w, sig)])
+        all_d.append(d); all_e.append(e)
+        per[s] = {k: dict(days=round(float((d < c).mean()) * 100, 2),
+                          events=round(float((e < c).mean()) * 100, 2)) for k, c in cuts.items()}
+    D, E = np.concatenate(all_d), np.concatenate(all_e)
+    per["TỔNG"] = {k: dict(days=round(float((D < c).mean()) * 100, 2),
+                           events=round(float((E < c).mean()) * 100, 2)) for k, c in cuts.items()}
+    return dict(per=per, cuts_pct={k: round(v * 100, 3) for k, v in cuts.items()},
+                median_sigma_pct=round(float(np.median(D)) * 100, 2), n_days=len(D), n_events=len(E))
 
 
 def slippage_table(m: dict) -> list[dict]:

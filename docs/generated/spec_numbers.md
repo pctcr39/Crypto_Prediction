@@ -133,7 +133,22 @@ Tập LỒNG NHAU trên cùng danh sách đã phát. Một mô hình, một hi�
 
 **Dây an toàn `p_required > 0.60` kích hoạt khi σ̂ ngày < 2.06%** (chân trời 1 ngày) hoặc **< 0.81%** (chân trời bằng thời gian nắm giữ). Trên cùng dải σ̂, `p_star` chỉ đi từ 21.9% xuống 17.5%.
 
-> ⚠️ Khung 1 ngày là khung **duy nhất** được phát ý định (ADR-002). Một dây an toàn kích hoạt ở biến động thấp sẽ bịt miệng đúng khung nó được viết ra để bảo vệ — và bịt đúng lúc chi phí trên mỗi R đang thấp nhất. Xem `docs/04_PREDICTION_SPEC.md §2.5`.
+> ⚠️ Khung 1 ngày là khung **duy nhất** được phát ý định (ADR-002). Dây an toàn kích hoạt ở biến động thấp — và `c_R` đi **NGƯỢC** chiều với σ̂, nên nhóm bị bịt đúng là nhóm chi phí trên mỗi R **cao nhất**. Tần suất kích hoạt thật: `§6b`. Xem `docs/04_PREDICTION_SPEC.md §2.5`.
+
+
+## 6b · ★ Dây an toàn cắn bao nhiêu — đo trên hai mẫu số
+
+Ngưỡng kích hoạt: σ̂ < **2.064%** (H = 1 ngày) · **0.811%** (H = nắm giữ). Trung vị σ̂ ngày của toàn mẫu: **3.94%** (9,366 ngày-đồng · 1,114 sự kiện).
+
+| Cặp | % THỜI GIAN bị cắn (H=1d) | % SỰ KIỆN bị cắn (H=1d) | % thời gian (H=giữ) | % sự kiện (H=giữ) |
+|---|---|---|---|---|
+| BTCUSDT | 20.09% | 23.26% | 0.0% | 0.0% |
+| ETHUSDT | 3.76% | 2.11% | 0.0% | 0.0% |
+| SOLUSDT | 0.18% | 0.85% | 0.0% | 0.0% |
+| DOGEUSDT | 1.18% | 0.3% | 0.0% | 0.0% |
+| TỔNG | **5.81%** | **5.39%** | **0.0%** | **0.0%** |
+
+> **Không phải "phần lớn thời gian".** Dây cắn một thiểu số, nhưng phân bố rất lệch theo cặp — và nhóm bị cắn là nhóm `c_R` cao nhất (chi phí trên mỗi R đi ngược chiều σ̂). Câu hỏi thật không phải "dây có bịt miệng hệ không" mà **"nhóm sự kiện đó có đáng phát không, khi mỗi đơn vị R của chúng đắt hơn nhiều lần"**.
 
 
 ## 7 · ★ Ranh giới của trạng thái `bác bỏ` — không hằng số, một phát biểu
